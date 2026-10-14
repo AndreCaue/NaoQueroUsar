@@ -113,13 +113,59 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _(a ser preenchido pelo roadmapper)_ | — | — |
+| ADMN-01 | Phase 1 | Pending |
+| ADMN-02 | Phase 1 | Pending |
+| ADMN-03 | Phase 1 | Pending |
+| EXTR-01 | Phase 2 | Pending |
+| EXTR-02 | Phase 2 | Pending |
+| EXTR-03 | Phase 2 | Pending |
+| EXTR-04 | Phase 2 | Pending |
+| EXTR-05 | Phase 2 | Pending |
+| EXTR-06 | Phase 2 | Pending |
+| EXTR-07 | Phase 2 | Pending |
+| EXTR-08 | Phase 2 | Pending |
+| EXTR-09 | Phase 2 | Pending |
+| SECR-01 | Phase 3 | Pending |
+| SECR-02 | Phase 3 | Pending |
+| SECR-03 | Phase 3 | Pending |
+| PUBL-05 | Phase 3 | Pending |
+| PUBL-01 | Phase 4 | Pending |
+| PUBL-02 | Phase 4 | Pending |
+| PUBL-03 | Phase 4 | Pending |
+| PUBL-04 | Phase 4 | Pending |
+| PUBL-06 | Phase 4 | Pending |
+| SRCH-01 | Phase 4 | Pending |
+| SRCH-02 | Phase 4 | Pending |
+| SRCH-03 | Phase 4 | Pending |
+| UIUX-01 | Phase 4 | Pending |
+| UIUX-02 | Phase 4 | Pending |
+| UIUX-03 | Phase 4 | Pending |
+| REVW-01 | Phase 5 | Pending |
+| REVW-02 | Phase 5 | Pending |
+| REVW-03 | Phase 5 | Pending |
+| REVW-04 | Phase 5 | Pending |
+| REVW-05 | Phase 5 | Pending |
+| LIFE-01 | Phase 6 | Pending |
+| LIFE-02 | Phase 6 | Pending |
+| LIFE-03 | Phase 6 | Pending |
+| LIFE-04 | Phase 6 | Pending |
+| TRST-01 | Phase 6 | Pending |
+| TRST-02 | Phase 6 | Pending |
+| TRST-03 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 39 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 39 ⚠️
+- Mapped to phases: 39
+- Unmapped: 0 ✓
+
+**Per Phase:**
+- Phase 1 — Backend Foundation, Data & Admin Auth: ADMN-01, ADMN-02, ADMN-03 (3)
+- Phase 2 — LLM Extraction Pipeline (HIGH RISK): EXTR-01..09 (9)
+- Phase 3 — Contact Reveal & Anti-Spam (HIGH RISK): SECR-01, SECR-02, SECR-03, PUBL-05 (4)
+- Phase 4 — Public Board Frontend: PUBL-01..04, PUBL-06, SRCH-01..03, UIUX-01..03 (11)
+- Phase 5 — Admin Review Area: REVW-01..05 (5)
+- Phase 6 — Lifecycle, Trust, Legal & Launch (HIGH RISK): LIFE-01..04, TRST-01..03 (7)
 
 ---
 *Requirements defined: 2026-10-13*
-*Last updated: 2026-10-13 after initial definition*
+*Last updated: 2026-10-13 after roadmap creation (traceability + coverage 39/39)*
