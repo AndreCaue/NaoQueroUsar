@@ -65,7 +65,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - **Tech stack — Frontend:** Next.js 15 (App Router) + Tailwind CSS + dark mode — decisão fixada pelo usuário
 - **Tech stack — Backend:** FastAPI (Python) — decisão fixada pelo usuário
 - **Banco:** Neon (Postgres gratuito) — decisão fixada pelo usuário
-- **LLM de extração:** Groq, modelo gratuito (`llama-3.1-8b-instant` ou `llama-3.3-70b`) — decisão fixada pelo usuário
+- **LLM de extração:** Groq, modelo gratuito — `openai/gpt-oss-20b` (padrão) com `openai/gpt-oss-120b` como fallback, via env `GROQ_MODEL` — *corrigido pós-pesquisa: `llama-3.1-8b-instant`/`llama-3.3-70b` foram aposentados em 2026-08-16*
 - **Anti-spam:** Cloudflare Turnstile (gratuito) — decisão fixada pelo usuário
 - **Deploy:** Vercel (frontend) + local inicialmente; depois Railway/Render (backend) — decisão fixada pelo usuário
 - **Idioma/Locale:** Português (Brasil), datas e textos em pt-BR
@@ -81,6 +81,8 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 | Extração via LLM (Groq) + revisão manual obrigatória | Automação do trabalho pesado sem abrir mão do controle de qualidade | — Pending |
 | Repo git dedicado no diretório do projeto | O diretório está dentro do repo da home; isolamento evita poluir histórico | — Pending |
 | Contato revelado no clique (client-side) | Reduz scraping com fricção mínima ao usuário | — Pending |
+| Servir contato via endpoint dedicado (não no payload público) | Ocultação client-side sozinha não protege contra scraping; exigido Turnstile server-side no reveal | — Pending |
+| Substituir Llama aposentados por Groq `gpt-oss` | `llama-3.1-8b-instant`/`llama-3.3-70b` desativados em 2026-08-16; `openai/gpt-oss-*` suporta structured outputs estritos | — Pending |
 
 ## Evolution
 
@@ -100,4 +102,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-13 after initialization*
+*Last updated: 2026-10-13 after research (Groq model correction)*
