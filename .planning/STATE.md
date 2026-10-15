@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-10-15T02:51:08.665Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-10-15T02:59:28.642Z"
 last_activity: 2026-10-15
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 ## Current Position
 
 Phase: 01 (backend-foundation-data-admin-auth) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-10-15
 
-Progress: [█████░░░░░] 50%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [█████░░░░░] 50%
 *Updated after each plan completion*
 | Phase 01 P01 | 15 | 2 tasks | 27 files |
 | Phase 01 P02 | 35 min | 2 tasks | 6 files |
+| Phase 01 P03 | 4 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - (Research) Groq `llama-3.1-8b-instant`/`llama-3.3-70b` aposentados em 2026-08-16 — usar `openai/gpt-oss-20b`/`120b` via `GROQ_MODEL` + fallback (nunca hardcoded).
 - (Research) Contatos nunca no payload público; servidos só por endpoint dedicado com Turnstile server-side (anti-scraping).
 - [Phase 01]: D-06..D-13 realized: Job model + initial migration (UUID PK gen_random_uuid, 4-value job_status enum, at_least_one_contact CHECK, timestamptz with expires_at=now()+14d, pg_trgm+unaccent search_text GIN trigram, city/salary free text, no soft delete)
+- [Phase 01]: D-01..D-04 realized: login returns a Bearer JWT (no cookie), single long-lived 12h token (JWT_EXPIRES_IN, no refresh), master password verified against ADMIN_PASSWORD_HASH, and login Turnstile/rate-limit deliberately deferred to Phase 3 — plan 01-03 (ADMN-01/ADMN-02/ADMN-03)
+- [Phase 01]: Password hashing uses the bcrypt library directly; passlib 1.7.4 is incompatible with the locked bcrypt 5.0.0 (its backend probe raises ValueError) — 01-03 deviation (Rule 3); tracked in deferred-items.md for a future re-lock
 
 ### Pending Todos
 
@@ -82,10 +85,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Dependency hygiene | Replace `passlib[bcrypt]` with a direct `bcrypt` dependency and re-lock with `uv` (passlib 1.7.4 is incompatible with the locked bcrypt 5.0.0) | Deferred | Phase 01 (plan 01-03) |
 
 ## Session Continuity
 
-Last session: 2026-10-15T02:51:08.645Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-10-15T02:59:28.626Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
