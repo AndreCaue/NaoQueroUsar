@@ -40,7 +40,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Monorepo scaffold, Python tooling, config (pydantic-settings), app factory, health, CORS, logging, async DB engine
+- [x] 01-01-PLAN.md — Monorepo scaffold, Python tooling, config (pydantic-settings), app factory, health, CORS, logging, async DB engine
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -138,7 +138,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Foundation, Data & Admin Auth | 0/TBD | Not started | - |
+| 1. Backend Foundation, Data & Admin Auth | 1/4 | In Progress|  |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
 | 3. Contact Reveal & Anti-Spam | 0/TBD | Not started | - |
 | 4. Public Board Frontend | 0/TBD | Not started | - |

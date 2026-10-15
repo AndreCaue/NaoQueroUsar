@@ -9,8 +9,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Admin & Autenticação
 
-- [ ] **ADMN-01**: Master faz login na área admin com senha definida via variável de ambiente
-- [ ] **ADMN-02**: Sessão admin autenticada por JWT persiste durante o uso
+- [x] **ADMN-01**: Master faz login na área admin com senha definida via variável de ambiente
+- [x] **ADMN-02**: Sessão admin autenticada por JWT persiste durante o uso
 - [ ] **ADMN-03**: Rotas administrativas bloqueiam acesso não autenticado
 
 ### Ingestão & Extração
@@ -113,8 +113,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ADMN-01 | Phase 1 | Pending |
-| ADMN-02 | Phase 1 | Pending |
+| ADMN-01 | Phase 1 | Complete |
+| ADMN-02 | Phase 1 | Complete |
 | ADMN-03 | Phase 1 | Pending |
 | EXTR-01 | Phase 2 | Pending |
 | EXTR-02 | Phase 2 | Pending |
