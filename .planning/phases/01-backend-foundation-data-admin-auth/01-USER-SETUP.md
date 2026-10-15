@@ -12,7 +12,7 @@ possible; these items require human access to external dashboards/accounts.
 | Status | Variable | Source | Add to |
 |--------|----------|--------|--------|
 | [ ] | `DATABASE_URL` | Neon Console → Project → Connection Details → **Pooled** connection string (host contains `-pooler`), append `?ssl=require` | `backend/.env` |
-| [ ] | `ADMIN_PASSWORD_HASH` | Generate locally: `.venv\Scripts\python -c "from passlib.context import CryptContext; print(CryptContext(schemes=['bcrypt']).hash('YOUR_MASTER_PASSWORD'))"` | `backend/.env` |
+| [ ] | `ADMIN_PASSWORD_HASH` | Generate locally (bcrypt directly — passlib 1.7.4 is incompatible with the locked bcrypt 5.0.0): `.venv\Scripts\python -c "import bcrypt; print(bcrypt.hashpw(b'YOUR_MASTER_PASSWORD', bcrypt.gensalt()).decode())"` | `backend/.env` |
 | [ ] | `JWT_SECRET` | Generate: 64-char random string (e.g. `python -c "import secrets; print(secrets.token_urlsafe(48))"`) | `backend/.env` |
 | [ ] | `TEST_DATABASE_URL` | Neon Console → Branches → create a branch of the dev DB → copy its **pooled** connection string with `?ssl=require` (required by plan 01-04) | `backend/.env` |
 
