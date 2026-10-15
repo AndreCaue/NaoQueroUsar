@@ -44,7 +44,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — `jobs` data contract: SQLAlchemy model + Alembic initial migration (enum, CHECK, timestamptz, search_text/pg_trgm, indexes)
+- [x] 01-02-PLAN.md — `jobs` data contract: SQLAlchemy model + Alembic initial migration (enum, CHECK, timestamptz, search_text/pg_trgm, indexes)
 - [ ] 01-03-PLAN.md — Admin auth: password hash verify, JWT login (`/auth/login`), `require_admin` guard, protected `/admin/me`
 
 **Wave 3** *(blocked on Wave 2 completion)*
@@ -138,7 +138,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Foundation, Data & Admin Auth | 1/4 | In Progress|  |
+| 1. Backend Foundation, Data & Admin Auth | 2/4 | In Progress|  |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
 | 3. Contact Reveal & Anti-Spam | 0/TBD | Not started | - |
 | 4. Public Board Frontend | 0/TBD | Not started | - |
