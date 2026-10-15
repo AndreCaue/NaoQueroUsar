@@ -13,7 +13,7 @@ Da fundação de dados ao board público curado e "sem fricção": primeiro gara
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Backend Foundation, Data & Admin Auth** - FastAPI + Neon, schema `jobs` (status/expires_at/contact invariant) e login master por JWT
+- [x] **Phase 1: Backend Foundation, Data & Admin Auth** - FastAPI + Neon, schema `jobs` (status/expires_at/contact invariant) e login master por JWT (completed 2026-10-15)
 - [ ] **Phase 2: LLM Extraction Pipeline** - Colar texto bruto → extração estruturada via Groq → cards `pending` (HIGH RISK)
 - [ ] **Phase 3: Contact Reveal & Anti-Spam** - Contato só via endpoint dedicado, Turnstile server-side + rate limit (HIGH RISK)
 - [ ] **Phase 4: Public Board Frontend** - Grade mobile-first, modal, busca/filtro/ordenação, reveal no clique, tema dark roxo
@@ -49,7 +49,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-04-PLAN.md — Public read API (published/non-expired, contact-free) + pytest validation suite + seed script
+- [x] 01-04-PLAN.md — Public read API (published/non-expired, contact-free) + pytest validation suite + seed script
 
 ### Phase 2: LLM Extraction Pipeline
 
@@ -138,7 +138,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Foundation, Data & Admin Auth | 3/4 | In Progress|  |
+| 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
 | 3. Contact Reveal & Anti-Spam | 0/TBD | Not started | - |
 | 4. Public Board Frontend | 0/TBD | Not started | - |
