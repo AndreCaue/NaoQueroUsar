@@ -1,0 +1,23 @@
+{
+  "phase": "2",
+  "phase_name": "LLM Extraction Pipeline",
+  "timestamp": "2026-10-19T00:00:00.000Z",
+  "areas_completed": ["Ritmo do fluxo colar→extrair", "Destino dos casos ruins"],
+  "areas_remaining": ["Texto grande: fatiar e avisar", "Texto-fonte por vaga", "Grounding anti-hallucination"],
+  "decisions": {
+    "Ritmo do fluxo colar→extrair": [
+      {"question": "O admin cola o texto — a extração roda em quanto tempo na frente dele?", "answer": "Síncrono com timeout (Recomendado)", "options_presented": ["Síncrono com timeout", "Background + polling", "Síncrono + streaming"]},
+      {"question": "O que o admin vê logo após a extração terminar?", "answer": "Salva e mostra o resumo", "options_presented": ["Salva e mostra o resumo", "Só salva, confirmação simples", "Preview antes de salvar"]},
+      {"question": "Se a extração falhar no meio, o que acontece com o que já foi processado?", "answer": "Nada salvo + erro claro + retry (commit único)", "options_presented": ["Nada salvo + retry", "Salva o que deu", "Você decide"]},
+      {"question": "Nesta fase o admin cola o texto por onde?", "answer": "Endpoint admin protegido por JWT + page mínima no frontend", "options_presented": ["Endpoint + page mínima", "Só o endpoint", "Você decide"]}
+    ],
+    "Destino dos casos ruins": [
+      {"question": "Qual a régua entre não salva / needs_review / salva normal?", "answer": "Só contato/título derrubam (não salva); defeitos menores → needs_review", "options_presented": ["Só contato/título derrubam", "Só schema OK salva", "Você decide"]},
+      {"question": "Cidade fora do conjunto permitido — como tratar variações?", "answer": "Mapeia o óbvio ('SP', 'São Paulo/SP') → cidade limpa; fora do conjunto → needs_review com texto bruto", "options_presented": ["Mapeia o óbvio, resto needs_review", "Zero mapeamento", "Você decide"]},
+      {"question": "EXTR-09: detectou 10 vagas, extraiu 8 — o que acontece com o lote?", "answer": "Salva as extraídas em pending + alerta forte de divergência no resumo", "options_presented": ["Salva as extraídas + alerta forte", "Lote todo needs_review", "Você decide"]},
+      {"question": "Vaga descartada (sem contato/título) reaparece como?", "answer": "No resumo com motivo + trecho-fonte, para o admin consertar e re-inserir", "options_presented": ["Resumo com trecho-fonte", "Só contagem/motivo", "Você decide"]}
+    ]
+  },
+  "deferred_ideas": [],
+  "canonical_refs": []
+}
