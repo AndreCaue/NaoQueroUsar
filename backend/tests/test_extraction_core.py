@@ -127,10 +127,12 @@ def test_chunk_oversized_unsplittable_block_is_emitted():
 def test_chunk_prefers_blank_line_boundaries():
     text = "primeiro paragrafo com vaga\n\nsegundo paragrafo com salario"
     chunks = chunk_text(text, 12)
-    assert chunks == [
-        "primeiro paragrafo com vaga",
-        "segundo paragrafo com salario",
-    ]
+    assert len(chunks) == 2
+    # Cut lands exactly on the paragraph boundary: first chunk is the whole
+    # first paragraph; the second carries the separator and the rest.
+    assert chunks[0] == "primeiro paragrafo com vaga"
+    assert chunks[1].strip() == "segundo paragrafo com salario"
+    assert "".join(chunks) == text  # contiguous exact slices
 
 
 def test_chunk_splits_on_lines_never_mid_word():
@@ -139,8 +141,9 @@ def test_chunk_splits_on_lines_never_mid_word():
     assert len(chunks) == 2
     original_lines = text.split("\n")
     for c in chunks:
-        for line in c.split("\n"):
-            assert line in original_lines
+        for line in c.strip().split("\n"):
+            if line:
+                assert line in original_lines
 
 
 def test_estimate_tokens_is_chars_over_four():
