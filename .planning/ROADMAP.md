@@ -64,8 +64,26 @@ Plans:
   4. Telefones em pt-BR são normalizados para E.164 gerando links `wa.me` confiáveis; o texto de entrada é delimitado para reduzir prompt injection.
   5. O modelo é configurável via `GROQ_MODEL` com cadeia de fallback e erro claro (nunca hardcoded) — corrigindo os Llama aposentados em 2026-08-16.
 
-**Plans**: TBD
-**⚠️ HIGH RISK**: Componente mais frágil (churn de modelo, limites de taxa, truncamento silencioso, hallucination). Pode precisar de `/gsd-research-phase` — confirmar IDs de modelo Groq vivos, suporte a strict structured outputs, limites TPM/TPD atuais e estratégia de chunking.
+**Plans**: 4 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Extraction foundations: source_snippet-less schema config (EXTRACT_* envs, .env.example), strict JSON Schema + Pydantic contract, chunking, pt-BR phone normalization, grounding helpers
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-02-PLAN.md — Groq extraction engine: AsyncGroq client, model fallback chain (gpt-oss-20b/120b), throttled chunked `extract_jobs` with grounding, classification (D-05/D-06), truncation/divergence detection
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-03-PLAN.md — Persistence + admin endpoint: Alembic migration adding `jobs.source_snippet`, `POST /api/v1/admin/extract` (JWT, sync timeout, atomic commit, save+summary), API test suite
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-04-PLAN.md — Minimal `/admin/paste` frontend: login → paste → extract → summary with alerts/discards (D-04), plain-CSS dark theme, human smoke checkpoint
+
+**⚠️ HIGH RISK**: Componente mais frágil (churn de modelo, limites de taxa, truncamento silencioso, hallucination). Pode precisar de `/gsd-research-phase` — confirmar IDs de modelo Groq vivos, suporte a strict structured outputs, limites TPM/TPD atuais e estratégia de chunking. *(Phase 2 research done: `02-RESEARCH.md` — openai/gpt-oss-20b/120b vivos, strict structured outputs OK, 30 RPM/1K RPD/8K TPM/200K TPD.)*
 
 ### Phase 3: Contact Reveal & Anti-Spam
 
