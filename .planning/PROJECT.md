@@ -16,13 +16,12 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate)
+- [x] Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1: Backend Foundation, Data & Admin Auth (ADMN-01/02/03)
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Admin solo acessa área protegida por senha (via `.env`) / JWT
 - [ ] Admin cola um texto grande com várias vagas de grupos (WhatsApp/Telegram)
 - [ ] LLM (Groq) extrai automaticamente os campos de cada vaga e cria cards com status `pending`
 - [ ] Admin revisa: aprovar, editar por ID, excluir
@@ -83,6 +82,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 | Contato revelado no clique (client-side) | Reduz scraping com fricção mínima ao usuário | — Pending |
 | Servir contato via endpoint dedicado (não no payload público) | Ocultação client-side sozinha não protege contra scraping; exigido Turnstile server-side no reveal | — Pending |
 | Substituir Llama aposentados por Groq `gpt-oss` | `llama-3.1-8b-instant`/`llama-3.3-70b` desativados em 2026-08-16; `openai/gpt-oss-*` suporta structured outputs estritos | — Pending |
+| Usar `bcrypt` direto (sem passlib) para hash de senha | `passlib` 1.7.4 é incompatível com o `bcrypt` 5.0.0 travado; a decisão de auth permite bcrypt diretamente | — Implemented Phase 1 |
 
 ## Evolution
 
@@ -102,4 +102,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-13 after research (Groq model correction)*
+*Last updated: 2026-10-19 after Phase 1 completion (Backend Foundation, Data & Admin Auth)*
