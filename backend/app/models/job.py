@@ -46,6 +46,8 @@ class Job(Base):
         server_default=text("'pending'"),
     )
     search_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # trecho do texto-fonte da extração (D-08; REVW-05 review aid)
+    source_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         nullable=False,
