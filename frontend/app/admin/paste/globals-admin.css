@@ -1,0 +1,97 @@
+:root {
+  --bg: #0f0a1a;
+  --panel: #1a1025;
+  --accent: #8b5cf6;
+  --accent-soft: #a78bfa;
+  --warn: #facc15;
+}
+
+.admin-page {
+  background: var(--bg);
+  color: #e2e8f0;
+  min-height: 100vh;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.admin-panel {
+  background: var(--panel);
+  border: 1px solid #2a1f3d;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  max-width: 720px;
+  width: 100%;
+}
+
+.admin-btn {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-alert {
+  background: #fff7cc;
+  border: 1px solid var(--warn);
+  color: #1a1500;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin-top: 1rem;
+}
+
+.admin-error {
+  background: #fee2e2;
+  border: 1px solid #f87171;
+  color: #7f1d1d;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin-top: 1rem;
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+  border-radius: 0.25rem;
+  border: 1px solid #4a3b6b;
+  background: #0f0a1a;
+  color: #e2e8f0;
+}
+
+.badge {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: #0f0a1a;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  margin-right: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.discard {
+  margin-top: 1rem;
+}
+
+.discard pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #0f0a1a;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid #4a3b6b;
+}
