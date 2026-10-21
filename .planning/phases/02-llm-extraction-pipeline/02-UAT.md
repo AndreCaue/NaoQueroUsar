@@ -13,10 +13,10 @@ updated: 2025-10-20T12:00:00Z
 
 ## Current Test
 
-number: 4
-name: Chunking Losslessness and Budget Limits
+number: 5
+name: Grounding and City Mapping
 expected: |
-  chunk_text produces contiguous exact slices under EXTRACT_CHUNK_MAX_TOKENS. Joining chunks reconstructs the original content (losslessness). When a paragraph boundary is chosen as the cut, the boundary is preserved correctly; pacing delays only occur between chunks for multi-chunk inputs.
+  Fields are grounded against the source text (accent/case/emoji-insensitive). City accepts raw value OR canonical mapping (e.g. SP maps to Sao Paulo) while truly absent cities cause the row to be flagged needs_review. D-05 discard logic applies only when title is missing/ungrounded OR both contacts absent.
 awaiting: user response
 
 ## Tests
@@ -39,7 +39,7 @@ result: pass
 ### 4. Chunking Losslessness and Budget Limits
 expected: |
   chunk_text produces contiguous exact slices under EXTRACT_CHUNK_MAX_TOKENS. Joining chunks reconstructs the original content (losslessness). When a paragraph boundary is chosen as the cut, the boundary is preserved correctly; pacing delays only occur between chunks for multi-chunk inputs.
-result: [pending]
+result: pass
 
 ### 5. Grounding and City Mapping
 expected: |
@@ -74,9 +74,9 @@ result: [pending]
 ## Summary
 
 total: 10
-passed: 3
+passed: 4
 issues: 0
-pending: 7
+pending: 6
 skipped: 0
 blocked: 0
 
