@@ -13,10 +13,10 @@ updated: 2025-10-20T12:00:00Z
 
 ## Current Test
 
-number: 5
-name: Grounding and City Mapping
+number: 6
+name: Extract API Authentication and Validation
 expected: |
-  Fields are grounded against the source text (accent/case/emoji-insensitive). City accepts raw value OR canonical mapping (e.g. SP maps to Sao Paulo) while truly absent cities cause the row to be flagged needs_review. D-05 discard logic applies only when title is missing/ungrounded OR both contacts absent.
+  POST /api/v1/admin/extract requires JWT authentication (Bearer). Missing/invalid token returns 401. text min_length enforced (422). Byte cap enforced (413). If GROQ_API_KEY missing, returns 503. Timeout returns 504. ValueError maps to 422.
 awaiting: user response
 
 ## Tests
@@ -44,7 +44,7 @@ result: pass
 ### 5. Grounding and City Mapping
 expected: |
   Fields are grounded against the source text (accent/case/emoji-insensitive). City accepts raw value OR canonical mapping (e.g. SP maps to Sao Paulo) while truly absent cities cause the row to be flagged needs_review. D-05 discard logic applies only when title is missing/ungrounded OR both contacts absent.
-result: [pending]
+result: pass
 
 ### 6. Extract API Authentication and Validation
 expected: |
@@ -74,9 +74,9 @@ result: [pending]
 ## Summary
 
 total: 10
-passed: 4
+passed: 5
 issues: 0
-pending: 6
+pending: 5
 skipped: 0
 blocked: 0
 
