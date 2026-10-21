@@ -1,10 +1,11 @@
 ---
 phase: 3
 slug: contact-reveal-anti-spam
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-10-20
+reviewed_at: 2026-10-20
 ---
 
 # Phase 03 — UI Design Contract
@@ -115,6 +116,8 @@ Turnstile widget copy: none (Cloudflare-rendered, pt-BR by browser locale; `them
 
 ### A. Admin login (built in this phase — `ExtractForm.tsx`, already `"use client"`)
 
+**Focal point:** the "Entrar" primary CTA is the visual anchor (accent bg on the `#1a1025` panel); the Turnstile widget is secondary (neutral, Cloudflare-rendered). In the Phase 4 reveal modal, the revealed contact block is the payoff focal point (`--accent-soft` `#a78bfa`, weight 600).
+
 1. Render `<Turnstile siteKey={NEXT_PUBLIC_TURNSTILE_SITE_KEY} action="login" theme="dark" onVerify onExpire />` **above** the "Entrar" button, inside the login block.
 2. "Entrar" disabled while: `loading || !password.trim() || !cfToken`.
 3. `onVerify(token)` → store token; `onExpire()` / `onError()` → `setCfToken(null)` (stale token must never be submitted).
@@ -176,14 +179,14 @@ No new files in `frontend/` for Phase 3 beyond edits to the two above.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: FLAG (focal point now declared — non-blocking recommendation applied)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved (2026-10-20, gsd-ui-checker — 6/6, 0 blocking issues)
 
 ---
 
