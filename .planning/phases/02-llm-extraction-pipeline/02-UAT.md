@@ -13,10 +13,10 @@ updated: 2025-10-20T12:00:00Z
 
 ## Current Test
 
-number: 3
-name: Groq Extraction with Strict JSON Schema
+number: 4
+name: Chunking Losslessness and Budget Limits
 expected: |
-  The extractor validates LLM responses against the strict EXTRACTION_JSON_SCHEMA (required fields, no extra properties). Malformed/extra-key responses are rejected and trigger the single repair attempt. The system never hardcodes the Groq model chain - it uses GROQ_MODEL/GROQ_MODEL_FALLBACK from environment.
+  chunk_text produces contiguous exact slices under EXTRACT_CHUNK_MAX_TOKENS. Joining chunks reconstructs the original content (losslessness). When a paragraph boundary is chosen as the cut, the boundary is preserved correctly; pacing delays only occur between chunks for multi-chunk inputs.
 awaiting: user response
 
 ## Tests
@@ -34,7 +34,7 @@ result: pass
 ### 3. Groq Extraction with Strict JSON Schema
 expected: |
   The extractor validates LLM responses against the strict EXTRACTION_JSON_SCHEMA (required fields, no extra properties). Malformed/extra-key responses are rejected and trigger the single repair attempt. The system never hardcodes the Groq model chain - it uses GROQ_MODEL/GROQ_MODEL_FALLBACK from environment.
-result: [pending]
+result: pass
 
 ### 4. Chunking Losslessness and Budget Limits
 expected: |
@@ -74,9 +74,9 @@ result: [pending]
 ## Summary
 
 total: 10
-passed: 2
+passed: 3
 issues: 0
-pending: 8
+pending: 7
 skipped: 0
 blocked: 0
 
