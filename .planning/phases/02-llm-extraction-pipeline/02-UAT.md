@@ -13,10 +13,10 @@ updated: 2025-10-20T12:00:00Z
 
 ## Current Test
 
-number: 6
-name: Extract API Authentication and Validation
+number: 7
+name: Atomic Persistence and Summary
 expected: |
-  POST /api/v1/admin/extract requires JWT authentication (Bearer). Missing/invalid token returns 401. text min_length enforced (422). Byte cap enforced (413). If GROQ_API_KEY missing, returns 503. Timeout returns 504. ValueError maps to 422.
+  Kept candidates are inserted in a single transaction (bulk_create_pending flushes only, caller commits). On exception, rollback occurs and API returns 500 with message about nothing being written. source_snippet is stored on persisted jobs. Discarded candidates are never persisted - only returned in the summary with reason and snippet.
 awaiting: user response
 
 ## Tests
@@ -49,7 +49,7 @@ result: pass
 ### 6. Extract API Authentication and Validation
 expected: |
   POST /api/v1/admin/extract requires JWT authentication (Bearer). Missing/invalid token returns 401. text min_length enforced (422). Byte cap enforced (413). If GROQ_API_KEY missing, returns 503. Timeout returns 504. ValueError maps to 422.
-result: [pending]
+result: pass
 
 ### 7. Atomic Persistence and Summary
 expected: |
@@ -74,9 +74,9 @@ result: [pending]
 ## Summary
 
 total: 10
-passed: 5
+passed: 6
 issues: 0
-pending: 5
+pending: 4
 skipped: 0
 blocked: 0
 
