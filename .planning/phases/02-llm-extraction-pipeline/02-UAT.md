@@ -13,10 +13,10 @@ updated: 2025-10-20T12:00:00Z
 
 ## Current Test
 
-number: 8
-name: Admin Paste UI Flow
+number: 9
+name: End-to-End Extraction from Paste to DB
 expected: |
-  Visit /admin/paste. Log in with admin password -> JWT stored (state + sessionStorage, persists on reload). Paste raw text and submit. See pt-BR summary with count badges, alerts (divergence/truncation/discarded/max-jobs), and discarded entries shown with reason+snippet. Can click Nova extração to reset summary while keeping token. UI uses dark theme and renders without build errors.
+  From the admin paste UI with GROQ_API_KEY configured and backend running, submit a realistic WhatsApp/Telegram-style paste containing multiple jobs. Extraction completes, summary shows counts, and persisted jobs appear in the DB with status pending/needs_review and source_snippet populated. No secrets leak to frontend.
 awaiting: user response
 
 ## Tests
@@ -59,7 +59,7 @@ result: pass
 ### 8. Admin Paste UI Flow
 expected: |
   Visit /admin/paste. Log in with admin password -> JWT stored (state + sessionStorage, persists on reload). Paste raw text and submit. See pt-BR summary with count badges, alerts (divergence/truncation/discarded/max-jobs), and discarded entries shown with reason+snippet. Can click Nova extração to reset summary while keeping token. UI uses dark theme and renders without build errors.
-result: [pending]
+result: pass
 
 ### 9. End-to-End Extraction from Paste to DB
 expected: |
@@ -74,9 +74,9 @@ result: [pending]
 ## Summary
 
 total: 10
-passed: 7
+passed: 8
 issues: 0
-pending: 3
+pending: 2
 skipped: 0
 blocked: 0
 
