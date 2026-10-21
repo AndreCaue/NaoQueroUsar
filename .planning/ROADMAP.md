@@ -97,7 +97,28 @@ Plans:
   3. O endpoint de reveal tem rate limiting por IP; excesso de requisições é bloqueado.
   4. O login do admin também é protegido por Turnstile contra credential stuffing.
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Fundação fail-closed: `Settings` do Turnstile (chave obrigatória fora de dev, chave de teste bloqueada em prod), knobs `REVEAL_RATE_LIMIT`/`LOGIN_RATE_LIMIT`, pin do `slowapi==0.1.10` e resolver de IP proxy-aware (`X-Real-IP` → XFF mais à direita público → client host → `unknown`)
+
+**Wave 2** *(blocked on 03-01)*
+
+- [ ] 03-02-PLAN.md — Cliente Siteverify (httpx) fail-closed com binding de `action`, seam `get_turnstile_verifier`, limiter slowapi in-memory com handler 429 pt-BR, status do Turnstile no `/health` e fixtures de teste offline
+
+**Wave 3** *(blocked on 03-02)*
+
+- [ ] 03-03-PLAN.md — Endpoint único de reveal `POST /api/v1/public/jobs/{id}/reveal-contact`: rate limit → 404 → Siteverify (403) → 200, com `RevealRequest`/`ContactRevealResponse` e 10 casos de teste
+
+**Wave 4** *(blocked on 03-02, 03-03)*
+
+- [ ] 03-04-PLAN.md — Login do master protegido: `cf_token` no `LoginRequest`, ordem rate limit → Siteverify (403) → bcrypt (401) → JWT (200), `loginAdmin(password, cfToken)` e widget `next-turnstile` `interaction-only` no admin (backend + front no mesmo plano)
+
+**Wave 5** *(blocked on 03-03, 03-04)*
+
+- [ ] 03-05-PLAN.md — Prova real: smoke test do Siteverify contra a Cloudflare (segredos `1x`/`2x`/`3x`), regressão completa, varredura de vazamento de segredo e checkpoint do login no browser
+
 **⚠️ HIGH RISK**: Superfície sensível a scraping e momento de payoff — precisa ser server-side desde o início (retrofit seria reescrita). Pode precisar de `/gsd-research-phase` — detalhes do Siteverify (vida útil/single-use do token, `timeout-or-duplicate`, extração de IP via proxy, chaves de teste) e abordagem de rate limiting.
 
 ### Phase 4: Public Board Frontend

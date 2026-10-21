@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 context gathered
-last_updated: "2026-10-21T21:32:39.675Z"
-last_activity: 2026-10-19 -- Phase 02 execution started
+stopped_at: Phase 03 planned (5 plans, 5 waves) — ready to execute
+last_updated: "2026-10-21T22:10:00.000Z"
+last_activity: 2026-10-21 -- Phase 03 planning complete (5 plans written, gates green)
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 8
+  total_plans: 13
   completed_plans: 8
   percent: 33
 ---
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-13)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 02 — llm-extraction-pipeline
+**Current focus:** Phase 03 — contact-reveal-anti-spam
 
 ## Current Position
 
-Phase: 02 (llm-extraction-pipeline) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 02
-Last activity: 2026-10-19 -- Phase 02 execution started
+Phase: 03 (contact-reveal-anti-spam) — PLANNED
+Plan: 0 of 5 (03-01 → 03-05, waves 1→5)
+Status: Planning complete — ready for `/gsd-execute-phase 3`
+Last activity: 2026-10-21 -- Phase 03 planning complete (5 plans written, gates green)
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0% (Phase 03 planejada; fases 01-02 concluídas)
 
 ## Performance Metrics
 
@@ -72,6 +72,11 @@ Recent decisions affecting current work:
 - [Phase 01]: Password hashing uses the bcrypt library directly; passlib 1.7.4 is incompatible with the locked bcrypt 5.0.0 (its backend probe raises ValueError) — 01-03 deviation (Rule 3); tracked in deferred-items.md for a future re-lock
 - [Phase 01]: D-14..D-18 realized (plan 01-04): public read surface is GET /api/v1/public/jobs (offset pagination page/limit 1-50 default 20 + total count) and GET /api/v1/public/jobs/{id} (404 otherwise), always filtering status='published' AND expires_at > now(), with a contact-free JobPublic schema (no contact_email/contact_phone); search/filter/sort and contact reveal deferred to Phases 4 and 3 respectively
 - [Phase 01]: D-22 realized (plan 01-04): focused pytest + pytest-asyncio suite (18 tests) + scripts/seed.py proving all five Phase 1 criteria (login ok/bad, admin 401, public contact-free list/detail, published-only non-expired, schema CHECK/enum/14-day expiry)
+- [Phase 03 planning]: 5 planos em 5 ondas — 03-01 (config fail-closed + IP + pin slowapi) → 03-02 (Siteverify + limiter + DI + fixtures) → 03-03 (endpoint de reveal) → 03-04 (login protegido, back+front no mesmo plano) → 03-05 (smoke live + checkpoint de browser)
+- [Phase 03 planning]: os segredos de teste do Cloudflare têm **35 chars** (`1x`/`2x`/`3x` + 31 + `AA`) — o regex de bloqueio em prod é `^[123]x[0-9A-Za-z]{31}AA$`; com `{30}` a chave always-pass passaria no validator (D-12 quebrado)
+- [Phase 03 planning]: `slowapi==0.1.10` verificado no wheel — `key_func` é re-resolvido por request, bucket por URL, o param `request` é obrigatório no decorator e `init_app` registraria o handler 429 default em inglês (usamos `app.state.limiter` + handler pt-BR próprio)
+- [Phase 03 planning]: `next-turnstile@1.0.7` exporta `{ Turnstile }` (nomeado) e **não** tem `resetKey` — o reset do widget é por remount via `key` do React
+- [Phase 03 planning]: o conftest **não** pode definir `TURNSTILE_SECRET_KEY`/`TURNSTILE_SITE_KEY`/`REVEAL_RATE_LIMIT`/`LOGIN_RATE_LIMIT` no ambiente global — em teste `ENV="dev"` (default) e env vars têm precedência sobre os defaults, o que quebraria os testes de fail-closed do plano 03-01
 
 ### Pending Todos
 
@@ -92,6 +97,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-21T21:32:39.642Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-contact-reveal-anti-spam/03-CONTEXT.md
+Last session: 2026-10-21T22:10:00.000Z
+Stopped at: Phase 03 planned (5 plans, 5 waves) — ready to execute
+Resume file: .planning/phases/03-contact-reveal-anti-spam/03-01-PLAN.md
