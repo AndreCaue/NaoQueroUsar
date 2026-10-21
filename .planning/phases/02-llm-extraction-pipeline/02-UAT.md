@@ -13,10 +13,10 @@ updated: 2025-10-20T12:00:00Z
 
 ## Current Test
 
-number: 7
-name: Atomic Persistence and Summary
+number: 8
+name: Admin Paste UI Flow
 expected: |
-  Kept candidates are inserted in a single transaction (bulk_create_pending flushes only, caller commits). On exception, rollback occurs and API returns 500 with message about nothing being written. source_snippet is stored on persisted jobs. Discarded candidates are never persisted - only returned in the summary with reason and snippet.
+  Visit /admin/paste. Log in with admin password -> JWT stored (state + sessionStorage, persists on reload). Paste raw text and submit. See pt-BR summary with count badges, alerts (divergence/truncation/discarded/max-jobs), and discarded entries shown with reason+snippet. Can click Nova extração to reset summary while keeping token. UI uses dark theme and renders without build errors.
 awaiting: user response
 
 ## Tests
@@ -54,7 +54,7 @@ result: pass
 ### 7. Atomic Persistence and Summary
 expected: |
   Kept candidates are inserted in a single transaction (bulk_create_pending flushes only, caller commits). On exception, rollback occurs and API returns 500 with message about nothing being written. source_snippet is stored on persisted jobs. Discarded candidates are never persisted - only returned in the summary with reason and snippet.
-result: [pending]
+result: pass
 
 ### 8. Admin Paste UI Flow
 expected: |
@@ -74,9 +74,9 @@ result: [pending]
 ## Summary
 
 total: 10
-passed: 6
+passed: 7
 issues: 0
-pending: 4
+pending: 3
 skipped: 0
 blocked: 0
 
