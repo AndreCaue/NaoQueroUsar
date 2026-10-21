@@ -1,5 +1,5 @@
 ﻿---
-status: testing
+status: complete
 phase: 02-llm-extraction-pipeline
 source:
   - .planning/phases/02-llm-extraction-pipeline/02-01-SUMMARY.md
@@ -13,10 +13,7 @@ updated: 2025-10-20T12:00:00Z
 
 ## Current Test
 
-number: 10
-name: Error Handling and Alert Surfaces
-expected: |
-  Divergence (detected vs extracted counts for multi-chunk) surfaces an alert. Truncation when hitting chunk/token limits surfaces an alert. MAX_JOBS overflow produces a single 'excedeu o limite' discarded entry and corresponding alert. Model dead/exhaustion and rate-limit conditions produce clear pt-BR error messages via the API helper.
+[testing complete]
 awaiting: user response
 
 ## Tests
@@ -69,14 +66,14 @@ result: pass
 ### 10. Error Handling and Alert Surfaces
 expected: |
   Divergence (detected vs extracted counts for multi-chunk) surfaces an alert. Truncation when hitting chunk/token limits surfaces an alert. MAX_JOBS overflow produces a single 'excedeu o limite' discarded entry and corresponding alert. Model dead/exhaustion and rate-limit conditions produce clear pt-BR error messages via the API helper.
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 10
-passed: 9
+passed: 10
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
