@@ -13,10 +13,10 @@ updated: 2025-10-20T12:00:00Z
 
 ## Current Test
 
-number: 9
-name: End-to-End Extraction from Paste to DB
+number: 10
+name: Error Handling and Alert Surfaces
 expected: |
-  From the admin paste UI with GROQ_API_KEY configured and backend running, submit a realistic WhatsApp/Telegram-style paste containing multiple jobs. Extraction completes, summary shows counts, and persisted jobs appear in the DB with status pending/needs_review and source_snippet populated. No secrets leak to frontend.
+  Divergence (detected vs extracted counts for multi-chunk) surfaces an alert. Truncation when hitting chunk/token limits surfaces an alert. MAX_JOBS overflow produces a single 'excedeu o limite' discarded entry and corresponding alert. Model dead/exhaustion and rate-limit conditions produce clear pt-BR error messages via the API helper.
 awaiting: user response
 
 ## Tests
@@ -64,7 +64,7 @@ result: pass
 ### 9. End-to-End Extraction from Paste to DB
 expected: |
   From the admin paste UI with GROQ_API_KEY configured and backend running, submit a realistic WhatsApp/Telegram-style paste containing multiple jobs. Extraction completes, summary shows counts, and persisted jobs appear in the DB with status pending/needs_review and source_snippet populated. No secrets leak to frontend.
-result: [pending]
+result: pass
 
 ### 10. Error Handling and Alert Surfaces
 expected: |
@@ -74,9 +74,9 @@ result: [pending]
 ## Summary
 
 total: 10
-passed: 8
+passed: 9
 issues: 0
-pending: 2
+pending: 1
 skipped: 0
 blocked: 0
 
