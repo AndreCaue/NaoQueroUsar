@@ -101,7 +101,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Fundação fail-closed: `Settings` do Turnstile (chave obrigatória fora de dev, chave de teste bloqueada em prod), knobs `REVEAL_RATE_LIMIT`/`LOGIN_RATE_LIMIT`, pin do `slowapi==0.1.10` e resolver de IP proxy-aware (`X-Real-IP` → XFF mais à direita público → client host → `unknown`)
+- [x] 03-01-PLAN.md — Fundação fail-closed: `Settings` do Turnstile (chave obrigatória fora de dev, chave de teste bloqueada em prod), knobs `REVEAL_RATE_LIMIT`/`LOGIN_RATE_LIMIT`, pin do `slowapi==0.1.10` e resolver de IP proxy-aware (`X-Real-IP` → XFF mais à direita público → client host → `unknown`)
 
 **Wave 2** *(blocked on 03-01)*
 
@@ -179,7 +179,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
-| 3. Contact Reveal & Anti-Spam | 0/TBD | Not started | - |
+| 3. Contact Reveal & Anti-Spam | 1/5 | In Progress|  |
 | 4. Public Board Frontend | 0/TBD | Not started | - |
 | 5. Admin Review Area | 0/TBD | Not started | - |
 | 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 03 planned (5 plans, 5 waves) — ready to execute
-last_updated: "2026-10-21T22:10:00.000Z"
-last_activity: 2026-10-21 -- Phase 03 planning complete (5 plans written, gates green)
+stopped_at: "Phase 03 plan 03-01 complete (2/2 tasks, 16 new tests) — next: 03-02 (Siteverify + limiter + fixtures)"
+last_updated: "2026-10-21T22:37:44.185Z"
+last_activity: 2026-10-21
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 13
-  completed_plans: 8
+  completed_plans: 9
   percent: 33
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 
 ## Current Position
 
-Phase: 03 (contact-reveal-anti-spam) — PLANNED
-Plan: 0 of 5 (03-01 → 03-05, waves 1→5)
-Status: Planning complete — ready for `/gsd-execute-phase 3`
-Last activity: 2026-10-21 -- Phase 03 planning complete (5 plans written, gates green)
+Phase: 03 (contact-reveal-anti-spam) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-10-21
 
-Progress: [░░░░░░░░░░] 0% (Phase 03 planejada; fases 01-02 concluídas)
+Progress: [███████░░░] 69%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0% (Phase 03 planejada; fases 01-02 c
 | Phase 01 P02 | 35 min | 2 tasks | 6 files |
 | Phase 01 P03 | 4 min | 2 tasks | 7 files |
 | Phase 01 P04 | ~6min | 2 tasks | 11 files |
+| Phase 03 P01 | 8min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 03 planning]: `slowapi==0.1.10` verificado no wheel — `key_func` é re-resolvido por request, bucket por URL, o param `request` é obrigatório no decorator e `init_app` registraria o handler 429 default em inglês (usamos `app.state.limiter` + handler pt-BR próprio)
 - [Phase 03 planning]: `next-turnstile@1.0.7` exporta `{ Turnstile }` (nomeado) e **não** tem `resetKey` — o reset do widget é por remount via `key` do React
 - [Phase 03 planning]: o conftest **não** pode definir `TURNSTILE_SECRET_KEY`/`TURNSTILE_SITE_KEY`/`REVEAL_RATE_LIMIT`/`LOGIN_RATE_LIMIT` no ambiente global — em teste `ENV="dev"` (default) e env vars têm precedência sobre os defaults, o que quebraria os testes de fail-closed do plano 03-01
+- [Phase 03]: D-10/D-11/D-12/D-06 realized (plan 03-01): Settings fail-closed do Turnstile (secret obrigatorio fora de dev; chaves de teste 1x/2x/3x rejeitadas), knobs REVEAL_RATE_LIMIT=10/minute e LOGIN_RATE_LIMIT=5/minute, resolver de IP proxy-aware (X-Real-IP -> XFF mais a direita publico -> client.host -> unknown) e slowapi==0.1.10 pinado — primitivas de enforcement sem endpoint novo; suíte 120 passed
+- [Phase 03]: X-Real-IP e aceito quando apenas PARSEIA como IP (nao quando e 'publico') — as faixas de documentacao do IANA (203.0.113.0/24, 198.51.100.0/24) tem is_private==True no ipaddress do Python; filtro de 'publico' no X-Real-IP derrubaria o header real do Railway. O filtro de 'publico' fica restrito ao XFF (D-10)
+- [Phase 03]: SECR-02 mantido desmarcado em REQUIREMENTS.md ate o plano 03-03 ligar o limiter ao endpoint de reveal — o plano 03-01 entrega so as primitivas (config, resolver de IP, pin do limiter); marcar o requisito agora daria sinal falso numa fase HIGH RISK
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-21T22:10:00.000Z
-Stopped at: Phase 03 planned (5 plans, 5 waves) — ready to execute
-Resume file: .planning/phases/03-contact-reveal-anti-spam/03-01-PLAN.md
+Last session: 2026-10-21T22:37:44.144Z
+Stopped at: Phase 03 plan 03-01 complete (2/2 tasks, 16 new tests) — next: 03-02 (Siteverify + limiter + fixtures)
+Resume file: .planning/phases/03-contact-reveal-anti-spam/03-02-PLAN.md
