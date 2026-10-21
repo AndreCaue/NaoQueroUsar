@@ -108,6 +108,22 @@ async def test_429_carries_a_retry_after_header(http_client):
     assert int(retry_after) > 0
 
 
+async def test_rate_limited_endpoint_without_response_param_still_answers_200(
+    http_client,
+):
+    """An endpoint that does not declare ``response: Response`` must not 500.
+
+    slowapi injects the ``X-RateLimit-*`` headers through the endpoint's
+    ``response`` argument and *raises* when it is missing. The reveal and
+    login routers do not declare that argument, so the limiter must not turn
+    a successful request into a 500.
+    """
+    resp = await http_client.get("/limited")
+
+    assert resp.status_code == 200
+    assert resp.json() == {"ok": True}
+
+
 async def test_a_different_ip_gets_its_own_bucket(http_client):
     for _ in range(2):
         resp = await http_client.get("/limited", headers={"X-Real-IP": "203.0.113.9"})
