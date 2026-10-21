@@ -65,7 +65,7 @@ completed: 2026-10-21
 - **Started:** 2026-10-21T22:21:27Z
 - **Completed:** 2026-10-21T22:29:36Z
 - **Tasks:** 2/2
-- **Files modified:** 6 (3 criados, 3 modificados + uv.lock)
+- **Files modified:** 7 (3 criados, 4 modificados)
 
 ## Accomplishments
 - `Settings` agora valida o Turnstile **fail-closed**: secret vazio fora de `ENV=dev` derruba o startup (`TURNSTILE_SECRET_KEY é obrigatória fora de dev (D-11)`) e as chaves de teste conhecidas do Cloudflare (`1x…`/`2x…`/`3x…`) também (`D-12`) — um `.env.example` copiado para produção não auto-aprove mais nada
@@ -151,6 +151,7 @@ None — nenhuma superfície nova fora do threat register do plano. T-03-01 (sec
 
 ## Self-Check: PASSED
 
-- Todos os 7 arquivos-chave existem em disco (`app/core/config.py`, `app/core/client_ip.py`, `tests/test_security_config.py`, `tests/test_client_ip.py`, `.env.example`, `pyproject.toml`, `uv.lock`)
-- Todos os 4 commits de task encontrados no histórico: `2c7e728`, `1897234`, `0fe5f76`, `d39734d`
+- Todos os 8 arquivos-chave existem em disco (`app/core/config.py`, `app/core/client_ip.py`, `tests/test_security_config.py`, `tests/test_client_ip.py`, `.env.example`, `pyproject.toml`, `uv.lock` e o próprio SUMMARY)
+- Todos os 4 commits de task encontrados no histórico: `2c7e728`, `1897234`, `0fe5f76`, `d39734d` (+ `bd58c7a` do metadata)
 - Verificação reexecutada: 120/120 testes passam (104 pré-existentes + 16 novos); grep gates do plano OK (`TURNSTILE_SECRET_KEY` em 4 linhas não-comentário ≥ 3; `def resolve_client_ip` == 1; `slowapi==0.1.10` == 1)
+- Nenhum arquivo pré-existente alheio ao plano foi staged ou commitado (`frontend/tsconfig.json` e os scratch files `backend/_*.txt`, `backend/body.json`, `frontend/next-env.d.ts`, `frontend/package-lock.json` seguem intactos na working tree)
