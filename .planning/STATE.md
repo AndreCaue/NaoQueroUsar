@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Phase 03 plan 03-04 complete (2/2 tasks, 7 new tests) - next: 03-05 (smoke live + checkpoint de browser)"
-last_updated: "2026-10-22T01:27:58.710Z"
+stopped_at: "Phase 03 plan 03-05: tasks 1-2 concluidas (2/3) - pausado no checkpoint human-verify (task 3: login real no browser); achado: segredos de teste da Cloudflare nao devolvem 'action' -> 403 no login"
+last_updated: "2026-10-22T01:59:48.685Z"
 last_activity: 2026-10-22
 progress:
   total_phases: 6
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 
 Phase: 03 (contact-reveal-anti-spam) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Paused at the human-verify checkpoint (03-05 task 3 — browser login)
 Last activity: 2026-10-22
 
 Progress: [█████████░] 92%
@@ -97,6 +97,9 @@ Recent decisions affecting current work:
 - [Phase 03]: SECR-03 materializado no login do admin (plan 03-04): a rota POST /api/v1/auth/login aplica rate limit -> Siteverify(expected_action='login') -> bcrypt -> JWT - a senha NUNCA e comparada sem um token Turnstile valido na mao (D-17). Token recusado ou verificacao indisponivel = 403 com copy propria (nunca 'Senha invalida'), e o front monta o widget interaction-only com action='login' e reseta por remount (D-16/D-19) — a prova da ordem e o status code: token recusado + senha errada da 403 (nao 401), coberto por test_login_turnstile_failure_does_not_reach_password_check
 - [Phase 03]: O reset do widget do Turnstile e por REMOUNT (key nova do React), nao por API: o next-turnstile@1.0.7 nao tem resetKey nem ref exposto - o useEffect de cleanup do pacote chama window.turnstile.remove(widgetId) e o remount renderiza um widget novo (D-19/T-03-18) — o token consumido pelo backend nunca pode ser reenviado: um login falho remonta o widget e a proxima tentativa usa um token novo
 - [Phase 03]: A site key do Turnstile e inlinada no bundle no BUILD (comportamento padrao do Next): trocar a chave no painel da Cloudflare depois do build nao atualiza o widget do front - o build tem que ser refeito. Registrado como threat flag para a Phase 6 — risco operacional de deploy, nao de codigo: a rotacao de chave sem rebuild quebraria o login em producao
+- [Phase 03]: O smoke test do Siteverify e opt-in por env (TURNSTILE_LIVE=1) e importa apenas app.services.turnstile - sem app, sem banco, sem estado global — T-03-23: prova de integracao real de terceiro sem consumir cota da Cloudflare na suite do dia a dia; com a env var os 3 casos ficam verdes contra a API real, sem ela o arquivo inteiro e skipped
+- [Phase 03]: A suite nunca herda o .env local do dev: o conftest fixa TURNSTILE_SECRET_KEY='' e TURNSTILE_SITE_KEY='' — o teste do /health do 03-02 afirmava site_key_configured is False, ou seja, um valor dependente da maquina; o harness ja fixava DATABASE_URL/ADMIN_PASSWORD_HASH/JWT_SECRET pelo mesmo motivo
+- [Phase 03]: O binding de action do Turnstile NAO foi corrigido automaticamente: os segredos publicos de teste da Cloudflare nao devolvem o campo action, entao login e reveal devolvem 403 em dev — T-03-03/T-03-16 sao disposicoes mitigate do portao de anti-spam e o proprio plano 03-05 manda reportar o sintoma exato sem consertar nada sem o veredito do usuario
 
 ### Pending Todos
 
@@ -106,6 +109,7 @@ None yet.
 
 - Phase 2/3/6 flagged for possible `/gsd-research-phase` (modelo Groq vivo, strict outputs, TPM; Siteverify; scheduler externo/Neon CU-hour/Render-Railway free-tier).
 - LGPD exige revisão por advogado brasileiro antes do lançamento (tarefa humana, não de código).
+- Turnstile: os segredos publicos de teste da Cloudflare (1x/2x/3x) nao devolvem o campo 'action' na resposta do Siteverify - com eles o login (expected_action='login') e o reveal (expected_action='reveal') devolvem 403 'Verificacao anti-bot falhou - tente novamente', travando o checkpoint de browser da task 3 do plano 03-05. Sintoma medido contra o backend no ar (403, e nao 401 'Senha invalida', o que prova que a chamada real a Cloudflare acontece). Correcao proposta (exigir action so quando a resposta tiver action, ou um flag enforce_action desligado quando turnstile_mode == 'test') aguardando o veredito do usuario - nenhum codigo de producao foi alterado.
 
 ## Deferred Items
 
@@ -117,6 +121,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-22T01:27:58.693Z
-Stopped at: Phase 03 plan 03-04 complete (2/2 tasks, 7 new tests) - next: 03-05 (smoke live + checkpoint de browser)
+Last session: 2026-10-22T01:59:48.666Z
+Stopped at: Phase 03 plan 03-05: tasks 1-2 concluidas (2/3) - pausado no checkpoint human-verify (task 3: login real no browser); achado: segredos de teste da Cloudflare nao devolvem 'action' -> 403 no login
 Resume file: .planning/phases/03-contact-reveal-anti-spam/03-05-PLAN.md
