@@ -82,6 +82,24 @@ class Settings(BaseSettings):
         origins = self.CORS_ORIGINS.split(",")
         return [origin.strip() for origin in origins]
 
+    @property
+    def turnstile_mode(self) -> str:
+        """``live`` | ``test`` | ``disabled`` — never reveals the secret.
+
+        ``test`` means the effective secret is one of Cloudflare's public test
+        keys (the always-pass one used in dev and CI); ``live`` means a real
+        secret is in use; ``disabled`` means there is no secret at all.
+
+        The classification lives next to the fail-closed validator so the
+        test-key pattern has exactly one home in the codebase.
+        """
+        secret = self.effective_turnstile_secret
+        if not secret:
+            return "disabled"
+        if _TURNSTILE_TEST_KEY_RE.match(secret):
+            return "test"
+        return "live"
+
 
 @lru_cache
 def get_settings() -> Settings:

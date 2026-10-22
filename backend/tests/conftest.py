@@ -12,6 +12,15 @@ Design:
   and the ``jobs`` table is cleared at the start of the transaction — tests are
   isolated from each other and from any pre-existing rows without ever
   committing.
+- Phase 3: the Turnstile verifier is replaced by ``FakeTurnstileVerifier``
+  through ``dependency_overrides`` and the in-memory limiter store is reset
+  around every test, so the suite stays 100% offline and no bucket leaks from
+  one test into the next (T-03-03, T-03-08).
+
+The Turnstile env vars are deliberately **not** set here: in the test run
+``ENV`` is ``dev`` and the dev default of the secret is Cloudflare's public
+always-pass key. Defining the env vars would take precedence over that default
+and break the fail-closed tests of the plan 03-01.
 """
 
 import os
@@ -56,9 +65,12 @@ if TEST_DATABASE_URL:
 # App imports (safe now that the settings env is fixed).
 # ---------------------------------------------------------------------------
 from app.core.config import get_settings  # noqa: E402
+from app.core.ratelimit import limiter  # noqa: E402
 from app.db.session import get_session  # noqa: E402
+from app.deps import get_turnstile_verifier  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models.job import Job, JobStatus  # noqa: E402
+from app.services.turnstile import TurnstileResult  # noqa: E402
 
 from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
@@ -76,6 +88,67 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(
                 pytest.mark.skip(reason="TEST_DATABASE_URL/DATABASE_URL not set")
             )
+
+
+class FakeTurnstileVerifier:
+    """Stand-in for the real Cloudflare verifier — the suite never hits the API.
+
+    ``outcome`` drives the answer:
+
+    - ``"success"`` — the token is accepted;
+    - ``"failure"`` — the token is refused (invalid/expired);
+    - ``"timeout-or-duplicate"`` — the token was already consumed;
+    - ``"error"`` — the verification itself failed (our side or Cloudflare's).
+
+    ``action`` is the action the token was minted for. ``None`` means the stub
+    does not check the binding at all; any other value makes a token minted
+    for a different flow fail with ``action-mismatch`` (T-03-03).
+    """
+
+    _DEFAULT_ERROR_CODES = {
+        "failure": ["invalid-input-response"],
+        "timeout-or-duplicate": ["timeout-or-duplicate"],
+        "error": ["internal-error"],
+    }
+
+    def __init__(
+        self,
+        outcome: str = "success",
+        error_codes: list[str] | None = None,
+        action: str | None = None,
+    ) -> None:
+        self.outcome = outcome
+        self.error_codes = list(error_codes or [])
+        self.action = action
+        self.calls: list[tuple[str, str | None]] = []
+
+    async def verify(
+        self,
+        token: str,
+        remoteip: str | None = None,
+        *,
+        expected_action: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> TurnstileResult:
+        self.calls.append((token, remoteip))
+
+        if self.outcome == "success":
+            if (
+                self.action is not None
+                and expected_action is not None
+                and self.action != expected_action
+            ):
+                return TurnstileResult(
+                    success=False,
+                    error_codes=["action-mismatch"],
+                    action=self.action,
+                )
+            return TurnstileResult(success=True, action=self.action)
+
+        codes = list(self.error_codes) or list(
+            self._DEFAULT_ERROR_CODES.get(self.outcome, ["internal-error"])
+        )
+        return TurnstileResult(success=False, error_codes=codes)
 
 
 @pytest.fixture
@@ -117,18 +190,53 @@ async def db_session(engine):
 
 
 @pytest.fixture
-async def client(db_session):
-    """An ``httpx.AsyncClient`` over the ASGI app, hitting the test DB."""
-    app = create_app()
+async def app(db_session):
+    """The FastAPI app under test, with every external dependency stubbed.
+
+    The session is redirected to the test database and the Turnstile verifier
+    is replaced by :class:`FakeTurnstileVerifier`, so the whole suite runs
+    **offline** — no request ever reaches Cloudflare (T-03-03).
+    """
+    application = create_app()
 
     async def _override_get_session():
         yield db_session
 
-    app.dependency_overrides[get_session] = _override_get_session
+    async def _override_get_turnstile_verifier():
+        return fake
+
+    fake = FakeTurnstileVerifier()
+    application.dependency_overrides[get_session] = _override_get_session
+    application.dependency_overrides[get_turnstile_verifier] = (
+        _override_get_turnstile_verifier
+    )
+    application.state.fake_turnstile = fake
+
+    yield application
+
+    application.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def client(app):
+    """An ``httpx.AsyncClient`` over the ASGI app, hitting the test DB."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac
-    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def fake_turnstile(app) -> FakeTurnstileVerifier:
+    """The stub installed in place of the real Cloudflare verifier."""
+    return app.state.fake_turnstile
+
+
+@pytest.fixture(autouse=True)
+async def reset_rate_limiter():
+    """The limiter store is global — never let a bucket leak across tests."""
+    limiter.reset()
+    yield
+    limiter.reset()
 
 
 @pytest.fixture
