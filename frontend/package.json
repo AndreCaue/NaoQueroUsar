@@ -10,12 +10,15 @@
   },
   "dependencies": {
     "next": "15.5.3",
+    "next-turnstile": "1.0.7",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
   "devDependencies": {
     "@types/node": "22.18.8",
     "@types/react": "19.1.13",
+    "eslint": "8.57.1",
+    "eslint-config-next": "15.5.3",
     "typescript": "5.9.2"
   }
 }
