@@ -17,10 +17,14 @@ Design:
   around every test, so the suite stays 100% offline and no bucket leaks from
   one test into the next (T-03-03, T-03-08).
 
-The Turnstile env vars are deliberately **not** set here: in the test run
-``ENV`` is ``dev`` and the dev default of the secret is Cloudflare's public
-always-pass key. Defining the env vars would take precedence over that default
-and break the fail-closed tests of the plan 03-01.
+The Turnstile **keys** are pinned to empty strings: the local ``.env`` carries
+the developer's own Cloudflare keys (plan 03-05 puts the public testing keys
+there) and a suite that depends on the machine it runs on breaks on someone
+else's laptop. An empty secret falls back to Cloudflare's public always-pass
+key (dev) and an empty site key means "no site key configured" — exactly the
+state the ``/health`` test of plan 03-02 asserts. The fail-closed tests of
+plan 03-01 build their own ``Settings`` with explicit init kwargs, so they
+are unaffected by these two variables.
 """
 
 import os
@@ -58,6 +62,10 @@ os.environ["ADMIN_PASSWORD_HASH"] = bcrypt.hashpw(
     TEST_ADMIN_PASSWORD.encode("utf-8"), bcrypt.gensalt()
 ).decode("utf-8")
 os.environ["JWT_SECRET"] = "test-secret-key-for-pytest-only-0123456789abcdef"
+# The Turnstile keys are pinned to empty so the suite never inherits the
+# developer's local ``.env`` (which carries the Cloudflare testing keys).
+os.environ["TURNSTILE_SECRET_KEY"] = ""
+os.environ["TURNSTILE_SITE_KEY"] = ""
 if TEST_DATABASE_URL:
     os.environ["TEST_DATABASE_URL"] = TEST_DATABASE_URL
 
