@@ -52,7 +52,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **SECR-01**: Cloudflare Turnstile é validado no servidor antes de revelar o contato
 - [x] **SECR-02**: Endpoint de revelação de contato tem rate limiting por IP
-- [ ] **SECR-03**: Turnstile também protege o login do admin contra credential stuffing
+- [x] **SECR-03**: Turnstile também protege o login do admin contra credential stuffing
 
 ### Ciclo de Vida
 
@@ -127,7 +127,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXTR-09 | Phase 2 | Pending |
 | SECR-01 | Phase 3 | Complete |
 | SECR-02 | Phase 3 | Complete |
-| SECR-03 | Phase 3 | Pending |
+| SECR-03 | Phase 3 | Complete |
 | PUBL-05 | Phase 3 | Complete |
 | PUBL-01 | Phase 4 | Pending |
 | PUBL-02 | Phase 4 | Pending |

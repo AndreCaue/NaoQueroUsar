@@ -113,7 +113,7 @@ Plans:
 
 **Wave 4** *(blocked on 03-02, 03-03)*
 
-- [ ] 03-04-PLAN.md — Login do master protegido: `cf_token` no `LoginRequest`, ordem rate limit → Siteverify (403) → bcrypt (401) → JWT (200), `loginAdmin(password, cfToken)` e widget `next-turnstile` `interaction-only` no admin (backend + front no mesmo plano)
+- [x] 03-04-PLAN.md — Login do master protegido: `cf_token` no `LoginRequest`, ordem rate limit → Siteverify (403) → bcrypt (401) → JWT (200), `loginAdmin(password, cfToken)` e widget `next-turnstile` `interaction-only` no admin (backend + front no mesmo plano)
 
 **Wave 5** *(blocked on 03-03, 03-04)*
 
@@ -179,7 +179,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
-| 3. Contact Reveal & Anti-Spam | 3/5 | In Progress|  |
+| 3. Contact Reveal & Anti-Spam | 4/5 | In Progress|  |
 | 4. Public Board Frontend | 0/TBD | Not started | - |
 | 5. Admin Review Area | 0/TBD | Not started | - |
 | 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |

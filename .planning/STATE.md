@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Phase 03 plan 03-03 complete (2/2 tasks, 11 new tests) - next: 03-04 (login do admin com Turnstile)"
-last_updated: "2026-10-22T00:53:13.145Z"
+stopped_at: "Phase 03 plan 03-04 complete (2/2 tasks, 7 new tests) - next: 03-05 (smoke live + checkpoint de browser)"
+last_updated: "2026-10-22T01:27:58.710Z"
 last_activity: 2026-10-22
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 33
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 ## Current Position
 
 Phase: 03 (contact-reveal-anti-spam) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-10-22
 
-Progress: [█████████░] 85%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [█████████░] 85%
 | Phase 03 P01 | 8min | 2 tasks | 6 files |
 | Phase 03 P02 | 93min | 3 tasks | 10 files |
 | Phase 03 P03 | 17min | 2 tasks | 5 files |
+| Phase 03 P04 | 26min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [Phase 03]: O contato do reveal volta cru (E.164) e a resposta carrega o job_id: e o que permite ao Phase 4 montar wa.me/mailto e manter o contato em memoria do cliente por vaga (D-04), sem pedir token novo ao reabrir a mesma vaga. O hostname do Siteverify NAO e checado (deliberado): o binding por action ja impede reuso de token entre fluxos
 - [Phase 03]: SECR-01, SECR-02 e PUBL-05 marcados como CONCLUIDOS no plano 03-03 (diferente dos planos 03-01/03-02, que mantiveram desmarcado): com a rota de reveal no lugar, a validacao server-side do Turnstile, o rate limit por IP de verdade e a ausencia de contato no payload publico passam a valer - o caso 9 da suite exige que OUTRA vaga do mesmo IP tambem receba 429, o que prova a granularidade por IP
 - [Phase 03]: A suite do backend precisa rodar a partir de backend/ (cd backend; .venv\Scripts\python.exe -m pytest -q): da raiz do repo o pytest nao le backend/pyproject.toml, perde asyncio_mode=auto e a suite inteira falha com 157 errors. Nenhum arquivo do repo foi alterado para isso
+- [Phase 03]: SECR-03 materializado no login do admin (plan 03-04): a rota POST /api/v1/auth/login aplica rate limit -> Siteverify(expected_action='login') -> bcrypt -> JWT - a senha NUNCA e comparada sem um token Turnstile valido na mao (D-17). Token recusado ou verificacao indisponivel = 403 com copy propria (nunca 'Senha invalida'), e o front monta o widget interaction-only com action='login' e reseta por remount (D-16/D-19) — a prova da ordem e o status code: token recusado + senha errada da 403 (nao 401), coberto por test_login_turnstile_failure_does_not_reach_password_check
+- [Phase 03]: O reset do widget do Turnstile e por REMOUNT (key nova do React), nao por API: o next-turnstile@1.0.7 nao tem resetKey nem ref exposto - o useEffect de cleanup do pacote chama window.turnstile.remove(widgetId) e o remount renderiza um widget novo (D-19/T-03-18) — o token consumido pelo backend nunca pode ser reenviado: um login falho remonta o widget e a proxima tentativa usa um token novo
+- [Phase 03]: A site key do Turnstile e inlinada no bundle no BUILD (comportamento padrao do Next): trocar a chave no painel da Cloudflare depois do build nao atualiza o widget do front - o build tem que ser refeito. Registrado como threat flag para a Phase 6 — risco operacional de deploy, nao de codigo: a rotacao de chave sem rebuild quebraria o login em producao
 
 ### Pending Todos
 
@@ -113,6 +117,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-22T00:53:13.127Z
-Stopped at: Phase 03 plan 03-03 complete (2/2 tasks, 11 new tests) - next: 03-04 (login do admin com Turnstile)
-Resume file: .planning/phases/03-contact-reveal-anti-spam/03-04-PLAN.md
+Last session: 2026-10-22T01:27:58.693Z
+Stopped at: Phase 03 plan 03-04 complete (2/2 tasks, 7 new tests) - next: 03-05 (smoke live + checkpoint de browser)
+Resume file: .planning/phases/03-contact-reveal-anti-spam/03-05-PLAN.md
