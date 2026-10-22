@@ -33,16 +33,16 @@ from app.main import create_app
 # The limited route is declared ONCE at module level: the slowapi decorator
 # *appends* the limit to a per-endpoint list, so re-declaring it per test
 # would make a single request consume several hits.
-test_app = create_app()
+limited_app = create_app()
 
 
-@test_app.get("/limited")
+@limited_app.get("/limited")
 @limiter.limit("2/minute")
 async def limited(request: Request):
     return {"ok": True}
 
 
-@test_app.get("/dynamic")
+@limited_app.get("/dynamic")
 @limiter.limit(reveal_limit)
 async def dynamic(request: Request):
     return {"ok": True}
@@ -58,7 +58,7 @@ def _reset_limiter_store():
 
 @pytest.fixture
 async def http_client():
-    transport = ASGITransport(app=test_app)
+    transport = ASGITransport(app=limited_app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac
 

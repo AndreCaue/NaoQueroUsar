@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
+from app.core.ratelimit import RateLimitExceeded, limiter, rate_limit_exceeded_handler
 from app.db.session import engine
 
 settings = get_settings()
@@ -29,6 +30,12 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
         allow_credentials=False,
     )
+
+    # Rate limiting: the limiter instance lives on the app state and the 429
+    # answer is ours — slowapi's default handler replies in English with a
+    # body the frontend cannot read.
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
     app.include_router(api_router, prefix="/api/v1")
 

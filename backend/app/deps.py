@@ -5,8 +5,15 @@ import jwt
 from app.core.config import get_settings
 from app.core.security import decode_access_token
 from app.db.session import get_session
+from app.services.turnstile import TurnstileVerifier
 
-__all__ = ["get_session", "get_settings", "require_admin", "bearer_scheme"]
+__all__ = [
+    "get_session",
+    "get_settings",
+    "require_admin",
+    "bearer_scheme",
+    "get_turnstile_verifier",
+]
 
 # auto_error=False so a missing header reaches our handler and yields a
 # controlled 401 with a WWW-Authenticate challenge (T-03-03).
@@ -42,3 +49,17 @@ async def require_admin(
         raise _unauthorized()
 
     return claims
+
+
+async def get_turnstile_verifier() -> TurnstileVerifier:
+    """Build the Turnstile verifier used by the protected routes.
+
+    It is a dependency (and not a module-level singleton) so the tests can
+    replace it through ``app.dependency_overrides`` and run completely
+    offline — no request ever reaches Cloudflare from the test suite.
+    """
+    settings = get_settings()
+    return TurnstileVerifier(
+        secret=settings.effective_turnstile_secret,
+        timeout_seconds=settings.TURNSTILE_TIMEOUT_SECONDS,
+    )
