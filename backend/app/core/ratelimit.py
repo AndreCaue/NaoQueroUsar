@@ -12,6 +12,13 @@ Three decisions shape this module:
 - **The bucket key is the resolved IP**, never slowapi's ``get_remote_address``
   default, which behind a proxy would put every visitor in the same bucket
   (D-10).
+- **The bucket is per route, not per URL.** slowapi's default ``key_style``
+  (``"url"``) scopes the bucket by the *request path* — and the reveal route
+  carries the job id in the path, so every job would get its own bucket and a
+  scraper could walk through the ids without ever hitting the limit (and
+  without ever paying for the Cloudflare verification it triggers). With
+  ``key_style="endpoint"`` the bucket is ``(IP, route)``: one window per
+  visitor per route, which is what D-05 and D-08 describe.
 - **The 429 answer is ours.** slowapi's default handler replies
   ``{"error": "Rate limit exceeded: ..."}`` in English, while the frontend
   reads ``body.detail``. The custom handler answers ``{"detail": ...}`` in
@@ -72,11 +79,16 @@ class SafeLimiter(Limiter):
 
 # One instance per process. The storage is in-memory (no Redis, no table, no
 # migration) and the window is one minute — the format of the env knobs.
+#
+# ``key_style="endpoint"`` scopes the bucket by the endpoint instead of by
+# the request path: the reveal route has the job id in its path, and a
+# per-path bucket would give every job its own window (D-05/D-08).
 limiter = SafeLimiter(
     key_func=resolve_client_ip,
     default_limits=[],
     headers_enabled=True,
     storage_uri="memory://",
+    key_style="endpoint",
 )
 
 

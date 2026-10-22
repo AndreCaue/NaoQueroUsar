@@ -145,6 +145,16 @@ def test_limiter_is_keyed_by_the_resolved_client_ip():
     assert limiter._key_func is resolve_client_ip
 
 
+def test_limiter_buckets_by_route_and_not_by_url():
+    """The bucket must not be scoped by the request path (D-05/D-08).
+
+    The reveal route carries the job id in its path. With slowapi's default
+    ``key_style="url"`` every job would get its own bucket and a scraper
+    could walk through the ids without ever hitting the limit.
+    """
+    assert limiter._key_style == "endpoint"
+
+
 # ---------------------------------------------------------------------------
 # The limit is configuration, read per request — not frozen at import time
 # ---------------------------------------------------------------------------
