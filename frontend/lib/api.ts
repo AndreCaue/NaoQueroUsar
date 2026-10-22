@@ -18,11 +18,11 @@ export interface ExtractSummary {
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-export async function loginAdmin(password: string): Promise<string> {
+export async function loginAdmin(password: string, cfToken: string): Promise<string> {
   const res = await fetch(`${API}/api/v1/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ password, cf_token: cfToken }),
   });
 
   if (!res.ok) {

@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Turnstile } from "next-turnstile";
 import { loginAdmin, extractJobs, type ExtractSummary } from "@/lib/api";
 import "./globals-admin.css";
 
 const TOKEN_KEY = "nqu_admin_token";
+
+// The site key is a public value (the secret never reaches the browser).
+// Outside production we fall back to Cloudflare's public always-pass test key
+// so local dev works without a Cloudflare account. In production the env var
+// is mandatory: without it the widget does not render and the login stays
+// blocked — fail closed (D-15).
+const TURNSTILE_SITE_KEY =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
+  (process.env.NODE_ENV === "production" ? "" : "1x00000000000000000000AA");
 
 export default function ExtractForm() {
   const [token, setToken] = useState<string | null>(null);
@@ -13,6 +23,8 @@ export default function ExtractForm() {
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<ExtractSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cfToken, setCfToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
 
   useEffect(() => {
     try {
@@ -25,12 +37,21 @@ export default function ExtractForm() {
     }
   }, []);
 
+  // next-turnstile has no reset API: the widget is remounted with a new React
+  // key, which removes the old widget and renders a fresh one — the consumed
+  // token is never sent twice (D-19/T-03-18).
+  const resetTurnstile = () => {
+    setCfToken(null);
+    setTurnstileKey((k) => k + 1);
+  };
+
   const handleLogin = async () => {
+    if (!cfToken) return;
     setError(null);
     setSummary(null);
     setLoading(true);
     try {
-      const t = await loginAdmin(password);
+      const t = await loginAdmin(password, cfToken);
       setToken(t);
       try {
         window.sessionStorage.setItem(TOKEN_KEY, t);
@@ -40,6 +61,9 @@ export default function ExtractForm() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro ao autenticar";
       setError(msg);
+      // The token was consumed by the backend (or refused) — a new one is
+      // needed for the next attempt.
+      resetTurnstile();
     } finally {
       setLoading(false);
     }
@@ -67,7 +91,7 @@ export default function ExtractForm() {
     setError(null);
   };
 
-  const isLoginDisabled = loading || !password.trim();
+  const isLoginDisabled = loading || !password.trim() || !cfToken;
   const isSubmitDisabled = loading || !token || !text.trim();
 
   return (
@@ -85,9 +109,31 @@ export default function ExtractForm() {
                 disabled={loading}
               />
             </label>
+            {TURNSTILE_SITE_KEY ? (
+              <div className="admin-turnstile">
+                <Turnstile
+                  key={turnstileKey}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  action="login"
+                  theme="dark"
+                  appearance="interaction-only"
+                  size="flexible"
+                  execution="render"
+                  onVerify={(token) => setCfToken(token)}
+                  onExpire={() => setCfToken(null)}
+                  onError={() => setCfToken(null)}
+                />
+              </div>
+            ) : (
+              <div className="admin-error">
+                Configuração ausente: defina NEXT_PUBLIC_TURNSTILE_SITE_KEY
+              </div>
+            )}
             <button className="admin-btn" onClick={handleLogin} disabled={isLoginDisabled}>
               {loading ? "Entrando..." : "Entrar"}
             </button>
+
+            {error && <div className="admin-error">{error}</div>}
           </div>
         )}
 

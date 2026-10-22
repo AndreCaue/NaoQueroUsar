@@ -57,6 +57,14 @@
   margin-top: 1rem;
 }
 
+/* The Cloudflare widget renders an iframe of its own: never apply
+   transform/scale to it — the iframe breaks with any CSS transform. */
+.admin-turnstile {
+  margin-top: 1rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
 label {
   display: block;
   margin-top: 1rem;
