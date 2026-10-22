@@ -105,7 +105,7 @@ Plans:
 
 **Wave 2** *(blocked on 03-01)*
 
-- [ ] 03-02-PLAN.md — Cliente Siteverify (httpx) fail-closed com binding de `action`, seam `get_turnstile_verifier`, limiter slowapi in-memory com handler 429 pt-BR, status do Turnstile no `/health` e fixtures de teste offline
+- [x] 03-02-PLAN.md — Cliente Siteverify (httpx) fail-closed com binding de `action`, seam `get_turnstile_verifier`, limiter slowapi in-memory com handler 429 pt-BR, status do Turnstile no `/health` e fixtures de teste offline
 
 **Wave 3** *(blocked on 03-02)*
 
@@ -179,7 +179,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
-| 3. Contact Reveal & Anti-Spam | 1/5 | In Progress|  |
+| 3. Contact Reveal & Anti-Spam | 2/5 | In Progress|  |
 | 4. Public Board Frontend | 0/TBD | Not started | - |
 | 5. Admin Review Area | 0/TBD | Not started | - |
 | 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |
