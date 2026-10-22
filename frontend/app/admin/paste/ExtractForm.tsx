@@ -116,9 +116,7 @@ export default function ExtractForm() {
                   siteKey={TURNSTILE_SITE_KEY}
                   action="login"
                   theme="dark"
-                  appearance="interaction-only"
-                  size="flexible"
-                  execution="render"
+                  appearance="always"
                   onVerify={(token) => setCfToken(token)}
                   onExpire={() => setCfToken(null)}
                   onError={() => setCfToken(null)}
