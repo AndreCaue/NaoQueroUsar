@@ -117,7 +117,7 @@ Plans:
 
 **Wave 5** *(blocked on 03-03, 03-04)*
 
-- [ ] 03-05-PLAN.md — Prova real: smoke test do Siteverify contra a Cloudflare (segredos `1x`/`2x`/`3x`), regressão completa, varredura de vazamento de segredo e checkpoint do login no browser
+- [x] 03-05-PLAN.md — Prova real: smoke test do Siteverify contra a Cloudflare (segredos `1x`/`2x`/`3x`), regressão completa, varredura de vazamento de segredo e checkpoint do login no browser
 
 **⚠️ HIGH RISK**: Superfície sensível a scraping e momento de payoff — precisa ser server-side desde o início (retrofit seria reescrita). Pode precisar de `/gsd-research-phase` — detalhes do Siteverify (vida útil/single-use do token, `timeout-or-duplicate`, extração de IP via proxy, chaves de teste) e abordagem de rate limiting.
 
