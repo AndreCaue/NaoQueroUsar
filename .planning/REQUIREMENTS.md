@@ -39,7 +39,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PUBL-02**: Card mostra título, início das atividades (expansível), salário (quando houver) e botão "Ver a vaga"
 - [ ] **PUBL-03**: Visitante abre modal de detalhes completo, mobile-friendly
 - [ ] **PUBL-04**: Contato fica oculto por padrão e é revelado pelo botão "Mostrar contato"
-- [ ] **PUBL-05**: Contato é servido por endpoint dedicado e não aparece no payload público da lista
+- [x] **PUBL-05**: Contato é servido por endpoint dedicado e não aparece no payload público da lista
 - [ ] **PUBL-06**: Visitante se candidata via WhatsApp (`wa.me`) e/ou email
 
 ### Busca & Filtros
@@ -50,8 +50,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Anti-spam & Segurança
 
-- [ ] **SECR-01**: Cloudflare Turnstile é validado no servidor antes de revelar o contato
-- [ ] **SECR-02**: Endpoint de revelação de contato tem rate limiting por IP
+- [x] **SECR-01**: Cloudflare Turnstile é validado no servidor antes de revelar o contato
+- [x] **SECR-02**: Endpoint de revelação de contato tem rate limiting por IP
 - [ ] **SECR-03**: Turnstile também protege o login do admin contra credential stuffing
 
 ### Ciclo de Vida
@@ -125,10 +125,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXTR-07 | Phase 2 | Pending |
 | EXTR-08 | Phase 2 | Pending |
 | EXTR-09 | Phase 2 | Pending |
-| SECR-01 | Phase 3 | Pending |
-| SECR-02 | Phase 3 | Pending |
+| SECR-01 | Phase 3 | Complete |
+| SECR-02 | Phase 3 | Complete |
 | SECR-03 | Phase 3 | Pending |
-| PUBL-05 | Phase 3 | Pending |
+| PUBL-05 | Phase 3 | Complete |
 | PUBL-01 | Phase 4 | Pending |
 | PUBL-02 | Phase 4 | Pending |
 | PUBL-03 | Phase 4 | Pending |

@@ -109,7 +109,7 @@ Plans:
 
 **Wave 3** *(blocked on 03-02)*
 
-- [ ] 03-03-PLAN.md — Endpoint único de reveal `POST /api/v1/public/jobs/{id}/reveal-contact`: rate limit → 404 → Siteverify (403) → 200, com `RevealRequest`/`ContactRevealResponse` e 10 casos de teste
+- [x] 03-03-PLAN.md — Endpoint único de reveal `POST /api/v1/public/jobs/{id}/reveal-contact`: rate limit → 404 → Siteverify (403) → 200, com `RevealRequest`/`ContactRevealResponse` e 10 casos de teste
 
 **Wave 4** *(blocked on 03-02, 03-03)*
 
@@ -179,7 +179,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
-| 3. Contact Reveal & Anti-Spam | 2/5 | In Progress|  |
+| 3. Contact Reveal & Anti-Spam | 3/5 | In Progress|  |
 | 4. Public Board Frontend | 0/TBD | Not started | - |
 | 5. Admin Review Area | 0/TBD | Not started | - |
 | 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |

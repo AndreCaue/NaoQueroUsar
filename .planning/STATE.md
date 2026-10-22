@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Phase 03 plan 03-02 complete (3/3 tasks, 37 new tests) - next: 03-03 (endpoint de reveal)"
-last_updated: "2026-10-22T00:20:24.675Z"
+stopped_at: "Phase 03 plan 03-03 complete (2/2 tasks, 11 new tests) - next: 03-04 (login do admin com Turnstile)"
+last_updated: "2026-10-22T00:53:13.145Z"
 last_activity: 2026-10-22
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 13
-  completed_plans: 10
+  completed_plans: 11
   percent: 33
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 ## Current Position
 
 Phase: 03 (contact-reveal-anti-spam) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-10-22
 
-Progress: [████████░░] 77%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [████████░░] 77%
 | Phase 01 P04 | ~6min | 2 tasks | 11 files |
 | Phase 03 P01 | 8min | 2 tasks | 6 files |
 | Phase 03 P02 | 93min | 3 tasks | 10 files |
+| Phase 03 P03 | 17min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,11 @@ Recent decisions affecting current work:
 - [Phase 03]: SafeLimiter (subclasse de Limiter) neutraliza o _inject_headers do slowapi quando a rota nao declara 'response: Response' — o slowapi 0.1.10 com headers_enabled=True levanta Exception 500 em vez de 429 nesse caso; o Retry-After passou a ser emitido pelo handler pt-BR (T-03-07)
 - [Phase 03]: o mode do Turnstile no /health deriva do segredo EFETIVO (live/test/disabled) e a site key vira o booleano site_key_configured — o texto do plano dizia 'sem site key o modo e disabled', mas o modo e sobre o segredo e o proprio caso de teste do plano exige mode=='test' em dev (T-03-06)
 - [Phase 03]: SECR-01 e SECR-02 seguem como contribuidos, nao concluidos — este plano entrega a mecanica (verifier fail-closed + limiter por IP), mas o requisito so vale quando o endpoint de reveal do 03-03 consumir verifier e limiter - marcar agora daria sinal falso numa fase HIGH RISK (mesmo tratamento do 03-01)
+- [Phase 03]: D-03/D-13 materializados no endpoint de reveal (plan 03-03): a rota POST /api/v1/public/jobs/{id}/reveal-contact aplica rate limit -> 404 (vaga) -> Siteverify (403) -> 200; a busca da vaga vem ANTES da chamada a Cloudflare e toda falha do Siteverify e 403 (nunca 200 degradado), com as duas copies pt-BR vindas de turnstile_error_detail()
+- [Phase 03]: O bucket do rate limit do slowapi escopava pela URL (key_style default), e a rota de reveal carrega o id da vaga no path: cada vaga tinha a propria janela e um scraper girava ids sem nunca bater no limite nem na cota da Cloudflare (T-03-12). Fix no plano 03-03: key_style='endpoint' -> bucket (IP, rota), com guarda de regressao em test_ratelimit.py
+- [Phase 03]: O contato do reveal volta cru (E.164) e a resposta carrega o job_id: e o que permite ao Phase 4 montar wa.me/mailto e manter o contato em memoria do cliente por vaga (D-04), sem pedir token novo ao reabrir a mesma vaga. O hostname do Siteverify NAO e checado (deliberado): o binding por action ja impede reuso de token entre fluxos
+- [Phase 03]: SECR-01, SECR-02 e PUBL-05 marcados como CONCLUIDOS no plano 03-03 (diferente dos planos 03-01/03-02, que mantiveram desmarcado): com a rota de reveal no lugar, a validacao server-side do Turnstile, o rate limit por IP de verdade e a ausencia de contato no payload publico passam a valer - o caso 9 da suite exige que OUTRA vaga do mesmo IP tambem receba 429, o que prova a granularidade por IP
+- [Phase 03]: A suite do backend precisa rodar a partir de backend/ (cd backend; .venv\Scripts\python.exe -m pytest -q): da raiz do repo o pytest nao le backend/pyproject.toml, perde asyncio_mode=auto e a suite inteira falha com 157 errors. Nenhum arquivo do repo foi alterado para isso
 
 ### Pending Todos
 
@@ -107,6 +113,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-22T00:20:24.651Z
-Stopped at: Phase 03 plan 03-02 complete (3/3 tasks, 37 new tests) - next: 03-03 (endpoint de reveal)
-Resume file: .planning/phases/03-contact-reveal-anti-spam/03-03-PLAN.md
+Last session: 2026-10-22T00:53:13.127Z
+Stopped at: Phase 03 plan 03-03 complete (2/2 tasks, 11 new tests) - next: 03-04 (login do admin com Turnstile)
+Resume file: .planning/phases/03-contact-reveal-anti-spam/03-04-PLAN.md
