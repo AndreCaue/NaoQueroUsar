@@ -57,9 +57,15 @@ async def get_turnstile_verifier() -> TurnstileVerifier:
     It is a dependency (and not a module-level singleton) so the tests can
     replace it through ``app.dependency_overrides`` and run completely
     offline — no request ever reaches Cloudflare from the test suite.
+
+    Action binding is strictly enforced only in ``live`` mode. Cloudflare's
+    public test keys do not echo the ``action`` in Siteverify responses, so
+    we relax the check in ``test``/``dev`` to keep local/browser verification
+    functional (D-12 already blocks test keys outside dev).
     """
     settings = get_settings()
     return TurnstileVerifier(
         secret=settings.effective_turnstile_secret,
         timeout_seconds=settings.TURNSTILE_TIMEOUT_SECONDS,
+        enforce_action=(settings.turnstile_mode != "test"),
     )

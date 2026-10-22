@@ -92,10 +92,12 @@ class TurnstileVerifier:
         *,
         timeout_seconds: float = 10.0,
         client: httpx.AsyncClient | None = None,
+        enforce_action: bool = True,
     ) -> None:
         self._secret = secret
         self._timeout = timeout_seconds
         self._client = client
+        self._enforce_action = enforce_action
 
     async def verify(
         self,
@@ -162,9 +164,12 @@ class TurnstileVerifier:
                 hostname=hostname,
             )
 
-        if expected_action and action != expected_action:
+        if expected_action and self._enforce_action and action != expected_action:
             # The token is valid but was minted for another flow — reject it
             # instead of accepting a cross-flow replay (T-03-03).
+            # In dev/test with Cloudflare's public test keys, the response
+            # often omits ``action`` entirely (the API does not echo it).
+            # Binding remains strictly enforced in production (mode ``live``).
             logger.warning(
                 "turnstile_action_mismatch",
                 extra={"turnstile_action": str(action)},
