@@ -71,7 +71,12 @@ def _make_result(**overrides: Any) -> ExtractionResult:
 
 
 async def _get_admin_token(client, admin_password: str) -> str:
-    login = await client.post("/api/v1/auth/login", json={"password": admin_password})
+    # The admin login is behind the Turnstile gate (SECR-03) — the token is
+    # stubbed by the ``fake_turnstile`` fixture, so any non-empty value works.
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"password": admin_password, "cf_token": "token-de-teste"},
+    )
     assert login.status_code == 200
     return login.json()["access_token"]
 
