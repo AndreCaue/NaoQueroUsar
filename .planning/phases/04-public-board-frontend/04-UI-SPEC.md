@@ -1,11 +1,12 @@
 ---
 phase: 4
 slug: public-board-frontend
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 design_system: tailwind-v4
 created: 2026-10-22
+reviewed_at: 2026-10-22
 ---
 
 # Phase 04 — UI Design Contract
@@ -459,7 +460,8 @@ Não houve canal interativo nesta execução; cada decisão abaixo tem default s
 | 10 | Grid | **1 / 2 / 3 colunas** (`base`/`sm`/`xl`), sidebar em `lg` | Mobile-first, sem breakpoint inventado |
 | 11 | Datas | **sempre absolutas** `dd/mm/aaaa` em `America/Sao_Paulo`; sem "há X dias" | Elimina divergência de hidratação RSC↔browser |
 | 12 | Doações | link para **`/doacoes`** com página mínima; nunca `#` | Botão morto é pior que uma página "em breve" honesta; PIX real é Phase 6 |
-| 13 | Cache de contato | **memória por aba** (`Map`), sem storage | D-04 (docstring do `ContactRevealResponse` + STATE.md) supersede a regra "never cache" do Phase 03 |
+| 13 | Cache de contato | **memória por aba** (`Map` module-scope), sem storage | D-04 (docstring do `ContactRevealResponse` + STATE.md) supersede a regra "never cache" do Phase 03 |
+| 14 | Preenchimento roxo com texto branco | **`#7c3aed`** (5.70:1) — `#8b5cf6` reprova AA com branco (4.23:1) | UIUX-01 e critério 4 do roadmap exigem AA; `#8b5cf6` continua como marca (borda/hover) e `#a78bfa` como texto/focus ring |
 
 **Pendências herdadas que afetam o Phase 4 (não resolvidas aqui):** o binding `action` do Turnstile falha com os segredos de teste da Cloudflare (STATE.md, bloqueio aberto) — em dev o reveal vai devolver **403** até o veredito do usuário. O contrato de UI já trata esse 403 como estado de erro normal (com `Tentar novamente`), então a UI é implementável e testável independentemente da correção.
 
@@ -467,14 +469,26 @@ Não houve canal interativo nesta execução; cada decisão abaixo tem default s
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: FLAG (2 não-bloqueantes — ver abaixo)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved — 0 bloqueios, 2 FLAGs não-bloqueantes.
+
+### FLAGs de Dimension 2 (aceitos como recomendações de execução)
+
+1. **Focal point do board não declarado.** O `<h1>` *Vagas abertas* + o input de busca são o ponto de entrada; o primeiro card ancora o grid e **todos** os `Ver a vaga` são `outline` para não competir com o CTA de busca.
+2. **CTAs repetidos por card sem nome acessível contextual.** Todo `Ver a vaga` leva `aria-label="Ver a vaga: {title}"`; o toggle `Ver mais`/`Ver menos` leva `aria-controls` apontando para o bloco de `activities`.
+
+### Ajustes de redação incorporados da verificação
+
+- O reveal **não herda** o `appearance` do login: o login implantado usa `appearance="always"` (`ExtractForm.tsx:119`); o reveal declara `interaction-only` por conta própria. Sem colisão — ids distintos (`turnstile-widget` no login, `turnstile-reveal` no reveal).
+- A tabela de copy é intenção de design, não literal para os erros de backend: o texto exibido é `body.detail` verbatim (o backend emite hífen, não travessão).
+- O cache de contato por aba deve ser **module-scope/context**, não um `Map` em `useRef` do host do dialog — um `useRef` morre se o `JobGrid` desmontar (navegação client-side para `/doacoes` e volta).
+- `#7c3aed` entra na tabela de discrição (#14) como terceiro hex roxo, restrito a **preenchimento com texto branco** (AA); `#8b5cf6` segue como marca e `#a78bfa` como texto/focus ring.
 
 ---
 
