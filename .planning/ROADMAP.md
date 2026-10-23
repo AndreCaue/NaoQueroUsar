@@ -134,7 +134,29 @@ Plans:
   4. Tema dark roxo minimalista atende contraste WCAG AA (`#a78bfa` para texto); botão "Doações" amarelo `#facc15` discreto (efeito só no hover) no topo; espaços de ADS reservados (banner topo, sidebar, entre cards).
   5. Candidatura funciona por WhatsApp (`wa.me`) e/ou email a partir do detalhe da vaga.
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Public shell + Tailwind v4 foundation: theme tokens, header/Doações/footer/skip link, `/doacoes`, route group
+- [ ] 04-02-PLAN.md — Backend search & demo seed: migration `0003` (requirements in `search_text`), accent-insensitive `q`, `city`, `sort`, dev-only seed script
+
+**Wave 2** *(blocked on 04-01)*
+
+- [ ] 04-03-PLAN.md — Server-rendered board: cards, pagination, skeleton/error states, native detail dialog
+
+**Wave 3** *(blocked on 04-03)*
+
+- [ ] 04-04-PLAN.md — Reveal & apply: Turnstile-gated contact, tab-scoped cache, WhatsApp/e-mail links, `?vaga=` deep link
+
+**Wave 4** *(blocked on 04-02, 04-03, 04-04)*
+
+- [ ] 04-05-PLAN.md — Search/city/sort controls with URL state, debounce, and filtered/out-of-range states
+
+**Wave 5** *(blocked on 04-01..04-05)*
+
+- [ ] 04-06-PLAN.md — ADS placeholders, focus/motion polish, `verify-ssr.ps1` gate, human verification checkpoint
+
 **UI hint**: yes
 
 ### Phase 5: Admin Review Area
