@@ -67,5 +67,5 @@ async def get_turnstile_verifier() -> TurnstileVerifier:
     return TurnstileVerifier(
         secret=settings.effective_turnstile_secret,
         timeout_seconds=settings.TURNSTILE_TIMEOUT_SECONDS,
-        enforce_action=(settings.turnstile_mode != "test"),
+        enforce_action=(settings.turnstile_mode == "live"),
     )
