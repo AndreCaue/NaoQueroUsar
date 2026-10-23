@@ -1,16 +1,75 @@
 ---
 phase: 04-public-board-frontend
 artifact: plan-check
-verdict: BLOCK
-revision_loop: 2
-blockers: 1
-warnings: 6
-info: 3
-checked_at: 2026-10-22
+verdict: PASS WITH CONCERNS
+revision_loop: 3
+blockers: 0
+warnings: 3
+info: 4
+checked_at: 2026-10-23
 plans_checked: 6
 ---
 
-# Phase 4 — Plan Verification (pre-execution, loop 2)
+# Phase 4 — Plan Verification (pre-execution, loop 3)
+
+**Verdict: PASS WITH CONCERNS** — no blocker remains. `B-04` is resolved end to end, the seven previously-resolved blockers still hold, and the loop-3 edits introduced no new contradiction. Concerns are documentation/verification-robustness items only; execution can proceed.
+
+**Re-check scope:** `B-04` end-to-end; regression spot-check of `B-01/B-02/B-03/B-05/B-07`; loop-3 contradiction scan (`jobs`/`items`, ad placement, `Página N de`, `data-dialog-title`); remaining HIGH+ issues.
+
+## Loop 3 disposition — B-04 RESOLVED
+
+`?vaga=not-a-uuid` now reaches the server-rendered panel on a correct execution:
+
+| Step | Plan | Evidence | Result |
+|------|------|----------|--------|
+| Parse | 04-03 t1 | `normalizeFilters` keeps `vaga` = first value, trimmed, capped 64, **even when not a UUID**; `toApiParams` omits it | raw survives |
+| Fetch boundary | 04-04 t3 | `rawVaga = filters.vaga?.trim() \|\| null`; `vaga = isUuid(rawVaga) ? rawVaga : null`; `malformedVaga = Boolean(rawVaga && !vaga)`; `fetchJob` only inside the `vaga` branch | **no `GET /jobs/{id}` for a malformed id** |
+| Render | 04-04 t3 | panel when `malformedVaga \|\| (vaga && initialJob === null)`; title `Vaga não encontrada`, link `Limpar filtros`, in the RSC tree above `JobGrid` | **present in SSR HTML** |
+| State rewrite | 04-05 t2 | explicit bullet requires keeping the same condition above the grid; toolbar `commit` always sets `page: 1, vaga: null` | preserved |
+| Gate | 04-06 t2 check 6 | malformed asserts `Vaga não encontrada` + `Limpar filtros`; bogus UUID asserts the same panel; valid extracts `data-dialog-title` | executable proof |
+
+- **Valid UUID outside the filter (D-10a):** any valid `vaga` is resolved via `fetchJob` → `GET /api/v1/public/jobs/{id}` regardless of page membership; a found job seeds `useState(initialJob ?? null)`, so the dialog markup is in the SSR HTML.
+- **Valid-but-missing UUID:** `fetchJob` maps `404 → null`, so `(vaga && initialJob === null)` renders the same panel.
+- **Plain `/`:** `filters.vaga` is null → no panel and no `fetchJob`; the board is unaffected.
+
+## Regression spot-check (loop-2 RESOLVED blockers)
+
+| ID | Status | Evidence in current plans |
+|----|--------|--------------------------|
+| B-01 | ✅ still holds | 04-06 check 5 uses `limit=50`; check 5b requests `limit=51` and expects `422`; 04-02 keeps `le=50`. |
+| B-02 | ✅ still holds | 04-06 check 7 asserts `recentes` non-increasing and `antigas` non-decreasing; 04-02 keeps `asc()`/`desc()` plus the `id` tie-break. |
+| B-03 | ✅ still holds | `Colar vagas` exists in `frontend/app/admin/paste/page.tsx:5`; 04-06 check 2 fetches every admin-linked stylesheet and rejects `--color-canvas`; `globals-admin.css` has no token. |
+| B-05 | ✅ still holds | 04-02 seed default **30** (cap 1..60) > `PAGE_SIZE` 24; check 4b asserts the `Página 2 de` prefix; UAT step 7 uses `<N>`. |
+| B-07 | ✅ still holds | 04-01 uses `Push-Location frontend` and `Test-Path`/`node -e` probes inside `frontend/`; no root `npm ls`. |
+
+`B-04`, `B-06`, `B-08` remain resolved as recorded in loop 2.
+
+## Loop-3 contradiction scan
+
+- **`jobs` vs `items`:** ✅ 04-06 interfaces/action use `jobs` and state “there is no `items` prop”; only the API JSON uses `items` (`data.items`, `$jobs.items`).
+- **Ad-slot placement:** ✅ header is **outside/above** the two-column wrapper (full container width, 728px centered); sidebar is in the `lg` right column; inline slots live inside the content column. Loop-2 `I-02` resolved.
+- **`Página N de`:** ✅ `Pagination` copy, 04-06 check 4b prefix, and UAT step 7 prefix agree.
+- **`data-dialog-title`:** ✅ attribute created in 04-03, preserved in 04-04, styled in 04-06 `public.css`, and extracted by check 6.
+
+## Remaining concerns (non-blocking — no HIGH+)
+
+- **W-02 (carried).** 04-03 still lists 13 files (context text says 11). Cohesive vertical slice, below the 15-file blocker line; stay inside the list.
+- **W-03 (carried).** `04-VALIDATION.md` is still `status: draft`, `nyquist_compliant: false`, with a stale per-task map. Regenerate after execution; does not block the gate.
+- **W-07 (new).** 04-05's automated verify does not re-assert `malformedVaga`/the panel; the phase gate check 6 is the safety net. Acceptable for execution, but worth asserting if 04-05 is revised.
+- **Info.** UI-SPEC `W-05` is fixed in the working tree (lines 248/259 annotated for D-06b/D-10a) but is uncommitted.
+- **Info.** 04-06 check 6 references `$deepValid` without showing its assignment; implement it explicitly (`$deepValid = Get-Html "$BaseUrl/?vaga=$id"`). The title regex is element-scoped but still regex-brittle.
+- **Info.** No gate/UAT case exercises a valid UUID **outside** the active filter (`?vaga=<id>&city=remoto`). The implementation resolves unconditionally, so D-10a is covered by construction; an explicit UAT case would strengthen the proof.
+- **I-01 (carried).** `npm install`, `npm run build/lint`, `alembic upgrade head` against Neon, and the live servers remain execution-time preconditions.
+
+## DISPOSITION
+
+**PASS WITH CONCERNS.** Proceed to `/gsd-execute-phase 4`. Re-open the checker only if execution changes the `vaga` parsing/fetch boundary or the phase gate.
+
+---
+
+# Loop 2 report (historical — superseded by Loop 3)
+
+> The `B-04` finding below was fixed in commit `7f9355c` and re-verified above. The rest of this section is preserved as the loop-2 record.
 
 **Goal verified against:** ROADMAP "Qualquer visitante encontra uma vaga e o contato para se candidatar em segundos, no mobile, sem cadastro nem login."
 

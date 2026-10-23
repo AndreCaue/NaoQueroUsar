@@ -245,7 +245,7 @@ O estado do board **mora na URL** (SRCH-01/02/03 + critério 3 do Phase 4). Nada
 | Param | Valores | Default | Comportamento |
 |-------|---------|---------|---------------|
 | `q` | texto livre (1–80 chars) | ausente | Busca server-side; **sem acento e case-insensitive** (responsabilidade do backend, índice pg_trgm do Phase 1) |
-| `city` | `sao-paulo` \| `rio-de-janeiro` \| `belo-horizonte` \| `remoto` | ausente = **Todas** | Slug na URL ↔ label na UI; o front envia a **label** ao backend (`city=São Paulo`) |
+| `city` | `sao-paulo` \| `rio-de-janeiro` \| `belo-horizonte` \| `remoto` | ausente = **Todas** | Slug na URL ↔ label acentuada na UI; o front envia o **slug** ao backend, que o traduz para o valor canônico sem acento (`Sao Paulo`) — ver D-06b |
 | `sort` | `recentes` \| `antigas` | `recentes` | Omitido quando default. `recentes` → `created_at DESC`; `antigas` → `ASC` |
 | `page` | inteiro ≥ 1 | `1` | Omitido quando `1`. Tamanho de página fixo: `limit=24` |
 
@@ -256,7 +256,7 @@ Regras:
 - Slug/valor desconhecido → ignorado, cai no default (não 400, não crash).
 - `q` é trimado; string vazia remove o param. Máx. 80 chars no input (`maxLength`).
 - O backend **precisa** aceitar `q`, `city`, `sort` em `GET /api/v1/public/jobs` (hoje ele tem um comentário de fronteira "search/city/sort are Phase 4"). O planner deve incluir essa extensão no Phase 4, com os **mesmos nomes** (`q`, `city`, `sort`) — sem camada de tradução de nome.
-- O modal **não** busca detalhe: o `JobPublic` da lista já tem tudo. Nenhum `GET /jobs/{id}` no fluxo do board.
+- O modal **não** busca detalhe a partir da lista: o `JobPublic` da lista já tem tudo. **Exceção (D-10a):** quando `?vaga=<uuid>` aponta para uma vaga **fora do filtro atual**, o servidor resolve esse id via `GET /api/v1/public/jobs/{id}` (que é contact-free) para o deep-link funcionar. Nenhum `GET /jobs/{id}` no caminho normal de abrir um card.
 
 ---
 
