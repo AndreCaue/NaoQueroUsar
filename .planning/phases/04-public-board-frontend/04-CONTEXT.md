@@ -38,7 +38,7 @@ O visitante encontra uma vaga e o contato em segundos, no celular, sem cadastro 
 - **D-06:** `sort` aceita `recentes` (default, `created_at DESC`) e `antigas` (`created_at ASC`), cobrindo SRCH-03. `page` mantém offset; `limit=24` (dentro do `le=50` atual). Filtro de validade (`status='published' AND expires_at > now()`) permanece aplicado em itens **e** no `total`.
 - **D-06a (correção de estabilidade):** ordenar **apenas** por `created_at` é não-determinístico — linhas inseridas na mesma transação compartilham `now()` e podem duplicar/sumir entre páginas. Adicionar `id` como desempate (`created_at DESC, id DESC` / `created_at ASC, id ASC`).
 - **D-06b (labels de cidade):** o front usa um mapa `slug → { label, canonical }` com labels **acentuados** (`São Paulo`, `Rio de Janeiro`, `Belo Horizonte`, `Remoto`) e `canonical` igual ao valor sem acento do banco (`Sao Paulo`, …). A API aceita **slug** em `city` e traduz para o canonical; nunca compara slug direto com a coluna.
-- **D-06c (placeholder da busca):** como `q` não cobre cidade (D-03), o placeholder é "Buscar por cargo, empresa ou palavra-chave" — **não** prometer cidade, que tem chips próprios.
+- **D-06c (placeholder da busca):** como `q` não cobre cidade (D-03), o placeholder é "Busque por cargo, empresa ou palavra-chave" — **não** prometer cidade, que tem chips próprios.
 
 ### Renderização, cache e URL
 - **D-07:** O board é **Server Component**. A lista é buscada no servidor a partir de `searchParams` e o HTML inicial já contém as vagas (SEO). `q/city/sort/page` disparam re-render no servidor — sem spinner de primeira carga.

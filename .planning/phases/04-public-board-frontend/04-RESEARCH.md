@@ -592,21 +592,20 @@ if not args.yes:
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED 2026-10-22)
 
-1. **Should `q` also match `city`?**
-   - What we know: UI-SPEC's search placeholder is `Busque por cargo, empresa ou cidade`; D-03 (locked) restricts `q` to title+company+activities+requirements; city already has its own chip filter.
-   - What's unclear: whether the placeholder is aspirational copy or a promise about `q`.
-   - Recommendation: **keep D-03** and change the placeholder to `Busque por cargo, empresa ou requisito` (or similar). Including `city` in `search_text` would contradict a locked decision and make `q`+`city` produce surprising narrow-then-broad results. Flag to the user; do not silently add `city` to the migration.
+1. **Should `q` also match `city`?** — **RESOLVED: no.**
+   - User decision: keep D-03 (`q` = title + company + activities + requirements) and fix the copy instead.
+   - Final placeholder string: `Busque por cargo, empresa ou palavra-chave` (already applied to `04-UI-SPEC.md` and recorded as D-06c). City keeps its own chip filter.
 
-2. **Accented or unaccented city labels in the chips?**
-   - What we know: `ALLOWED_CITIES` is unaccented (`extractor.py:56`); UI-SPEC lists chips as `Sao Paulo · Rio de Janeiro · Belo Horizonte · Remoto` and has the front send `city=Sao Paulo`; CONTEXT line 127 says the UI is responsible for showing accented labels.
-   - What's unclear: which artifact wins for the visible string.
-   - Recommendation: `lib/cities.ts` maps `slug → { label: "São Paulo", canonical: "Sao Paulo" }`; chips show accented labels (pt-BR polish, satisfies CONTEXT line 127), the API receives the canonical value (satisfies D-05/UI-SPEC wire contract). Backend additionally accepts the 4 slugs and ignores unknown values, so both spellings work. Needs a one-line user confirmation since it deviates from UI-SPEC's literal strings.
+2. **Accented or unaccented city labels in the chips?** — **RESOLVED: accented labels, unaccented canonical.**
+   - User decision: `lib/cities.ts` maps `slug → { label: "São Paulo", canonical: "Sao Paulo" }`; chips and cards display the accented label; the API receives the slug (or canonical) and translates to the DB value.
+   - Recorded as D-06b in `04-CONTEXT.md`; `04-UI-SPEC.md` line 181 already lists `São Paulo`.
+   - Backend tolerates both spellings and ignores unknown cities (D-05).
 
-3. **Is a frontend test runner in scope?**
-   - What we know: `frontend/package.json` has only `dev/build/start/lint`; no vitest, no playwright, no jsdom.
-   - Recommendation: **no** — defer. Verify with `next build` (route must be `ƒ`), `next lint`, and PowerShell HTTP assertions against a running dev server, plus manual browser UAT for the dialog/reveal. Adding vitest+jsdom for one dialog is a net loss, and jsdom's `<dialog>` support is incomplete.
+3. **Is a frontend test runner in scope?** — **RESOLVED: no.**
+   - User decision: no Vitest/Playwright this phase.
+   - Gate = `npm run build` (must show `ƒ /`) + `npm run lint` + PowerShell HTTP assertions + manual browser UAT. Recorded as D-12a.
 
 ---
 
@@ -618,8 +617,8 @@ if not args.yes:
 | npm | install Tailwind | ✓ | 10.9.3 | — |
 | `next` | board | ✓ | 15.5.3 (installed) | — |
 | tailwindcss + @tailwindcss/postcss | UIUX-01 | ✗ | — | none needed; one `npm install -D` (Wave 0) |
-| `uv` | backend tests/migrations | ✓ | 0.13.1 | `python -m venv` + pip (worse) |
-| Python venv | backend | ✓ | `.venv` present | — |
+| `uv` | backend tests/migrations | ❌ | **not installed** (`Get-Command uv` fails) | use `backend\.venv\Scripts\python.exe -m ...` |
+| Python venv | backend | ✓ | `backend\.venv\Scripts\python.exe` (Python 3.11.17) | — |
 | pytest | backend tests | ✓ | 9.1.1, **178 tests collected in 0.29 s** | — |
 | Neon Postgres (dev branch) | seed + manual UAT | ✓ (configured) | `ep-snowy-mouse…` pooled | — |
 | Neon Postgres (test branch) | `TEST_DATABASE_URL` | ✓ (configured) | `ep-holy-rice…` pooled | falls back to `DATABASE_URL` |
@@ -631,7 +630,7 @@ if not args.yes:
 **Missing dependencies with fallback:** frontend test runner (see Open Question 3).
 
 **Baseline commands (verified this session):**
-- `cd backend; python -m uv run pytest -q` → 178 tests, collection works, DB-gated.
+- `Push-Location backend; .\.venv\Scripts\python.exe -m pytest -q; Pop-Location` → 178 tests, collection works, DB-gated.
 - `cd frontend; npm run build` → compiles in ~6 s; current routes: `/` `○`, `/admin/paste` `○` (both static today).
 
 ---
@@ -648,14 +647,14 @@ if not args.yes:
 | Config file | `backend/pyproject.toml` (`[tool.pytest.ini_options]`, `testpaths = ["tests"]`) |
 | Framework (frontend) | **none** — `next build` + `next lint` + HTTP assertions |
 | Config file | `frontend/.eslintrc.json`, `frontend/tsconfig.json` |
-| Quick run command | `cd backend; python -m uv run pytest -q` |
-| Full suite command | `cd backend; python -m uv run pytest -q` (single suite, ~fast) + `cd frontend; npm run build` + `npm run lint` |
+| Quick run command | `Push-Location backend; .\.venv\Scripts\python.exe -m pytest -q; Pop-Location` |
+| Full suite command | `Push-Location backend; .\.venv\Scripts\python.exe -m pytest -q; Pop-Location` (single suite, ~fast) + `cd frontend; npm run build` + `npm run lint` |
 
 ### Phase Requirements → Test Map
 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|--------------|
-| SRCH-01 | `q=analista` matches `ANALISTA`; `q=sao paulo` matches `São Paulo`; `q=requisito` matches a term that exists **only** in `requirements` | integration | `python -m uv run pytest tests/test_public_search.py -q` | ❌ Wave 0 |
+| SRCH-01 | `q=analista` matches `ANALISTA`; `q=sao paulo` matches `São Paulo`; `q=requisito` matches a term that exists **only** in `requirements` | integration | `Push-Location backend; .\.venv\Scripts\python.exe -m pytest tests/test_public_search.py -q; Pop-Location` | ❌ Wave 0 |
 | SRCH-02 | `city=sao-paulo` returns only São Paulo rows; `city=Sao Paulo` also works; unknown `city` ignored (no 400); `q`+`city` narrows `total` | integration | same file | ❌ Wave 0 |
 | SRCH-03 | `sort=antigas` reverses order; default = `recentes`; unknown sort → `recentes` | integration | same file | ❌ Wave 0 |
 | SRCH-03 / PUBL-01 | 3 same-transaction rows + `limit=1` pages 1..3 return 3 distinct ids | integration | `… -k tie_break` | ❌ Wave 0 |
@@ -674,7 +673,7 @@ if not args.yes:
 | Migration | `0003` applies, backfills, keeps `updated_at` | integration | run `alembic upgrade head` on the test branch + assert `search_text` contains a requirements term | ❌ Wave 0 |
 
 ### Sampling Rate
-- **Per task commit:** `cd backend; python -m uv run pytest -q` (whole suite is small) and `cd frontend; npm run lint`.
+- **Per task commit:** `Push-Location backend; .\.venv\Scripts\python.exe -m pytest -q; Pop-Location` (whole suite is small) and `Push-Location frontend; npm run lint; Pop-Location`.
 - **Per wave merge:** backend suite + `cd frontend; npm run build` (must show `ƒ /`).
 - **Phase gate:** backend suite green, `next build` green with `/` dynamic, seeded board verified in a real browser (search with/without accents, city chip, sort, page 2, deep link, reveal, `wa.me`, ESC/backdrop close).
 
