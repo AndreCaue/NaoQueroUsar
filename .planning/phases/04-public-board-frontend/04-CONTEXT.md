@@ -36,16 +36,24 @@ O visitante encontra uma vaga e o contato em segundos, no celular, sem cadastro 
   - A consulta compara `search_text` com `immutable_unaccent(lower(:q))` como substring; o índice trigram já serve. Não introduzir `unaccent(...)` na query (a coluna já está normalizada).
 - **D-05:** Params na URL: `q`, `city`, `sort`, `page` (idênticos no front e na API — sem tradução). `city` usa os slugs `sao-paulo | rio-de-janeiro | belo-horizonte | remoto`, mapeados para os valores canônicos de `ALLOWED_CITIES` em `backend/app/services/extraction/extractor.py:56`. **Atenção:** os valores canônicos são **sem acento** (`"Sao Paulo"`, não `"São Paulo"`) — o filtro compara com esses valores.
 - **D-06:** `sort` aceita `recentes` (default, `created_at DESC`) e `antigas` (`created_at ASC`), cobrindo SRCH-03. `page` mantém offset; `limit=24` (dentro do `le=50` atual). Filtro de validade (`status='published' AND expires_at > now()`) permanece aplicado em itens **e** no `total`.
+- **D-06a (correção de estabilidade):** ordenar **apenas** por `created_at` é não-determinístico — linhas inseridas na mesma transação compartilham `now()` e podem duplicar/sumir entre páginas. Adicionar `id` como desempate (`created_at DESC, id DESC` / `created_at ASC, id ASC`).
+- **D-06b (labels de cidade):** o front usa um mapa `slug → { label, canonical }` com labels **acentuados** (`São Paulo`, `Rio de Janeiro`, `Belo Horizonte`, `Remoto`) e `canonical` igual ao valor sem acento do banco (`Sao Paulo`, …). A API aceita **slug** em `city` e traduz para o canonical; nunca compara slug direto com a coluna.
+- **D-06c (placeholder da busca):** como `q` não cobre cidade (D-03), o placeholder é "Buscar por cargo, empresa ou palavra-chave" — **não** prometer cidade, que tem chips próprios.
 
 ### Renderização, cache e URL
 - **D-07:** O board é **Server Component**. A lista é buscada no servidor a partir de `searchParams` e o HTML inicial já contém as vagas (SEO). `q/city/sort/page` disparam re-render no servidor — sem spinner de primeira carga.
 - **D-08:** **Sem cache**: `cache: 'no-store'` na leitura do board. Nada de ISR/`revalidateTag`. Justificativa: volume de 100–500 vagas/mês, risco zero de vaga expirada/removida, e evita explosão de variantes de cache com os filtros.
 - **D-09:** O card abre um **`<dialog>` nativo** no cliente e grava **`?vaga=<uuid>`** na URL (`history.replaceState`/`router.replace`, preservando `q/city/sort/page`). Carregar a URL com `?vaga=` reabre o modal; um id desconhecido/expirado cai no estado "vaga não encontrada" sem quebrar o board. Fechar o modal remove o param.
 - **D-10:** O reveal só monta o widget do Turnstile **no clique** (token vive 300 s e é single-use), com `appearance="interaction-only"` e `id="turnstile-reveal"` (não colide com o `turnstile-widget` do login). O contato revelado fica em memória **por vaga, com escopo de aba** — usar module-scope/context, **não** um `Map` em `useRef` do host do dialog (morre se o grid desmontar).
+- **D-10a (link compartilhado):** um `?vaga=<uuid>` cujo id **não está** no filtro atual ainda deve abrir. O servidor resolve o id pelo `GET /api/v1/public/jobs/{id}` (que já é contact-free) em paralelo à lista, em vez de procurar no array da página. Id inexistente/expirado → estado "vaga não encontrada" com CTA para limpar filtros.
+- **D-10b (Retry-After):** o `Retry-After` do 429 não é legível cross-origin hoje (`main.py` não expõe headers). Adicionar `expose_headers=["Retry-After"]` ao CORS para a contagem regressiva da UI funcionar; sem isso ela cai no default silencioso de 10 s.
 
 ### Tema, Doações e ADS
 - **D-11:** "Doações" leva a uma rota estática **`/doacoes`** no route group público, com copy honesta ("apoie o projeto — chave PIX em breve") e link de volta. Nunca `#`, nunca botão morto. PIX real é Phase 6.
 - **D-12:** ADS nesta fase são **apenas placeholders reservados**: banner topo 90px, sidebar 300×250 (≥1024px) e inline 90px a cada 6 cards — caixa tracejada com rótulo "Publicidade" e **altura fixa** (anti-CLS). Nenhum script de anúncio, nenhum tracking, nenhum cookie de terceiro.
+
+### Verificação e testes
+- **D-12a:** **Sem runner de teste novo no frontend** nesta fase. Gate de UI = `npm run build` + `npm run lint` + asserções HTTP no PowerShell contra o backend (busca/filtro/ordenação/total) + checkpoint manual no browser. Vitest/Playwright entram quando houver mais superfície de UI ou CI.
 
 ### Contraste e tokens (herdado do UI-SPEC aprovado)
 - **D-13:** `#a78bfa` é a cor de **texto** de acento e do focus ring; `#8b5cf6` é **marca** (borda/hover/indicador); preenchimento com **texto branco** usa `#7c3aed` (5,70:1) porque `#8b5cf6` reprova AA com branco (4,23:1) — exigência de UIUX-01. Borda de controle `#6d5a91` (3,26:1) no lugar do `#4a3b6b` do admin (1,97:1).
@@ -116,7 +124,7 @@ O visitante encontra uma vaga e o contato em segundos, no celular, sem cadastro 
 - `backend/app/api/v1/public.py:32` — remover o comentário de fronteira ao adicionar os filtros.
 - `backend/app/crud/jobs.py:13` — assinatura de `list_published` ganha `q`/`city`/`sort`.
 - `backend/alembic/versions/` — nova migration `0003` (trigger + backfill).
-- `backend/scripts/` — novo diretório para o seed dev-only.
+- `backend/scripts/` — **já existe** (`seed.py`, `__init__.py`). O `seed.py` atual **não tem guarda de ambiente** — o novo seed dev-only deve ter guarda explícita e não herdar esse padrão.
 
 </code_context>
 

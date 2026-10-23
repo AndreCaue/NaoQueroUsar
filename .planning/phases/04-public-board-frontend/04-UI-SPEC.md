@@ -174,7 +174,7 @@ Todo copy em **pt-BR**. Erros do backend são renderizados **verbatim** (`body.d
 | `<h1>` | **"Vagas abertas"** |
 | Subtítulo do `<h1>` | `Sem cadastro, sem login. Encontre e candidate-se.` |
 | Slogan (footer) | `Procurar um emprego, não deve dar trabalho` |
-| Placeholder da busca | `Busque por cargo, empresa ou cidade` |
+| Placeholder da busca | `Busque por cargo, empresa ou palavra-chave` |
 | `aria-label` da busca | `Buscar vagas` |
 | Limpar busca (X, `aria-label`) | `Limpar busca` |
 | Grupo de cidades (`aria-label`) | `Filtrar por cidade` |
