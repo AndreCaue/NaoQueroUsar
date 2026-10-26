@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/*
+ * Phase 04 design tokens — APPROVED in 04-UI-SPEC.md §Design System.
+ * This file is imported ONLY by app/(public)/layout.tsx so Tailwind's
+ * Preflight never reaches /admin/* (D-01, T-04-01).
+ */
+@theme {
+  --color-canvas: #0f0a1a; /* 60% — page background */
+  --color-surface: #1a1025; /* 30% — cards, dialog */
+  --color-line: #2a1f3d; /* decorative card/dialog border */
+  --color-line-strong: #6d5a91; /* control border (input, secondary button, chip) — 3.26:1 */
+  --color-fg: #e2e8f0;
+  --color-fg-muted: #b8a9cc;
+  --color-accent: #8b5cf6; /* brand: borders/hover/indicator */
+  --color-accent-soft: #a78bfa; /* accent TEXT + focus ring */
+  --color-accent-strong: #7c3aed; /* filled CTA with white text (5.70:1) */
+  --color-accent-strong-hover: #6d28d9;
+  --color-donate: #facc15;
+  --color-danger: #f87171;
+  --color-danger-soft: #fecaca;
+  --radius-card: 12px;
+  --radius-dialog: 16px;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-fg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent-soft);
+    outline-offset: 2px;
+  }
+
+  /* UI-SPEC §G — no non-essential motion for users who ask for less. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
