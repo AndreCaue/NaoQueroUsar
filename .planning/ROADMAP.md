@@ -138,7 +138,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Public shell + Tailwind v4 foundation: theme tokens, header/Doações/footer/skip link, `/doacoes`, route group
+- [x] 04-01-PLAN.md — Public shell + Tailwind v4 foundation: theme tokens, header/Doações/footer/skip link, `/doacoes`, route group
 - [ ] 04-02-PLAN.md — Backend search & demo seed: migration `0003` (requirements in `search_text`), accent-insensitive `q`, `city`, `sort`, dev-only seed script
 
 **Wave 2** *(blocked on 04-01)*
@@ -202,6 +202,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
 | 3. Contact Reveal & Anti-Spam | 4/5 | In Progress|  |
-| 4. Public Board Frontend | 0/TBD | Not started | - |
+| 4. Public Board Frontend | 1/6 | In Progress|  |
 | 5. Admin Review Area | 0/TBD | Not started | - |
 | 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |

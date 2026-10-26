@@ -63,8 +63,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Tema & UI
 
-- [ ] **UIUX-01**: Tema dark minimalista roxo com contraste WCAG AA (usar `#a78bfa` para texto)
-- [ ] **UIUX-02**: Botão "Doações" no canto superior direito (amarelo `#facc15`), discreto, efeito apenas no hover
+- [x] **UIUX-01**: Tema dark minimalista roxo com contraste WCAG AA (usar `#a78bfa` para texto)
+- [x] **UIUX-02**: Botão "Doações" no canto superior direito (amarelo `#facc15`), discreto, efeito apenas no hover
 - [ ] **UIUX-03**: Espaços reservados para ADS (banner topo, sidebar, entre cards)
 
 ### Confiança & Legal
@@ -137,8 +137,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRCH-01 | Phase 4 | Pending |
 | SRCH-02 | Phase 4 | Pending |
 | SRCH-03 | Phase 4 | Pending |
-| UIUX-01 | Phase 4 | Pending |
-| UIUX-02 | Phase 4 | Pending |
+| UIUX-01 | Phase 4 | Complete |
+| UIUX-02 | Phase 4 | Complete |
 | UIUX-03 | Phase 4 | Pending |
 | REVW-01 | Phase 5 | Pending |
 | REVW-02 | Phase 5 | Pending |

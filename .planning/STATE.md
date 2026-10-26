@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-10-23T01:35:40.726Z"
-last_activity: 2026-10-22
+status: executing
+stopped_at: Completed 04-01-PLAN.md (Tailwind v4 + public shell + /doacoes)
+last_updated: "2026-10-26T21:57:09.517Z"
+last_activity: 2026-10-26
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 13
-  completed_plans: 13
-  percent: 50
+  total_plans: 19
+  completed_plans: 14
+  percent: 74
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-13)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 4 — public board frontend
+**Current focus:** Phase 04 — public-board-frontend
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-10-22
+Phase: 04 (public-board-frontend) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-10-26
 
-Progress: [█████████░] 92%
+Progress: [███████░░░] 74%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [█████████░] 92%
 | Phase 03 P02 | 93min | 3 tasks | 10 files |
 | Phase 03 P03 | 17min | 2 tasks | 5 files |
 | Phase 03 P04 | 26min | 2 tasks | 9 files |
+| Phase 04 P01 | 7min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,9 @@ Recent decisions affecting current work:
 - [Phase 03]: O smoke test do Siteverify e opt-in por env (TURNSTILE_LIVE=1) e importa apenas app.services.turnstile - sem app, sem banco, sem estado global — T-03-23: prova de integracao real de terceiro sem consumir cota da Cloudflare na suite do dia a dia; com a env var os 3 casos ficam verdes contra a API real, sem ela o arquivo inteiro e skipped
 - [Phase 03]: A suite nunca herda o .env local do dev: o conftest fixa TURNSTILE_SECRET_KEY='' e TURNSTILE_SITE_KEY='' — o teste do /health do 03-02 afirmava site_key_configured is False, ou seja, um valor dependente da maquina; o harness ja fixava DATABASE_URL/ADMIN_PASSWORD_HASH/JWT_SECRET pelo mesmo motivo
 - [Phase 03]: O binding de action do Turnstile NAO foi corrigido automaticamente: os segredos publicos de teste da Cloudflare nao devolvem o campo action, entao login e reveal devolvem 403 em dev — T-03-03/T-03-16 sao disposicoes mitigate do portao de anti-spam e o proprio plano 03-05 manda reportar o sintoma exato sem consertar nada sem o veredito do usuario
+- [Phase ?]: Phase 04 Plan 01: Tailwind v4 tokens live verbatim in app/(public)/public.css @theme; public.css is imported only by (public)/layout.tsx so Preflight never reaches /admin/* (proven from build CSS chunks: / links the canvas chunk, /admin/paste does not).
+- [Phase ?]: Phase 04 Plan 01: internal navigation uses next/link (renders a plain a href) because @next/next/no-html-link-for-pages rejects raw anchors to app routes; the Doacoes entry points at the real /doacoes page.
+- [Phase ?]: Phase 04 Plan 01: globals.css stays Tailwind-free and is imported by the root layout (theme-color #0f0a1a, color-scheme dark); Next 15 added target ES2017 to tsconfig during lint and it was kept.
 
 ### Pending Todos
 
@@ -122,6 +126,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-23T01:35:40.707Z
-Stopped at: Phase 4 UI-SPEC approved
-Resume file: .planning/phases/04-public-board-frontend/04-UI-SPEC.md
+Last session: 2026-10-26T21:57:09.491Z
+Stopped at: Completed 04-01-PLAN.md (Tailwind v4 + public shell + /doacoes)
+Resume file: None
