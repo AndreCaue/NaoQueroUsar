@@ -21,22 +21,72 @@ from app.services.turnstile import TurnstileVerifier, turnstile_error_detail
 # the public read surface is anonymous by design (D-16).
 router = APIRouter(prefix="/public", tags=["public"])
 
+# ``city`` aliases accepted from the URL (D-05/D-06b): the slug, the canonical
+# DB spelling and the accented label all resolve to the value actually stored
+# in ``jobs.city`` — which is the accented form of ``ALLOWED_CITIES`` in
+# ``app/services/extraction/extractor.py``. Unknown values are ignored (200).
+_CITY_ALIASES: dict[str, str] = {
+    "sao-paulo": "São Paulo",
+    "sao paulo": "São Paulo",
+    "são paulo": "São Paulo",
+    "rio-de-janeiro": "Rio de Janeiro",
+    "rio de janeiro": "Rio de Janeiro",
+    "belo-horizonte": "Belo Horizonte",
+    "belo horizonte": "Belo Horizonte",
+    "remoto": "Remoto",
+}
+
+
+def _resolve_city(value: str | None) -> str | None:
+    """Whitelist the city (slug/canonical/label); anything else is ``None``."""
+    if not value:
+        return None
+    return _CITY_ALIASES.get(value.strip().lower())
+
+
+def _resolve_sort(value: str) -> str:
+    """Only ``antigas`` changes the order; everything else is ``recentes``."""
+    return "antigas" if value.strip().lower() == "antigas" else "recentes"
+
 
 @router.get("/jobs", response_model=JobListResponse)
 async def list_public_jobs(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=50),
+    q: str | None = Query(None, max_length=80),
+    city: str | None = Query(None, max_length=40),
+    sort: str = Query("recentes", max_length=20),
     session: AsyncSession = Depends(get_session),
 ) -> JobListResponse:
-    """List published, non-expired jobs (contact-free), newest first (D-14/D-17)."""
-    # Phase boundary (D-16): search/city/sort are Phase 4 — do NOT add them here.
-    items, total = await list_published(session, page=page, limit=limit)
+    """List published, non-expired jobs (contact-free), filtered and sorted.
+
+    ``q`` searches title + company + activities + requirements, accent- and
+    case-insensitively (SRCH-01/D-03). ``city`` is an independent filter
+    combined with AND — it never replaces ``q`` (SRCH-02/D-05). ``sort`` is
+    ``recentes`` (default) or ``antigas`` (SRCH-03/D-06). Unknown ``city``
+    values are ignored and unknown ``sort`` values fall back to ``recentes`` —
+    a bad URL never produces a 400. Items and ``total`` share one predicate
+    list (04-RESEARCH Pattern 3).
+    """
+    term = q.strip() if q else None
+    if not term:
+        term = None
+
+    items, total = await list_published(
+        session,
+        page=page,
+        limit=limit,
+        q=term,
+        city=_resolve_city(city),
+        sort=_resolve_sort(sort),
+    )
     return JobListResponse(
         items=[JobPublic.model_validate(job) for job in items],
         page=page,
         limit=limit,
         total=total,
     )
+
 
 
 @router.get("/jobs/{job_id}", response_model=JobPublic)

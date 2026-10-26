@@ -10,33 +10,79 @@ from app.models.job import Job, JobStatus
 __all__ = ["list_published", "get_published", "bulk_create_pending"]
 
 
+def _escape_like(term: str) -> str:
+    """Escape LIKE metacharacters so ``q`` is matched literally (T-04-03).
+
+    The backslash itself must be escaped first, otherwise the escapes added
+    for ``%``/``_`` would be doubled by a later replace.
+    """
+    return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def _published_filters(*, q: str | None, city: str | None) -> list:
+    """The ONE predicate list shared by the page query and the total count.
+
+    ``status = 'published'`` is always present literally: the search trigram
+    index is partial on it, and ``total`` must describe exactly the same rows
+    as ``items`` (D-17, 04-RESEARCH Pattern 3).
+    """
+    filters: list = [Job.status == JobStatus.published, Job.expires_at > func.now()]
+
+    if city:
+        filters.append(Job.city == city)
+
+    if q:
+        term = q.strip()
+        if term:
+            # ``search_text`` is stored as ``immutable_unaccent(lower(...))``
+            # by the trigger, so the pattern is normalized identically. The
+            # value stays a bound parameter — it is never interpolated into
+            # SQL text (T-04-03).
+            normalized = func.immutable_unaccent(func.lower(_escape_like(term)))
+            pattern = func.concat("%", normalized, "%")
+            filters.append(Job.search_text.like(pattern, escape="\\"))
+
+    return filters
+
+
 async def list_published(
     session: AsyncSession,
-    page: int,
-    limit: int,
+    page: int = 1,
+    limit: int = 20,
+    *,
+    q: str | None = None,
+    city: str | None = None,
+    sort: str = "recentes",
 ) -> tuple[list[Job], int]:
     """Return ``(items, total)`` for published, non-expired jobs.
 
-    Newest first (``created_at DESC``), offset-paginated (D-14). Both the
-    page query and the total count apply the SAME filter (D-17):
-    ``status = 'published' AND expires_at > now()``.
+    Filters (all optional and combined with AND): ``q`` matches the normalized
+    ``search_text`` (title + company + activities + requirements, D-03/D-04)
+    and ``city`` compares to the canonical DB value (D-05). ``sort`` is
+    ``recentes`` (default, ``created_at DESC``) or ``antigas`` (``ASC``).
+
+    Both queries apply the SAME predicate list (D-17). The order always ends
+    with the ``id`` tie-break: rows inserted in one transaction share
+    ``created_at``, so without it ``limit``/``page`` could repeat or drop a row
+    (D-06a). ``q``/``city``/``sort`` are keyword-only so every Phase 1–3 call
+    keeps working unchanged.
     """
-    filters = (
-        Job.status == JobStatus.published,
-        Job.expires_at > func.now(),
-    )
+    filters = _published_filters(q=q, city=city)
+    oldest_first = sort == "antigas"
+    direction = Job.created_at.asc() if oldest_first else Job.created_at.desc()
+    tie_break = Job.id.asc() if oldest_first else Job.id.desc()
 
     items_stmt = (
         select(Job)
         .where(*filters)
-        .order_by(Job.created_at.desc())
+        .order_by(direction, tie_break)
         .offset((page - 1) * limit)
         .limit(limit)
     )
     count_stmt = select(func.count()).select_from(Job).where(*filters)
 
     items = list((await session.scalars(items_stmt)).all())
-    total = (await session.scalar(count_stmt)) or 0
+    total = int((await session.scalar(count_stmt)) or 0)
     return items, total
 
 
