@@ -15,7 +15,7 @@ through ``flush()`` (or the HTTP layer) so it sees what the trigger actually
 wrote — never an in-memory Python value.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from sqlalchemy import text
 
@@ -36,6 +36,19 @@ def _job(**overrides) -> Job:
     }
     defaults.update(overrides)
     return Job(**defaults)
+
+
+async def _insert(db_session, **overrides) -> Job:
+    job = _job(**overrides)
+    db_session.add(job)
+    await db_session.flush()
+    return job
+
+
+# Canonical DB spellings — the extraction pipeline writes these values
+# (``ALLOWED_CITIES`` in ``app/services/extraction/extractor.py``).
+SAO_PAULO = "São Paulo"
+RIO = "Rio de Janeiro"
 
 
 # ---------------------------------------------------------------------------
@@ -127,3 +140,236 @@ async def test_updated_at_trigger_is_enabled(db_session):
         state = state.decode()
 
     assert state == "O"
+
+
+# ---------------------------------------------------------------------------
+# SRCH-01 — accent/case-insensitive search over the normalized search_text
+# ---------------------------------------------------------------------------
+
+
+async def test_search_matches_title_ignoring_case(db_session, client):
+    await _insert(db_session, title="ANALISTA de Dados", city="Remoto")
+    await _insert(db_session, title="Vendedor de Loja", city="Remoto")
+
+    resp = await client.get("/api/v1/public/jobs", params={"q": "analista"})
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 1
+
+
+async def test_search_matches_company_ignoring_accents(db_session, client):
+    await _insert(
+        db_session,
+        title="Vaga Administrativa",
+        company="São Paulo Consultoria",
+        city="Remoto",
+    )
+    await _insert(
+        db_session, title="Vaga de Logística", company="Rio Express", city="Remoto"
+    )
+
+    for term in ("sao paulo", "São Paulo", "SAO PAULO"):
+        resp = await client.get("/api/v1/public/jobs", params={"q": term})
+        assert resp.status_code == 200, term
+        assert resp.json()["total"] == 1, term
+
+
+async def test_search_matches_requirements_only(db_session, client):
+    await _insert(
+        db_session,
+        title="Desenvolvedor(a) Backend",
+        requirements="Kubernetes e Terraform",
+        city="Remoto",
+    )
+    await _insert(db_session, title="Recepcionista", city="Remoto")
+
+    resp = await client.get("/api/v1/public/jobs", params={"q": "kubernetes"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["title"] == "Desenvolvedor(a) Backend"
+
+
+async def test_search_trims_whitespace(db_session, client):
+    await _insert(db_session, title="Analista Financeiro", city="Remoto")
+    await _insert(db_session, title="Motorista Entregador", city="Remoto")
+
+    resp = await client.get("/api/v1/public/jobs", params={"q": "  analista  "})
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 1
+
+
+async def test_search_wildcards_are_literal(db_session, client):
+    # T-04-03: ``%`` and ``_`` are LIKE metacharacters and must be escaped.
+    await _insert(db_session, title="Aumento de 100% garantido", city="Remoto")
+    await _insert(db_session, title="Analista de Dados", city="Remoto")
+
+    percent = await client.get("/api/v1/public/jobs", params={"q": "%"})
+    assert percent.status_code == 200
+    assert percent.json()["total"] == 1
+    assert percent.json()["items"][0]["title"] == "Aumento de 100% garantido"
+
+    literal = await client.get("/api/v1/public/jobs", params={"q": "100%"})
+    assert literal.status_code == 200
+    assert literal.json()["total"] == 1
+
+    underscore = await client.get("/api/v1/public/jobs", params={"q": "_"})
+    assert underscore.status_code == 200
+    assert underscore.json()["total"] == 0
+
+
+# ---------------------------------------------------------------------------
+# SRCH-02 — city filter (slug, canonical and accented label; unknown ignored)
+# ---------------------------------------------------------------------------
+
+
+async def test_city_filter_accepts_slug_canonical_and_label(db_session, client):
+    sp = await _insert(db_session, title="Vaga São Paulo", city=SAO_PAULO)
+    await _insert(db_session, title="Vaga Rio", city=RIO)
+
+    for value in ("sao-paulo", "Sao Paulo", "sao paulo", "São Paulo"):
+        resp = await client.get("/api/v1/public/jobs", params={"city": value})
+        assert resp.status_code == 200, value
+        body = resp.json()
+        assert body["total"] == 1, value
+        assert body["items"][0]["id"] == str(sp.id), value
+
+
+async def test_unknown_city_is_ignored(db_session, client):
+    await _insert(db_session, title="Vaga São Paulo", city=SAO_PAULO)
+    await _insert(db_session, title="Vaga Rio", city=RIO)
+
+    resp = await client.get("/api/v1/public/jobs", params={"city": "atlantida"})
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 2
+
+
+async def test_q_and_city_combine_with_and(db_session, client):
+    sp_analista = await _insert(
+        db_session, title="Analista de Dados", city=SAO_PAULO
+    )
+    await _insert(db_session, title="Vendedor de Loja", city=SAO_PAULO)
+    await _insert(db_session, title="Analista de Suporte", city=RIO)
+
+    resp = await client.get(
+        "/api/v1/public/jobs", params={"q": "analista", "city": "sao-paulo"}
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["id"] == str(sp_analista.id)
+
+
+# ---------------------------------------------------------------------------
+# SRCH-03 — deterministic date sort (created_at + id tie-break)
+# ---------------------------------------------------------------------------
+
+
+def _at(day: int) -> datetime:
+    return datetime(2026, 10, day, 12, 0, tzinfo=timezone.utc)
+
+
+async def test_sort_recentes_is_the_default_and_antigas_reverses_it(
+    db_session, client
+):
+    await _insert(db_session, title="Vaga 01 Out", created_at=_at(1))
+    await _insert(db_session, title="Vaga 05 Out", created_at=_at(5))
+    await _insert(db_session, title="Vaga 03 Out", created_at=_at(3))
+
+    default = await client.get("/api/v1/public/jobs")
+    assert default.status_code == 200
+    assert [i["title"] for i in default.json()["items"]] == [
+        "Vaga 05 Out",
+        "Vaga 03 Out",
+        "Vaga 01 Out",
+    ]
+
+    recentes = await client.get("/api/v1/public/jobs", params={"sort": "recentes"})
+    assert [i["title"] for i in recentes.json()["items"]] == [
+        "Vaga 05 Out",
+        "Vaga 03 Out",
+        "Vaga 01 Out",
+    ]
+
+    antigas = await client.get("/api/v1/public/jobs", params={"sort": "antigas"})
+    assert [i["title"] for i in antigas.json()["items"]] == [
+        "Vaga 01 Out",
+        "Vaga 03 Out",
+        "Vaga 05 Out",
+    ]
+
+
+async def test_unknown_sort_falls_back_to_recentes(db_session, client):
+    await _insert(db_session, title="Vaga Antiga", created_at=_at(1))
+    await _insert(db_session, title="Vaga Nova", created_at=_at(9))
+
+    resp = await client.get("/api/v1/public/jobs", params={"sort": "banana"})
+    assert resp.status_code == 200
+    assert [i["title"] for i in resp.json()["items"]] == [
+        "Vaga Nova",
+        "Vaga Antiga",
+    ]
+
+
+async def test_tie_break_returns_distinct_ids_across_pages(db_session, client):
+    # Same-transaction rows share ``now()``; without the id tie-break a small
+    # ``limit`` can repeat one row and drop another (Pitfall 3).
+    same_instant = _at(2)
+    jobs = [
+        await _insert(
+            db_session, title=f"Vaga Empatada {n}", created_at=same_instant
+        )
+        for n in range(3)
+    ]
+    expected = {str(job.id) for job in jobs}
+
+    seen: list[str] = []
+    for page in (1, 2, 3):
+        resp = await client.get(
+            "/api/v1/public/jobs", params={"limit": 1, "page": page}
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["total"] == 3
+        assert len(body["items"]) == 1
+        seen.append(body["items"][0]["id"])
+
+    assert len(set(seen)) == 3
+    assert set(seen) == expected
+
+
+# ---------------------------------------------------------------------------
+# total consistency and the contact-free payload
+# ---------------------------------------------------------------------------
+
+
+async def test_total_matches_the_same_filters_as_items(db_session, client):
+    await _insert(db_session, title="Analista Um", city=SAO_PAULO)
+    await _insert(db_session, title="Analista Dois", city=SAO_PAULO)
+    await _insert(db_session, title="Vendedor", city=SAO_PAULO)
+
+    resp = await client.get(
+        "/api/v1/public/jobs", params={"q": "analista", "limit": 1}
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 2
+    assert len(body["items"]) == 1
+
+
+async def test_filtered_payload_has_no_contact_fields(db_session, client):
+    await _insert(
+        db_session,
+        title="Analista de Dados",
+        contact_email="segredo@example.com",
+        contact_phone=None,
+    )
+    await _insert(db_session, title="Vendedor de Loja", city="Remoto")
+
+    resp = await client.get("/api/v1/public/jobs", params={"q": "analista"})
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    assert len(items) == 1
+    for item in items:
+        assert "contact_email" not in item
+        assert "contact_phone" not in item
+
