@@ -177,12 +177,12 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Backend review API (CRUD helpers, schemas, rotas, testes)
+- [x] 05-01-PLAN.md — Backend review API (CRUD helpers, schemas, rotas, testes)
 - [x] 05-02-PLAN.md — Admin shell Tailwind v4 (admin.css, layout, ToastProvider, AdminGuard, hub)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-03-PLAN.md — Migracao do paste para Tailwind v4
+- [x] 05-03-PLAN.md — Migracao do paste para Tailwind v4
 - [ ] 05-04-PLAN.md — Fila de review (ReviewRow, modais, ReviewQueue, page)
 
 **UI hint**: yes
@@ -215,5 +215,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
 | 3. Contact Reveal & Anti-Spam | 4/5 | In Progress|  |
 | 4. Public Board Frontend | 6/6 | Complete   | 2026-10-27 |
-| 5. Admin Review Area | 1/4 | In Progress|  |
+| 5. Admin Review Area | 3/4 | In Progress|  |
 | 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |
