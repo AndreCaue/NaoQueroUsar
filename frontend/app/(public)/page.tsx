@@ -2,15 +2,15 @@ import Link from "next/link";
 
 import { JobGrid } from "@/components/board/JobGrid";
 import { Pagination } from "@/components/board/Pagination";
-import type { JobPublic } from "@/lib/api";
 import {
   buildBoardHref,
   hasActiveFilters,
+  isUuid,
   PAGE_SIZE,
   normalizeFilters,
 } from "@/lib/filters";
 import { formatJobCount } from "@/lib/format";
-import { fetchBoard } from "@/lib/jobs";
+import { fetchBoard, fetchJob } from "@/lib/jobs";
 
 type BoardSearchParams = Promise<
   Record<string, string | string[] | undefined>
@@ -34,16 +34,24 @@ export default async function Page({
 }) {
   const sp = await searchParams;
   const filters = normalizeFilters(sp);
-  const data = await fetchBoard(filters);
+
+  // D-10a/B-04: `normalizeFilters` is still the only parser, but the raw value
+  // is validated at the fetch boundary so a malformed id can reach the
+  // server-rendered not-found panel instead of being silently dropped.
+  const rawVaga = filters.vaga?.trim() || null;
+  const vaga = rawVaga && isUuid(rawVaga) ? rawVaga : null;
+  const malformedVaga = Boolean(rawVaga && !vaga);
+
+  // A valid id resolves in parallel with the list: a shared link must open the
+  // job even when the current filter/page would not include it.
+  const [data, initialJob] = vaga
+    ? await Promise.all([fetchBoard(filters), fetchJob(vaga)])
+    : [await fetchBoard(filters), null];
 
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
   const filtersActive = hasActiveFilters(filters);
 
-  // Deep link: only when the id is on the current page in this plan; 04-04 adds
-  // the server-side `GET /jobs/{id}` fallback for ids outside the filter.
-  const initialJob: JobPublic | null = filters.vaga
-    ? (data.items.find((job) => job.id === filters.vaga) ?? null)
-    : null;
+  const notFound = malformedVaga || Boolean(vaga && initialJob === null);
 
   const prevHref =
     filters.page > 1
@@ -70,6 +78,27 @@ export default async function Page({
           </p>
         ) : null}
 
+        {/* Server-rendered not-found panel (B-04): malformed and
+            valid-but-missing ids both land here, and a plain board visit never
+            does. It carries no reveal footer and no contact data. The board
+            stays rendered underneath so the visitor still has jobs. */}
+        {notFound ? (
+          <section
+            role="status"
+            className="mt-4 rounded-[16px] border border-line bg-surface p-6 text-center"
+          >
+            <h2 className="text-xl font-semibold text-fg">
+              Vaga não encontrada
+            </h2>
+            <p className="mt-2 text-base text-fg-muted">
+              Esta vaga não está mais disponível ou o link está incorreto.
+            </p>
+            <Link href="/" className={`mt-6 ${SECONDARY_BUTTON}`}>
+              Limpar filtros
+            </Link>
+          </section>
+        ) : null}
+
         {data.items.length > 0 ? (
           <>
             <div className="mt-4">
@@ -77,7 +106,6 @@ export default async function Page({
                 key={buildBoardHref(filters)}
                 jobs={data.items}
                 initialJob={initialJob}
-                initialVaga={filters.vaga}
               />
             </div>
             <Pagination
