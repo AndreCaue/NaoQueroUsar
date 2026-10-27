@@ -147,7 +147,7 @@ Plans:
 
 **Wave 3** *(blocked on 04-03)*
 
-- [ ] 04-04-PLAN.md — Reveal & apply: Turnstile-gated contact, tab-scoped cache, WhatsApp/e-mail links, `?vaga=` deep link
+- [x] 04-04-PLAN.md — Reveal & apply: Turnstile-gated contact, tab-scoped cache, WhatsApp/e-mail links, `?vaga=` deep link
 
 **Wave 4** *(blocked on 04-02, 04-03, 04-04)*
 
@@ -202,6 +202,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
 | 3. Contact Reveal & Anti-Spam | 4/5 | In Progress|  |
-| 4. Public Board Frontend | 3/6 | In Progress|  |
+| 4. Public Board Frontend | 4/6 | In Progress|  |
 | 5. Admin Review Area | 0/TBD | Not started | - |
 | 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |
