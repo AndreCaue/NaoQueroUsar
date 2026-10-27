@@ -455,13 +455,13 @@ No new external dependencies for this phase.
 | Stale token / session fixation | Spoofing | JWT exp; sessionStorage cleared on logout |
 | Optimistic UI desync | Tampering (integrity) | Rollback + refetch |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Approve endpoint shape** — PATCH vs POST vs dedicated `/approve`. Recommendation: PATCH `/admin/jobs/{id}/approve`. Planner decides; keep consistent with REST conventions in codebase (POST used for extract/login).
-2. **Edit semantics** — full PUT vs partial PATCH. Recommendation: PUT with all fields (modal always sends all). Planner decides.
-3. **needs_review tab** — separate route `/admin/review/needs-review` vs client tab. CONTEXT allows discretion; recommendation: client-side tab on `/admin/review` (simpler, single fetch state). 
-4. **Admin layout location** — `app/admin/layout.tsx` vs `app/(admin)/`. Recommendation: `app/admin/layout.tsx` (preserves existing `/admin/paste` URL).
-5. **zod on frontend** — add dependency or manual validation. Recommendation: manual (small form) to avoid new dep; zod if planner prefers.
+1. **Approve endpoint shape** — RESOLVED: PATCH `/admin/jobs/{id}/approve` (plan 05-01). Consistent with REST; POST reserved for extract/login.
+2. **Edit semantics** — RESOLVED: full PUT with all fields (plan 05-01); modal always sends all. Note: title and city are required in `JobUpdate` (checker warning) to avoid NOT NULL violations.
+3. **needs_review tab** — RESOLVED: client-side tab on `/admin/review` (plan 05-04), single fetch state per active tab.
+4. **Admin layout location** — RESOLVED: `app/admin/layout.tsx` (plan 05-02), preserves existing `/admin/paste` URL.
+5. **zod on frontend** — RESOLVED: manual validation (plan 05-04), no new dependency.
 
 ## Assumptions Log
 
