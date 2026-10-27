@@ -50,5 +50,58 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+
+    .animate-pulse {
+      animation: none !important;
+    }
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer components {
+  @media (hover: hover) and (pointer: fine) {
+    .job-card:hover {
+      border-color: var(--color-accent);
+    }
+  }
+
+  .job-card:focus-within {
+    border-color: var(--color-accent);
+  }
+
+  h1,
+  [data-dialog-title] {
+    text-wrap: balance;
+  }
+
+  .job-card :is(h2, p),
+  [data-contact-value] {
+    overflow-wrap: anywhere;
+  }
+
+  .touch-target {
+    min-height: 44px;
+  }
+
+  dialog::backdrop {
+    background: rgba(5, 2, 12, 0.72);
+  }
+
+  dialog {
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior: contain;
+  }
+
+  @media (min-width: 640px) {
+    dialog {
+      max-width: 640px;
+      max-height: 88dvh;
+      border-radius: 16px;
+    }
   }
 }
