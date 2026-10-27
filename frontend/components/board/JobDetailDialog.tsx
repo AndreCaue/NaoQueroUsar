@@ -7,6 +7,7 @@ import { cityLabel } from "@/lib/cities";
 import { formatDateBR } from "@/lib/format";
 
 import { X } from "./icons";
+import { RevealContact } from "./RevealContact";
 
 interface JobDetailDialogProps {
   job: JobPublic;
@@ -45,6 +46,8 @@ export function JobDetailDialog({
 }: JobDetailDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = `job-dialog-title-${job.id}`;
+  // One close path for the X, ESC, backdrop and the reveal footer's 404 state.
+  const close = () => dialogRef.current?.close();
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -116,7 +119,7 @@ export function JobDetailDialog({
           <button
             type="button"
             aria-label="Fechar"
-            onClick={() => dialogRef.current?.close()}
+            onClick={close}
             className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-fg-muted transition-colors hover:bg-[rgba(167,139,250,0.08)] hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft"
           >
             <X size={20} />
@@ -141,9 +144,13 @@ export function JobDetailDialog({
           <span>Publicada em {formatDateBR(job.created_at)}</span>
           <span>Encerra em {formatDateBR(job.expires_at)}</span>
         </div>
-
-        {/* Contact footer lands in 04-04 — never rendered from the list payload. */}
       </div>
+
+      {/* Sticky footer: the reveal is the only filled CTA of the board
+          (UI-SPEC §E). It never receives contact data from the list payload. */}
+      <footer className="shrink-0 border-t border-line p-4">
+        <RevealContact job={job} onClose={close} />
+      </footer>
     </dialog>
   );
 }
