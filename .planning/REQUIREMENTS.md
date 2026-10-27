@@ -35,9 +35,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Board Público
 
-- [ ] **PUBL-01**: Visitante lista vagas publicadas em grade responsiva mobile-first, sem cadastro ou login
-- [ ] **PUBL-02**: Card mostra título, início das atividades (expansível), salário (quando houver) e botão "Ver a vaga"
-- [ ] **PUBL-03**: Visitante abre modal de detalhes completo, mobile-friendly
+- [x] **PUBL-01**: Visitante lista vagas publicadas em grade responsiva mobile-first, sem cadastro ou login
+- [x] **PUBL-02**: Card mostra título, início das atividades (expansível), salário (quando houver) e botão "Ver a vaga"
+- [x] **PUBL-03**: Visitante abre modal de detalhes completo, mobile-friendly
 - [ ] **PUBL-04**: Contato fica oculto por padrão e é revelado pelo botão "Mostrar contato"
 - [x] **PUBL-05**: Contato é servido por endpoint dedicado e não aparece no payload público da lista
 - [ ] **PUBL-06**: Visitante se candidata via WhatsApp (`wa.me`) e/ou email
@@ -129,9 +129,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SECR-02 | Phase 3 | Complete |
 | SECR-03 | Phase 3 | Complete |
 | PUBL-05 | Phase 3 | Complete |
-| PUBL-01 | Phase 4 | Pending |
-| PUBL-02 | Phase 4 | Pending |
-| PUBL-03 | Phase 4 | Pending |
+| PUBL-01 | Phase 4 | Complete |
+| PUBL-02 | Phase 4 | Complete |
+| PUBL-03 | Phase 4 | Complete |
 | PUBL-04 | Phase 4 | Pending |
 | PUBL-06 | Phase 4 | Pending |
 | SRCH-01 | Phase 4 | Complete |

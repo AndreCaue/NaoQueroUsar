@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-02-PLAN.md (busca/cidade/ordenacao + migration 0003 + seed dev)
-last_updated: "2026-10-26T22:19:30.524Z"
-last_activity: 2026-10-26
+stopped_at: Completed 04-03-PLAN.md (board SSR + card + dialog nativo)
+last_updated: "2026-10-27T00:39:55.584Z"
+last_activity: 2026-10-27
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 19
-  completed_plans: 15
+  completed_plans: 16
   percent: 50
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 ## Current Position
 
 Phase: 04 (public-board-frontend) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
-Last activity: 2026-10-26
+Last activity: 2026-10-27
 
-Progress: [████████░░] 79%
+Progress: [████████░░] 84%
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [████████░░] 79%
 | Phase 03 P04 | 26min | 2 tasks | 9 files |
 | Phase 04 P01 | 7min | 3 tasks | 11 files |
 | Phase 04 P02 | 197min | 3 tasks | 5 files |
+| Phase 04 P03 | 13min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,11 @@ Recent decisions affecting current work:
 - [Phase 04]: Phase 04 Plan 02: a migration 0003 mantem jobs_search_text_trg ATIVO durante o backfill e desabilita apenas jobs_updated_at, reabilitando-o na mesma transacao; aplicada nos dois branches Neon (test e dev) e verificada ao vivo (prosrc contem requirements, pg_trigger.tgenabled='O')
 - [Phase 04]: Phase 04 Plan 02: o filtro q usa exatamente uma lista de predicados compartilhada entre items e count (status='published' literal mantem o indice trigram parcial utilizavel), escapa barra/percent/underscore e faz bind via func.concat + LIKE ESCAPE; ordenacao sempre termina com tie-break por id
 - [Phase 04]: Phase 04 Plan 02: scripts/seed_public_demo.py e o unico caminho para popular o board antes do fluxo de aprovacao da Phase 5; exige ENV=dev + host local/.neon.tech + --yes, apaga por marcador SEED_PUBLIC_DEMO e nunca escreve search_text. 30 vagas published ficaram no branch dev para a verificacao de browser dos planos seguintes
+- [Phase 04]: Phase 04 Plan 03: as cidades canonicas do board sao ACENTUADAS (Sao Paulo) seguindo a descoberta do 04-02, e nao a tabela sem acento do plano; cityLabel faz fold NFD sobre slug/label/canonical para que as tres grafias resolvam para o label acentuado
+- [Phase 04]: Phase 04 Plan 03: BoardError.message carrega o kind (timeout/http/network) para o error.tsx client escolher a copy de cold start sem importar o modulo server-only lib/jobs.ts
+- [Phase 04]: Phase 04 Plan 03: o deep link ?vaga= e resolvido em page.tsx contra data.items e passado como initialJob (initializer do useState, nao effect), entao o markup do dialog existe no HTML do SSR; o fallback server-side fetchJob e o painel not-found ficam para o 04-04
+- [Phase 04]: Phase 04 Plan 03: o JobGrid remonta por key=buildBoardHref(filters) para zerar o 'Ver mais' dos cards quando filtro/pagina mudam, e os hrefs da paginacao descartam vaga para nao reabrir um dialog da pagina anterior
+- [Phase 04]: Phase 04 Plan 03: no Next 15.5 prerender-manifest.dynamicRoutes vem vazio ({}): a prova de que / e dinamico e a AUSENCIA de '/' em manifest.routes (so /doacoes, /admin/paste e /_not-found), coerente com a linha dinamica do build
 
 ### Pending Todos
 
@@ -131,6 +137,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-26T22:19:30.497Z
-Stopped at: Completed 04-02-PLAN.md (busca/cidade/ordenacao + migration 0003 + seed dev)
+Last session: 2026-10-27T00:39:55.547Z
+Stopped at: Completed 04-03-PLAN.md (board SSR + card + dialog nativo)
 Resume file: None
