@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import type { JobPublic } from "@/lib/api";
 
 import { JobCard } from "./JobCard";
+import { JobDetailDialog } from "./JobDetailDialog";
 
 interface JobGridProps {
   jobs: JobPublic[];
@@ -29,6 +30,14 @@ export function JobGrid({ jobs, initialJob }: JobGridProps) {
     setSelected(job);
   };
 
+  const handleClose = () => {
+    setSelected(null);
+    const trigger = triggerRef.current;
+    // Wait for the dialog to be removed before returning focus so the card
+    // does not fight the browser's own focus restoration.
+    window.requestAnimationFrame(() => trigger?.focus());
+  };
+
   return (
     <>
       <ul className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -38,7 +47,9 @@ export function JobGrid({ jobs, initialJob }: JobGridProps) {
           </li>
         ))}
       </ul>
-      {/* dialog mounts here */}
+      {selected ? (
+        <JobDetailDialog job={selected} open onClose={handleClose} />
+      ) : null}
     </>
   );
 }
