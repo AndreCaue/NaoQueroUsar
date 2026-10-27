@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Turnstile } from "next-turnstile";
 import { loginAdmin, extractJobs, type ExtractSummary } from "@/lib/api";
-import "./globals-admin.css";
 
 const TOKEN_KEY = "nqu_admin_token";
 
@@ -95,11 +94,11 @@ export default function ExtractForm() {
   const isSubmitDisabled = loading || !token || !text.trim();
 
   return (
-    <div className="admin-page">
-      <main className="admin-panel">
+    <div className="max-w-[720px] mx-auto p-6 bg-surface border border-line rounded-lg">
+      <main className="space-y-8">
         {!token && (
           <div>
-            <h2>Login</h2>
+            <h2 className="text-xl font-semibold">Login</h2>
             <label>
               Senha do admin
               <input
@@ -107,10 +106,11 @@ export default function ExtractForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
+                className="h-12 w-full rounded-lg border border-line-strong bg-canvas px-3 text-base text-fg placeholder:text-fg-muted focus-visible outline-accent-soft"
               />
             </label>
             {TURNSTILE_SITE_KEY ? (
-              <div className="admin-turnstile">
+              <div className="overflow-hidden max-w-full">
                 <Turnstile
                   key={turnstileKey}
                   siteKey={TURNSTILE_SITE_KEY}
@@ -123,21 +123,21 @@ export default function ExtractForm() {
                 />
               </div>
             ) : (
-              <div className="admin-error">
+              <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">
                 Configuração ausente: defina NEXT_PUBLIC_TURNSTILE_SITE_KEY
               </div>
             )}
-            <button className="admin-btn" onClick={handleLogin} disabled={isLoginDisabled}>
+            <button className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover" onClick={handleLogin} disabled={isLoginDisabled}>
               {loading ? "Entrando..." : "Entrar"}
             </button>
 
-            {error && <div className="admin-error">{error}</div>}
+            {error && <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">{error}</div>}
           </div>
         )}
 
         {token && (
           <div>
-            <h2>Extrair vagas</h2>
+            <h2 className="text-xl font-semibold">Extrair vagas</h2>
             <label>
               Texto bruto
               <textarea
@@ -147,17 +147,18 @@ export default function ExtractForm() {
                 minLength={1}
                 placeholder="Cole aqui o texto com uma ou mais vagas..."
                 disabled={loading}
+                className="min-h-[96px] resize-y w-full rounded-lg border border-line-strong bg-canvas px-3 text-base text-fg placeholder:text-fg-muted"
               />
             </label>
-            <button className="admin-btn" onClick={handleSubmit} disabled={isSubmitDisabled}>
+            <button className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover" onClick={handleSubmit} disabled={isSubmitDisabled}>
               {loading ? "Extraindo... isso pode levar até ~2 minutos para textos grandes" : "Extrair vagas"}
             </button>
 
-            {error && <div className="admin-error">{error}</div>}
+            {error && <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">{error}</div>}
 
             {summary && (
               <div>
-                <h3>Resumo</h3>
+                <h3 className="text-xl font-semibold">Resumo</h3>
                 <div>
                   <span className="badge">
                     salvas em revisão pendente: {summary.saved_pending}
@@ -168,11 +169,13 @@ export default function ExtractForm() {
                 </div>
 
                 {summary.alerts && summary.alerts.length > 0 && (
-                  <ul className="admin-alert">
-                    {summary.alerts.map((a, i) => (
-                      <li key={i}>{a}</li>
-                    ))}
-                  </ul>
+                  <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">
+                    <ul>
+                      {summary.alerts.map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 {summary.discarded && summary.discarded.length > 0 && (
@@ -187,7 +190,7 @@ export default function ExtractForm() {
                   </div>
                 )}
 
-                <button className="admin-btn" onClick={handleReset}>
+                <button className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover" onClick={handleReset}>
                   Nova extração
                 </button>
               </div>
