@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md (Tailwind v4 + public shell + /doacoes)
-last_updated: "2026-10-26T21:57:09.517Z"
+stopped_at: Completed 04-02-PLAN.md (busca/cidade/ordenacao + migration 0003 + seed dev)
+last_updated: "2026-10-26T22:19:30.524Z"
 last_activity: 2026-10-26
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 19
-  completed_plans: 14
-  percent: 74
+  completed_plans: 15
+  percent: 50
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 ## Current Position
 
 Phase: 04 (public-board-frontend) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-10-26
 
-Progress: [███████░░░] 74%
+Progress: [████████░░] 79%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [███████░░░] 74%
 | Phase 03 P03 | 17min | 2 tasks | 5 files |
 | Phase 03 P04 | 26min | 2 tasks | 9 files |
 | Phase 04 P01 | 7min | 3 tasks | 11 files |
+| Phase 04 P02 | 197min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,10 @@ Recent decisions affecting current work:
 - [Phase ?]: Phase 04 Plan 01: Tailwind v4 tokens live verbatim in app/(public)/public.css @theme; public.css is imported only by (public)/layout.tsx so Preflight never reaches /admin/* (proven from build CSS chunks: / links the canvas chunk, /admin/paste does not).
 - [Phase ?]: Phase 04 Plan 01: internal navigation uses next/link (renders a plain a href) because @next/next/no-html-link-for-pages rejects raw anchors to app routes; the Doacoes entry points at the real /doacoes page.
 - [Phase ?]: Phase 04 Plan 01: globals.css stays Tailwind-free and is imported by the root layout (theme-color #0f0a1a, color-scheme dark); Next 15 added target ES2017 to tsconfig during lint and it was kept.
+- [Phase 04]: Phase 04 Plan 02: os valores canonicos de cidade no banco sao ACENTUADOS (Sao Paulo com til, Rio de Janeiro, Belo Horizonte, Remoto), ao contrario do que o plano/CONTEXT afirmavam; o mapa de aliases resolve sao-paulo/sao paulo/Sao Paulo para o valor acentuado de ALLOWED_CITIES e os testes inserem a forma acentuada (Rule 1) — Mapear para a forma sem acento filtraria zero linhas contra as vagas reais extraidas
+- [Phase 04]: Phase 04 Plan 02: a migration 0003 mantem jobs_search_text_trg ATIVO durante o backfill e desabilita apenas jobs_updated_at, reabilitando-o na mesma transacao; aplicada nos dois branches Neon (test e dev) e verificada ao vivo (prosrc contem requirements, pg_trigger.tgenabled='O')
+- [Phase 04]: Phase 04 Plan 02: o filtro q usa exatamente uma lista de predicados compartilhada entre items e count (status='published' literal mantem o indice trigram parcial utilizavel), escapa barra/percent/underscore e faz bind via func.concat + LIKE ESCAPE; ordenacao sempre termina com tie-break por id
+- [Phase 04]: Phase 04 Plan 02: scripts/seed_public_demo.py e o unico caminho para popular o board antes do fluxo de aprovacao da Phase 5; exige ENV=dev + host local/.neon.tech + --yes, apaga por marcador SEED_PUBLIC_DEMO e nunca escreve search_text. 30 vagas published ficaram no branch dev para a verificacao de browser dos planos seguintes
 
 ### Pending Todos
 
@@ -126,6 +131,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-26T21:57:09.491Z
-Stopped at: Completed 04-01-PLAN.md (Tailwind v4 + public shell + /doacoes)
+Last session: 2026-10-26T22:19:30.497Z
+Stopped at: Completed 04-02-PLAN.md (busca/cidade/ordenacao + migration 0003 + seed dev)
 Resume file: None

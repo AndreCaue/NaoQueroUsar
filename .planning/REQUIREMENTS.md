@@ -44,9 +44,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Busca & Filtros
 
-- [ ] **SRCH-01**: Busca por palavra-chave é insensível a acento e caixa (ex.: "sao paulo" == "São Paulo")
-- [ ] **SRCH-02**: Filtro por cidade: São Paulo, Rio de Janeiro, Belo Horizonte, Remoto
-- [ ] **SRCH-03**: Ordenação por data de publicação (mais recentes por padrão; crescente/decrescente)
+- [x] **SRCH-01**: Busca por palavra-chave é insensível a acento e caixa (ex.: "sao paulo" == "São Paulo")
+- [x] **SRCH-02**: Filtro por cidade: São Paulo, Rio de Janeiro, Belo Horizonte, Remoto
+- [x] **SRCH-03**: Ordenação por data de publicação (mais recentes por padrão; crescente/decrescente)
 
 ### Anti-spam & Segurança
 
@@ -134,9 +134,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PUBL-03 | Phase 4 | Pending |
 | PUBL-04 | Phase 4 | Pending |
 | PUBL-06 | Phase 4 | Pending |
-| SRCH-01 | Phase 4 | Pending |
-| SRCH-02 | Phase 4 | Pending |
-| SRCH-03 | Phase 4 | Pending |
+| SRCH-01 | Phase 4 | Complete |
+| SRCH-02 | Phase 4 | Complete |
+| SRCH-03 | Phase 4 | Complete |
 | UIUX-01 | Phase 4 | Complete |
 | UIUX-02 | Phase 4 | Complete |
 | UIUX-03 | Phase 4 | Pending |
