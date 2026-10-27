@@ -83,3 +83,43 @@ async def test_pagination_limit_and_total(client, db_session, seed_published_job
 async def test_limit_above_cap_is_rejected(client):
     resp = await client.get("/api/v1/public/jobs", params={"limit": 999})
     assert resp.status_code == 422
+
+
+# --- CORS: the 429 countdown depends on a readable Retry-After (D-10b) -------
+
+
+async def test_cors_exposes_retry_after_on_actual_response(client, seed_published_job):
+    """Starlette only sets Expose-Headers on real responses, never on OPTIONS.
+
+    The reveal UI reads `Retry-After` from a cross-origin 429 (localhost:3000 →
+    localhost:8000). Without `expose_headers=["Retry-After"]` that read returns
+    `null` and the cooldown silently falls back to 10 s, so this asserts the
+    header on a regular GET (B-06).
+    """
+    resp = await client.get(
+        "/api/v1/public/jobs",
+        params={"limit": 1},
+        headers={"Origin": "http://localhost:3000"},
+    )
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    exposed = resp.headers.get("access-control-expose-headers", "")
+    assert "retry-after" in exposed.lower()
+
+
+async def test_cors_preflight_allows_reveal_post(client):
+    """The reveal POST is cross-origin JSON, so the preflight must allow it."""
+    resp = await client.options(
+        f"/api/v1/public/jobs/{uuid.uuid4()}/reveal-contact",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    assert resp.status_code == 200
+    allowed_methods = resp.headers.get("access-control-allow-methods", "")
+    assert "POST" in allowed_methods.upper()
+    # Deliberately NO expose-headers assertion here: Starlette omits it on the
+    # preflight reply (see the test above for where it actually appears).
+

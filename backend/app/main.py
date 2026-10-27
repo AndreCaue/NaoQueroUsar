@@ -28,6 +28,9 @@ def create_app() -> FastAPI:
         allow_origins=settings.cors_origins_list,
         allow_methods=["*"],
         allow_headers=["*"],
+        # `Retry-After` is not CORS-safelisted, so the reveal 429 countdown
+        # would silently fall back to 10s without this (D-10b/T-04-16).
+        expose_headers=["Retry-After"],
         allow_credentials=False,
     )
 
