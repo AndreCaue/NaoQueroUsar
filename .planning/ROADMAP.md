@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Backend Foundation, Data & Admin Auth** - FastAPI + Neon, schema `jobs` (status/expires_at/contact invariant) e login master por JWT (completed 2026-10-15)
 - [ ] **Phase 2: LLM Extraction Pipeline** - Colar texto bruto → extração estruturada via Groq → cards `pending` (HIGH RISK)
 - [ ] **Phase 3: Contact Reveal & Anti-Spam** - Contato só via endpoint dedicado, Turnstile server-side + rate limit (HIGH RISK)
-- [ ] **Phase 4: Public Board Frontend** - Grade mobile-first, modal, busca/filtro/ordenação, reveal no clique, tema dark roxo
+- [x] **Phase 4: Public Board Frontend** - Grade mobile-first, modal, busca/filtro/ordenação, reveal no clique, tema dark roxo (completed 2026-10-27)
 - [ ] **Phase 5: Admin Review Area** - Fila `pending`, aprovar/editar/excluir, texto-fonte ao lado dos campos, publicar
 - [ ] **Phase 6: Lifecycle, Trust, Legal & Launch** - Expiração hard-delete 14 dias, badge/report, páginas legais e deploy (HIGH RISK)
 
@@ -155,7 +155,7 @@ Plans:
 
 **Wave 5** *(blocked on 04-01..04-05)*
 
-- [ ] 04-06-PLAN.md — ADS placeholders, focus/motion polish, `verify-ssr.ps1` gate, human verification checkpoint
+- [x] 04-06-PLAN.md — ADS placeholders, focus/motion polish, `verify-ssr.ps1` gate, human verification checkpoint
 
 **UI hint**: yes
 
@@ -202,6 +202,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
 | 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
 | 3. Contact Reveal & Anti-Spam | 4/5 | In Progress|  |
-| 4. Public Board Frontend | 5/6 | In Progress|  |
+| 4. Public Board Frontend | 6/6 | Complete   | 2026-10-27 |
 | 5. Admin Review Area | 0/TBD | Not started | - |
 | 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |
