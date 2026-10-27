@@ -1,3 +1,33 @@
+export type JobStatus = "pending" | "published" | "needs_review" | "invalid";
+
+/**
+ * Public job payload (contact-free by design — PUBL-05/D-18).
+ *
+ * These are exactly the fields the board is allowed to render. The backend
+ * guarantees `contact_email`/`contact_phone` never appear in the list/detail
+ * response, so the board cannot leak a contact even by accident.
+ */
+export interface JobPublic {
+  id: string;
+  title: string;
+  company: string | null;
+  activities: string | null;
+  requirements: string | null;
+  salary: string | null;
+  benefits: string | null;
+  city: string;
+  status: JobStatus;
+  created_at: string; // ISO 8601
+  expires_at: string; // ISO 8601
+}
+
+export interface JobListResponse {
+  items: JobPublic[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
 export interface DiscardedJob {
   reason: string;
   snippet: string;
