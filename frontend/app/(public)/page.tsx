@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AdSlot } from "@/components/board/AdSlot";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
 import { JobGrid } from "@/components/board/JobGrid";
 import { Pagination } from "@/components/board/Pagination";
@@ -63,18 +64,22 @@ export default async function Page({
       : null;
 
   return (
-    <div id="vagas" className="pt-8">
-      <h1 className="text-[28px] font-semibold leading-tight [text-wrap:balance]">
-        Vagas abertas
-      </h1>
-      <p className="mt-2 text-base text-fg-muted">
-        Sem cadastro, sem login. Encontre e candidate-se.
-      </p>
+    <div className="pt-8">
+      <AdSlot variant="header" />
 
-      <div className="mt-6">
-        <BoardToolbar filters={filters} total={data.total} />
+      <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6 lg:items-start">
+        <div id="vagas" className="min-w-0">
+          <h1 className="text-[28px] font-semibold leading-tight [text-wrap:balance]">
+            Vagas abertas
+          </h1>
+          <p className="mt-2 text-base text-fg-muted">
+            Sem cadastro, sem login. Encontre e candidate-se.
+          </p>
 
-        {/* Server-rendered not-found panel (B-04): malformed and
+          <div className="mt-6">
+            <BoardToolbar filters={filters} total={data.total} />
+
+            {/* Server-rendered not-found panel (B-04): malformed and
             valid-but-missing ids both land here, and a plain board visit never
             does. It carries no reveal footer and no contact data. The board
             stays rendered underneath so the visitor still has jobs. */}
@@ -150,6 +155,11 @@ export default async function Page({
             </Link>
           </div>
         )}
+      </div>
+        </div>
+        <aside className="hidden lg:block">
+          <AdSlot variant="sidebar" />
+        </aside>
       </div>
     </div>
   );

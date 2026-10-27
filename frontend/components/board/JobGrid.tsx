@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 
 import type { JobPublic } from "@/lib/api";
 
+import { AdSlot } from "./AdSlot";
 import { JobCard } from "./JobCard";
 import { JobDetailDialog } from "./JobDetailDialog";
 
@@ -64,10 +65,15 @@ export function JobGrid({ jobs, initialJob }: JobGridProps) {
   return (
     <>
       <ul className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        {jobs.map((job) => (
-          <li key={job.id} className="h-full">
-            <JobCard job={job} onOpen={handleOpen} />
-          </li>
+        {jobs.map((job, index) => (
+          <>
+            <li key={job.id} className="h-full min-w-0">
+              <JobCard job={job} onOpen={handleOpen} />
+            </li>
+            {(index + 1) % 6 === 0 && index + 1 < jobs.length ? (
+              <AdSlot key={`ad-${index}`} variant="inline" />
+            ) : null}
+          </>
         ))}
       </ul>
       {selected ? (
