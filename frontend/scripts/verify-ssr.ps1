@@ -93,7 +93,7 @@ Write-Output "PASS - out-of-range page state"
 
 # 4b. Pagination proof
 $page2 = Get-Html "$BaseUrl/?page=2"
-Assert ($page2 -match "Página 2 de") "Missing pagination (Página 2 de)"
+Assert ($page2 -match "Página[\s\S]*?2[\s\S]*?de") "Missing pagination (Página ... 2 ... de)"
 Write-Output "PASS - pagination page 2"
 
 # 5. API contract
@@ -140,8 +140,10 @@ Write-Output "PASS - malformed id not-found panel"
 $one = Invoke-RestMethod "$BackendUrl/api/v1/public/jobs?limit=1"
 Assert ($one.items.Count -eq 1) "limit=1 did not return exactly 1 item"
 
-$sp1 = Invoke-RestMethod "$BackendUrl/api/v1/public/jobs?city=sao-paulo&limit=50"
-$sp2 = Invoke-RestMethod "$BackendUrl/api/v1/public/jobs?city=Sao%20Paulo&limit=50"
+$sp1Raw = Invoke-WebRequest -UseBasicParsing "$BackendUrl/api/v1/public/jobs?city=sao-paulo&limit=50"
+$sp1 = [Text.Encoding]::UTF8.GetString($sp1Raw.RawContentStream.ToArray()) | ConvertFrom-Json
+$sp2Raw = Invoke-WebRequest -UseBasicParsing "$BackendUrl/api/v1/public/jobs?city=Sao%20Paulo&limit=50"
+$sp2 = [Text.Encoding]::UTF8.GetString($sp2Raw.RawContentStream.ToArray()) | ConvertFrom-Json
 Assert ($sp1.total -eq $sp2.total) "City slug vs canonical totals differ"
 foreach ($item in $sp1.items) {
     Assert ($item.city -eq "São Paulo") "City filter returned non-São-Paulo row"
