@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Revisão Admin
 
-- [ ] **REVW-01**: Admin visualiza a fila de vagas com status `pending`
+- [x] **REVW-01**: Admin visualiza a fila de vagas com status `pending`
 - [ ] **REVW-02**: Admin aprova uma vaga, mudando seu status para `published`
 - [ ] **REVW-03**: Admin edita os campos de uma vaga pelo seu ID
 - [ ] **REVW-04**: Admin exclui uma vaga
@@ -140,7 +140,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UIUX-01 | Phase 4 | Complete |
 | UIUX-02 | Phase 4 | Complete |
 | UIUX-03 | Phase 4 | Complete |
-| REVW-01 | Phase 5 | Pending |
+| REVW-01 | Phase 5 | Complete |
 | REVW-02 | Phase 5 | Pending |
 | REVW-03 | Phase 5 | Pending |
 | REVW-04 | Phase 5 | Pending |
