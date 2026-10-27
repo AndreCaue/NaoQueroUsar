@@ -172,7 +172,14 @@ Plans:
   4. O fluxo completo colar → extrair → revisar → aprovar funciona de ponta a ponta dentro da área admin (consumindo o endpoint de extração da Fase 2).
   5. A área admin é protegida: acesso sem sessão autenticada é redirecionado/negado.
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Backend review API (CRUD helpers, schemas, rotas, testes)
+- [ ] 05-02-PLAN.md — Admin shell Tailwind v4 (admin.css, layout, ToastProvider, AdminGuard, hub)
+- [ ] 05-03-PLAN.md — Migracao do paste para Tailwind v4
+- [ ] 05-04-PLAN.md — Fila de review (ReviewRow, modais, ReviewQueue, page)
+
 **UI hint**: yes
 
 ### Phase 6: Lifecycle, Trust, Legal & Launch
