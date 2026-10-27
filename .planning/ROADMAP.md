@@ -175,8 +175,13 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 05-01-PLAN.md — Backend review API (CRUD helpers, schemas, rotas, testes)
 - [ ] 05-02-PLAN.md — Admin shell Tailwind v4 (admin.css, layout, ToastProvider, AdminGuard, hub)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 05-03-PLAN.md — Migracao do paste para Tailwind v4
 - [ ] 05-04-PLAN.md — Fila de review (ReviewRow, modais, ReviewQueue, page)
 
