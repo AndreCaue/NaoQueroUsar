@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BoardToolbar } from "@/components/board/BoardToolbar";
 import { JobGrid } from "@/components/board/JobGrid";
 import { Pagination } from "@/components/board/Pagination";
 import {
@@ -9,7 +10,6 @@ import {
   PAGE_SIZE,
   normalizeFilters,
 } from "@/lib/filters";
-import { formatJobCount } from "@/lib/format";
 import { fetchBoard, fetchJob } from "@/lib/jobs";
 
 type BoardSearchParams = Promise<
@@ -72,11 +72,7 @@ export default async function Page({
       </p>
 
       <div className="mt-6">
-        {data.total > 0 ? (
-          <p role="status" aria-live="polite" className="text-sm text-fg-muted">
-            {formatJobCount(data.total)}
-          </p>
-        ) : null}
+        <BoardToolbar filters={filters} total={data.total} />
 
         {/* Server-rendered not-found panel (B-04): malformed and
             valid-but-missing ids both land here, and a plain board visit never
@@ -103,7 +99,7 @@ export default async function Page({
           <>
             <div className="mt-4">
               <JobGrid
-                key={buildBoardHref(filters)}
+                key={[filters.q, filters.city, filters.sort, filters.page].join("|")}
                 jobs={data.items}
                 initialJob={initialJob}
               />
