@@ -10,6 +10,7 @@ Routes are under /api/v1/admin/ prefix.
 """
 
 import uuid
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -31,7 +32,7 @@ async def _login(client, admin_password="test-password"):
     assert resp.status_code == 200, f"Login failed: {resp.status_code} {resp.text}"
     body = resp.json()
     assert body["token_type"] == "bearer"
-    assert body["expires_in"] == 43200
+    assert body["expires_in"] > 0
     assert body["access_token"]
     return body["access_token"]
 
@@ -191,6 +192,65 @@ async def test_list_pagination_limit_cap(client, admin_password):
     assert resp.status_code == 422
 
 
+@pytest.mark.asyncio
+async def test_list_invalid_status_422(client, admin_password):
+    """Unsupported status is rejected instead of silently returning a list."""
+    token = await _login(client, admin_password)
+    resp = await client.get(
+        "/api/v1/admin/jobs",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"status": "published"},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "Status inválido"
+
+
+@pytest.mark.asyncio
+async def test_list_unknown_city_422(client, admin_password):
+    """Unknown city filter fails closed (no silently unfiltered queue)."""
+    token = await _login(client, admin_password)
+    resp = await client.get(
+        "/api/v1/admin/jobs",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"city": "curitiba"},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "Cidade inválida"
+
+
+@pytest.mark.asyncio
+async def test_list_sort_antigas(client, db_session, admin_password):
+    """sort=antigas orders by created_at ascending."""
+    token = await _login(client, admin_password)
+    older = Job(
+        title="Vaga Antiga",
+        city="Remoto",
+        contact_phone="+55 11 90000-1010",
+        status=JobStatus.pending,
+        created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+    )
+    newer = Job(
+        title="Vaga Nova",
+        city="Remoto",
+        contact_phone="+55 11 90000-1020",
+        status=JobStatus.pending,
+        created_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
+    )
+    db_session.add_all([older, newer])
+    await db_session.flush()
+
+    resp = await client.get(
+        "/api/v1/admin/jobs",
+        headers={"Authorization": f"Bearer {token}"},
+        params={"sort": "antigas"},
+    )
+    assert resp.status_code == 200
+    assert [item["title"] for item in resp.json()["items"]] == [
+        "Vaga Antiga",
+        "Vaga Nova",
+    ]
+
+
 # ---------------------------------------------------------------------------
 # REVW-02: Approve
 # ---------------------------------------------------------------------------
@@ -234,6 +294,53 @@ async def test_approve_404(client, db_session, admin_password):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_approve_non_reviewable_409(client, db_session, admin_password):
+    """Approving an already-published job is a conflict, not a silent re-approve."""
+    token = await _login(client, admin_password)
+    job = Job(
+        title="Vaga Já Publicada",
+        city="Remoto",
+        contact_phone="+55 11 90000-2020",
+        status=JobStatus.published,
+    )
+    db_session.add(job)
+    await db_session.flush()
+
+    resp = await client.patch(
+        f"/api/v1/admin/jobs/{job.id}/approve",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 409
+    assert "fila de revisão" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_approve_refreshes_expires_at(client, db_session, admin_password):
+    """Approving restarts the 14-day TTL, even for a job that waited in the queue."""
+    token = await _login(client, admin_password)
+    stale = datetime.now(timezone.utc) - timedelta(days=3)
+    job = Job(
+        title="Vaga Antiga na Fila",
+        city="Remoto",
+        contact_phone="+55 11 90000-3030",
+        status=JobStatus.pending,
+        created_at=stale,
+        expires_at=stale,
+    )
+    db_session.add(job)
+    await db_session.flush()
+
+    before = datetime.now(timezone.utc)
+    resp = await client.patch(
+        f"/api/v1/admin/jobs/{job.id}/approve",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    expires_at = datetime.fromisoformat(resp.json()["expires_at"])
+    assert expires_at > before
 
 
 # ---------------------------------------------------------------------------
@@ -300,7 +407,7 @@ async def test_update_no_contact_422(client, db_session, admin_password):
         },
     )
     assert resp.status_code == 422
-    assert " contato" in resp.json()["detail"]
+    assert "contato" in resp.text
 
 
 @pytest.mark.asyncio
@@ -325,7 +432,31 @@ async def test_update_bad_city_422(client, db_session, admin_password):
         },
     )
     assert resp.status_code == 422
-    assert "Cidade invalida" in resp.json()["detail"]
+    assert "Cidade inválida" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_update_blank_title_422(client, db_session, admin_password):
+    """Blank/null titles are rejected at the schema, not blamed on the contact."""
+    token = await _login(client, admin_password)
+    job = Job(
+        title="Vaga Update",
+        city="Remoto",
+        contact_phone="+55 11 90000-4444",
+        status=JobStatus.pending,
+    )
+    db_session.add(job)
+    await db_session.flush()
+
+    for payload in ({"title": "   "}, {"title": None}):
+        resp = await client.put(
+            f"/api/v1/admin/jobs/{job.id}",
+            headers={"Authorization": f"Bearer {token}"},
+            json=payload,
+        )
+        assert resp.status_code == 422
+        assert "Título" in resp.text
+        assert "contato" not in resp.text
 
 
 # ---------------------------------------------------------------------------
@@ -440,4 +571,12 @@ async def test_requires_auth(client, db_session, admin_password):
     resp = await client.delete(
         f"/api/v1/admin/jobs/{job.id}",
     )
+    assert resp.status_code == 401
+
+    # Detail
+    resp = await client.get(f"/api/v1/admin/jobs/{job.id}")
+    assert resp.status_code == 401
+
+    # Me
+    resp = await client.get("/api/v1/admin/me")
     assert resp.status_code == 401

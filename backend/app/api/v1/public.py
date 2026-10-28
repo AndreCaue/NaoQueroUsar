@@ -14,6 +14,7 @@ from app.schemas.job import (
     JobPublic,
     RevealRequest,
 )
+from app.services.cities import resolve_city, resolve_sort
 from app.services.turnstile import TurnstileVerifier, turnstile_error_detail
 
 # Mounted by router.py without an extra prefix, so these resolve to
@@ -25,28 +26,7 @@ router = APIRouter(prefix="/public", tags=["public"])
 # DB spelling and the accented label all resolve to the value actually stored
 # in ``jobs.city`` — which is the accented form of ``ALLOWED_CITIES`` in
 # ``app/services/extraction/extractor.py``. Unknown values are ignored (200).
-_CITY_ALIASES: dict[str, str] = {
-    "sao-paulo": "São Paulo",
-    "sao paulo": "São Paulo",
-    "são paulo": "São Paulo",
-    "rio-de-janeiro": "Rio de Janeiro",
-    "rio de janeiro": "Rio de Janeiro",
-    "belo-horizonte": "Belo Horizonte",
-    "belo horizonte": "Belo Horizonte",
-    "remoto": "Remoto",
-}
-
-
-def _resolve_city(value: str | None) -> str | None:
-    """Whitelist the city (slug/canonical/label); anything else is ``None``."""
-    if not value:
-        return None
-    return _CITY_ALIASES.get(value.strip().lower())
-
-
-def _resolve_sort(value: str) -> str:
-    """Only ``antigas`` changes the order; everything else is ``recentes``."""
-    return "antigas" if value.strip().lower() == "antigas" else "recentes"
+# The table itself lives in ``app.services.cities`` (shared with the admin).
 
 
 @router.get("/jobs", response_model=JobListResponse)
@@ -77,8 +57,8 @@ async def list_public_jobs(
         page=page,
         limit=limit,
         q=term,
-        city=_resolve_city(city),
-        sort=_resolve_sort(sort),
+        city=resolve_city(city),
+        sort=resolve_sort(sort),
     )
     return JobListResponse(
         items=[JobPublic.model_validate(job) for job in items],

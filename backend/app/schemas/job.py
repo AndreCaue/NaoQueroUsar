@@ -16,13 +16,14 @@ Admin schemas (below) expose contact + source_snippet because the routes
 are guarded by ``require_admin`` — contact is only visible behind auth.
 """
 
+import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.job import JobStatus
+from app.services.cities import resolve_city
 
 
 class JobPublic(BaseModel):
@@ -112,11 +113,12 @@ class JobAdmin(BaseModel):
 class JobUpdate(BaseModel):
     """Partial update schema for job fields via PUT /admin/jobs/{id}.
 
-    All fields are optional — only provided fields are applied.
-    City validation against allowed set is enforced via Literal (fails fast
-    before DB) and normalized to canonical accented form.
-    At least one contact (email or phone) must remain non-empty — enforced
-    by DB CHECK and caught as ``422`` via ``IntegrityError``.
+    All fields are optional — only provided fields are applied. ``title`` and
+    ``city`` cannot be blanked and ``city`` is normalized to its canonical
+    accented form (slug/label/canonical all accepted). Contact fields are
+    trimmed, format-checked and empty strings collapse to ``None``; clearing
+    both contacts in one payload is rejected here, and the DB CHECK remains
+    the final guard for a partial clear.
     """
 
     model_config = ConfigDict(from_attributes=True)
@@ -127,35 +129,63 @@ class JobUpdate(BaseModel):
     requirements: str | None = Field(default=None)
     salary: str | None = Field(default=None, max_length=80)
     benefits: str | None = Field(default=None, max_length=255)
-    city: str | None = Field(default=None)
+    city: str | None = Field(default=None, max_length=80)
     contact_email: str | None = Field(default=None, max_length=254)
     contact_phone: str | None = Field(default=None, max_length=30)
 
+    @field_validator("title")
     @classmethod
-    def _resolve_city(cls, value: str | None) -> str | None:
-        """Resolve city slug/label to canonical accented form."""
-        if not value:
-            return None
-        aliases: dict[str, str] = {
-            "sao-paulo": "São Paulo",
-            "sao paulo": "São Paulo",
-            "são paulo": "São Paulo",
-            "rio-de-janeiro": "Rio de Janeiro",
-            "rio de janeiro": "Rio de Janeiro",
-            "belo-horizonte": "Belo Horizonte",
-            "belo horizonte": "Belo Horizonte",
-            "remoto": "Remoto",
-        }
-        return aliases.get(value.strip().lower())
+    def _title_not_blank(cls, value: str | None) -> str | None:
+        if value is None:
+            raise ValueError("Título é obrigatório")
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Título é obrigatório")
+        return stripped
 
+    @field_validator("city")
     @classmethod
-    def _validate_at_least_one_contact(cls, values: dict) -> dict:
-        """Pydantic model_validator: require at least one contact."""
-        contact_email = values.get("contact_email")
-        contact_phone = values.get("contact_phone")
-        if not contact_email and not contact_phone:
-            raise ValueError("Vaga precisa ter ao menos um contato (email ou telefone)")
-        return values
+    def _resolve_city_field(cls, value: str | None) -> str | None:
+        if value is None:
+            raise ValueError("Cidade é obrigatória")
+        resolved = resolve_city(value)
+        if resolved is None:
+            raise ValueError("Cidade inválida")
+        return resolved
+
+    @field_validator("contact_email")
+    @classmethod
+    def _validate_email(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped:
+            return None
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", stripped):
+            raise ValueError("E-mail inválido")
+        return stripped
+
+    @field_validator("contact_phone")
+    @classmethod
+    def _validate_phone(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped:
+            return None
+        if len(re.sub(r"\D", "", stripped)) < 8:
+            raise ValueError("Telefone inválido")
+        return stripped
+
+    @model_validator(mode="after")
+    def _at_least_one_contact(self) -> "JobUpdate":
+        provided = self.model_fields_set
+        if "contact_email" in provided and "contact_phone" in provided:
+            if self.contact_email is None and self.contact_phone is None:
+                raise ValueError(
+                    "Vaga precisa ter ao menos um contato (email ou telefone)"
+                )
+        return self
 
 
 class JobAdminListResponse(BaseModel):

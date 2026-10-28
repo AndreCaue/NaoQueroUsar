@@ -1,12 +1,16 @@
 """CRUD for jobs: public read queries (D-17) and extraction writes (D-03)."""
 
 import uuid
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy.exc import IntegrityError
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.job import Job, JobStatus
+
+PUBLISHED_TTL = timedelta(days=14)
 
 __all__ = ["list_published", "get_published", "bulk_create_pending", "list_by_status", "get_job", "approve_job", "update_job", "delete_job"]
 
@@ -99,7 +103,7 @@ async def list_by_status(
     """List jobs by status (no expires_at filter — admin sees all pending regardless of age).
 
     Mirrors ``list_published`` but filters ``Job.status == status`` only.
-    City filter uses canonical DB value (resolved via ``_resolve_city`` like public).
+    City filter uses canonical DB value (resolved via ``resolve_city`` like public).
     Sort ``recentes`` (default, ``created_at DESC``) or ``antigas`` (``ASC``).
     Tie-break by ``id``.
     """
@@ -131,8 +135,15 @@ async def get_job(session: AsyncSession, job_id: uuid.UUID) -> Job | None:
 
 
 async def approve_job(session: AsyncSession, job: Job) -> Job:
-    """Set job.status = ``published`` and flush (caller owns transaction/commit)."""
+    """Publish a job and restart its 14-day TTL (caller owns transaction/commit).
+
+    A job can sit in the review queue for longer than 14 days; without this
+    refresh it would be published with ``expires_at`` already in the past —
+    ``GET /public/jobs`` filters on ``expires_at > now()``, so it would be
+    invisible forever even though the admin saw "aprovada e publicada".
+    """
     job.status = JobStatus.published
+    job.expires_at = datetime.now(timezone.utc) + PUBLISHED_TTL
     await session.flush()
     return job
 
