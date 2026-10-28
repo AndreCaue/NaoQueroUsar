@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { Turnstile } from "next-turnstile";
 import { loginAdmin, extractJobs, type ExtractSummary } from "@/lib/api";
-
-const TOKEN_KEY = "nqu_admin_token";
+import { TOKEN_KEY } from "@/lib/auth";
 
 // The site key is a public value (the secret never reaches the browser).
 // Outside production we fall back to Cloudflare's public always-pass test key

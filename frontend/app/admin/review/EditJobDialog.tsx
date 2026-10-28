@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type RefObject,
+} from "react";
 
 import { useToast } from "@/components/admin/ToastProvider";
 import { X } from "@/components/admin/icons";
 import { updateJob, type JobAdmin, type JobUpdate } from "@/lib/api";
 import { CITY_OPTIONS, type CitySlug } from "@/lib/cities";
-
-const TOKEN_KEY = "nqu_admin_token";
 
 interface FormState {
   title: string;
@@ -27,12 +31,20 @@ type FormErrors = Partial<
 
 function slugFromCanonical(canonical: string | null | undefined): CitySlug | "" {
   if (!canonical) return "";
+  const target = fold(canonical);
   const match = CITY_OPTIONS.find(
-    (option) =>
-      option.canonical.toLowerCase() === canonical.toLowerCase() ||
-      option.slug === canonical.toLowerCase(),
+    (option) => fold(option.canonical) === target || option.slug === target,
   );
   return match?.slug ?? "";
+}
+
+/** Case- and accent-insensitive comparison key. */
+function fold(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 function toFormState(job: JobAdmin | null): FormState {
@@ -49,14 +61,6 @@ function toFormState(job: JobAdmin | null): FormState {
   };
 }
 
-function getToken(): string | null {
-  try {
-    return sessionStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
 function Field({
   label,
   value,
@@ -65,6 +69,8 @@ function Field({
   placeholder,
   type = "text",
   disabled = false,
+  maxLength,
+  inputRef,
 }: {
   label: string;
   value: string;
@@ -73,6 +79,8 @@ function Field({
   placeholder?: string;
   type?: string;
   disabled?: boolean;
+  maxLength?: number;
+  inputRef?: RefObject<HTMLInputElement | null>;
 }) {
   const id = `field-${label.toLowerCase().replace(/\s+/g, "-")}`;
   return (
@@ -82,10 +90,12 @@ function Field({
       </label>
       <input
         id={id}
+        ref={inputRef}
         type={type}
         value={value}
         placeholder={placeholder}
         disabled={disabled}
+        maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
         className="min-h-11 w-full rounded-lg border border-line-strong bg-canvas px-3 text-base text-fg placeholder:text-fg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
       />
@@ -104,12 +114,14 @@ function Textarea({
   onChange,
   placeholder,
   disabled = false,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  maxLength?: number;
 }) {
   const id = `field-${label.toLowerCase().replace(/\s+/g, "-")}`;
   return (
@@ -122,6 +134,7 @@ function Textarea({
         value={value}
         placeholder={placeholder}
         disabled={disabled}
+        maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
         className="min-h-24 w-full resize-y rounded-lg border border-line-strong bg-canvas px-3 py-2 text-base text-fg placeholder:text-fg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
       />
@@ -150,6 +163,7 @@ function SnippetPanel({ snippet }: { snippet: string | null }) {
 
 export interface EditJobDialogProps {
   job: JobAdmin | null;
+  token: string | null;
   open: boolean;
   onClose: () => void;
   onSaved: (job: JobAdmin) => void;
@@ -164,28 +178,32 @@ export interface EditJobDialogProps {
  */
 export function EditJobDialog({
   job,
+  token,
   open,
   onClose,
   onSaved,
 }: EditJobDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [form, setForm] = useState<FormState>(() => toFormState(job));
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
 
-  // Reset the form whenever a different job is opened.
+  // Reset on every open, not just when the object identity changes: reopening
+  // the same row after "Cancelar" must discard the abandoned edits (CR-01).
   useEffect(() => {
+    if (!open) return;
     setForm(toFormState(job));
     setErrors({});
-  }, [job]);
+  }, [job, open]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) {
       dialog.showModal();
-      dialog.focus();
+      titleRef.current?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
     }
@@ -207,7 +225,9 @@ export function EditJobDialog({
   const validate = (): boolean => {
     const next: FormErrors = {};
     if (!form.title.trim()) next.title = "Título é obrigatório.";
-    if (!form.citySlug) next.city = "Selecione uma cidade.";
+    // A legacy row can carry a city outside CITY_OPTIONS. Keep it editable
+    // (payload falls back to job.city) instead of blocking every save.
+    if (!form.citySlug && !job?.city) next.city = "Selecione uma cidade.";
     const email = form.contact_email.trim();
     const phone = form.contact_phone.trim();
     if (!email && !phone) {
@@ -223,12 +243,11 @@ export function EditJobDialog({
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (saving || !job) return;
     if (!validate()) return;
 
-    const token = getToken();
     if (!token) {
       toast("Sessão expirada. Entre novamente.", "error");
       return;
@@ -314,6 +333,8 @@ export function EditJobDialog({
             <Field
               label="Título"
               value={form.title}
+              inputRef={titleRef}
+              maxLength={200}
               onChange={(value) => setForm((prev) => ({ ...prev, title: value }))}
               error={errors.title}
               placeholder="Título da vaga"
@@ -322,6 +343,7 @@ export function EditJobDialog({
             <Field
               label="Empresa"
               value={form.company}
+              maxLength={150}
               onChange={(value) => setForm((prev) => ({ ...prev, company: value }))}
               placeholder="Nome da empresa (opcional)"
               disabled={saving}
@@ -363,6 +385,7 @@ export function EditJobDialog({
             <Field
               label="Salário"
               value={form.salary}
+              maxLength={80}
               onChange={(value) => setForm((prev) => ({ ...prev, salary: value }))}
               placeholder="Ex.: R$ 2.500 ou A combinar"
               disabled={saving}
@@ -370,6 +393,7 @@ export function EditJobDialog({
             <Field
               label="E-mail de contato"
               value={form.contact_email}
+              maxLength={254}
               onChange={(value) =>
                 setForm((prev) => ({ ...prev, contact_email: value }))
               }
@@ -381,6 +405,7 @@ export function EditJobDialog({
             <Field
               label="Telefone de contato"
               value={form.contact_phone}
+              maxLength={30}
               onChange={(value) =>
                 setForm((prev) => ({ ...prev, contact_phone: value }))
               }
@@ -410,6 +435,7 @@ export function EditJobDialog({
             <Textarea
               label="Benefícios"
               value={form.benefits}
+              maxLength={255}
               onChange={(value) =>
                 setForm((prev) => ({ ...prev, benefits: value }))
               }

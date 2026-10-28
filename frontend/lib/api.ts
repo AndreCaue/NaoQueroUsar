@@ -47,7 +47,13 @@ export interface JobAdmin {
   expires_at: string; // ISO 8601
 }
 
-/** Partial fields that can be updated by admin via updateJob. */
+/**
+ * Partial fields that can be updated by admin via updateJob.
+ *
+ * Mirrors the backend `JobUpdate`: status and source_snippet are NOT editable
+ * here (Pydantic silently ignores unknown fields, so advertising them would
+ * let a caller believe a change was applied when it was not).
+ */
 export interface JobUpdate {
   title?: string;
   company?: string | null;
@@ -56,10 +62,8 @@ export interface JobUpdate {
   salary?: string | null;
   benefits?: string | null;
   city?: string;
-  status?: JobStatus;
   contact_email?: string | null;
   contact_phone?: string | null;
-  source_snippet?: string | null;
 }
 
 /** Response from listAdminJobs — paginated admin list. */
@@ -101,6 +105,44 @@ export interface ExtractSummary {
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 /**
+ * HTTP error that preserves the status code so callers can react to 401
+ * (expired admin session) instead of only showing the message.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+/**
+ * Extract a human-readable message from an error response.
+ * FastAPI returns `detail` as a string for HTTPException but as an array for
+ * RequestValidationError — flatten both instead of showing "Erro 422".
+ */
+async function readError(res: Response): Promise<string> {
+  const fallback = `Erro ${res.status}`;
+  try {
+    const body = await res.json();
+    if (typeof body?.detail === "string") return body.detail;
+    if (Array.isArray(body?.detail)) {
+      const parts = body.detail
+        .map((item: { loc?: (string | number)[]; msg?: string }) =>
+          [item.loc?.slice(1).join("."), item.msg].filter(Boolean).join(": "),
+        )
+        .filter(Boolean);
+      if (parts.length > 0) return parts.join("; ");
+    }
+  } catch {
+    // non-JSON body — the status is still authoritative
+  }
+  return fallback;
+}
+
+/**
  * Login admin via password + Cloudflare Turnstile token.
  * Returns JWT access_token stored in sessionStorage as "nqu_admin_token".
  */
@@ -112,16 +154,7 @@ export async function loginAdmin(password: string, cfToken: string): Promise<str
   });
 
   if (!res.ok) {
-    let detail = `Erro ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body && typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // ignore JSON parse errors
-    }
-    throw new Error(detail);
+    throw new ApiError(await readError(res), res.status);
   }
 
   const body = (await res.json()) as { access_token?: string };
@@ -146,16 +179,7 @@ export async function extractJobs(token: string, text: string): Promise<ExtractS
   });
 
   if (!res.ok) {
-    let detail = `Erro ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body && typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // ignore JSON parse errors
-    }
-    throw new Error(detail);
+    throw new ApiError(await readError(res), res.status);
   }
 
   return (await res.json()) as ExtractSummary;
@@ -201,15 +225,7 @@ export async function revealContact(
   }
 
   if (!res.ok) {
-    let detail = `Erro ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body && typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // ignore JSON parse errors — the status is still authoritative
-    }
+    const detail = await readError(res);
     const retryAfterHeader = res.headers.get("Retry-After");
     const retryAfter = retryAfterHeader
       ? Number.parseInt(retryAfterHeader, 10)
@@ -303,16 +319,7 @@ export async function listAdminJobs(
   });
 
   if (!res.ok) {
-    let detail = `Erro ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body && typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // ignore JSON parse errors
-    }
-    throw new Error(detail);
+    throw new ApiError(await readError(res), res.status);
   }
 
   return (await res.json()) as JobAdminListResponse;
@@ -326,16 +333,7 @@ export async function approveJob(token: string, id: string): Promise<JobAdmin> {
   });
 
   if (!res.ok) {
-    let detail = `Erro ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body && typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // ignore JSON parse errors
-    }
-    throw new Error(detail);
+    throw new ApiError(await readError(res), res.status);
   }
 
   return (await res.json()) as JobAdmin;
@@ -353,16 +351,7 @@ export async function updateJob(token: string, id: string, data: JobUpdate): Pro
   });
 
   if (!res.ok) {
-    let detail = `Erro ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body && typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // ignore JSON parse errors
-    }
-    throw new Error(detail);
+    throw new ApiError(await readError(res), res.status);
   }
 
   return (await res.json()) as JobAdmin;
@@ -376,15 +365,6 @@ export async function deleteJob(token: string, id: string): Promise<void> {
   });
 
   if (!res.ok) {
-    let detail = `Erro ${res.status}`;
-    try {
-      const body = await res.json();
-      if (body && typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // ignore JSON parse errors
-    }
-    throw new Error(detail);
+    throw new ApiError(await readError(res), res.status);
   }
 }

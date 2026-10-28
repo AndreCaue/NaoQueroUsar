@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
-const TOKEN_KEY = "nqu_admin_token";
+import { TOKEN_KEY } from "@/lib/auth";
 
 /**
  * Hook that protects admin routes.
@@ -31,10 +30,4 @@ export function useAdminGuard(): string | null {
   }, [router]);
 
   return token;
-}
-
-/** Component wrapper: renders children only after the guard effect runs. */
-export function AdminGuard({ children }: { children: ReactNode }) {
-  useAdminGuard();
-  return <>{children}</>;
 }

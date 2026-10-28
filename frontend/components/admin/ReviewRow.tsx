@@ -27,6 +27,13 @@ export interface ReviewRowProps {
 
 type PendingAction = "approve" | "delete" | null;
 
+const STATUS_LABELS: Record<JobAdmin["status"], string> = {
+  pending: "Pendente",
+  published: "Publicada",
+  needs_review: "Necessita revisão",
+  invalid: "Inválida",
+};
+
 const secondaryButton =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft disabled:opacity-50 disabled:cursor-not-allowed";
 
@@ -55,8 +62,7 @@ export function ReviewRow({
     onDelete();
   };
 
-  const statusLabel =
-    job.status === "needs_review" ? "Necessita revisão" : "Pendente";
+  const statusLabel = STATUS_LABELS[job.status];
 
   return (
     <article

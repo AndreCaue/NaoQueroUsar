@@ -1,21 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { TOKEN_KEY } from "@/lib/auth";
 
-import { useToast } from "@/components/admin/ToastProvider";
-
+/**
+ * Logs out by clearing the stored JWT and hard-navigating to the login page.
+ * A full reload is intentional: components such as ExtractForm keep the token
+ * in memory, so a client-side route change would leave the session alive.
+ */
 export function LogoutButton() {
-  const router = useRouter();
-  const { toast } = useToast();
-
   const handleLogout = () => {
     try {
-      sessionStorage.removeItem("nqu_admin_token");
+      sessionStorage.removeItem(TOKEN_KEY);
     } catch {
       // ignore storage errors
     }
-    toast("Sessão encerrada.", "success");
-    router.replace("/admin/paste");
+    window.location.replace("/admin/paste");
   };
 
   return (

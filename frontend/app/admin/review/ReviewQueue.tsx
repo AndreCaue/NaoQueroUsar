@@ -1,17 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAdminGuard } from "@/components/admin/AdminGuard";
 import { CityChips } from "@/components/admin/CityChips";
 import { ReviewRow } from "@/components/admin/ReviewRow";
 import { useToast } from "@/components/admin/ToastProvider";
 import {
+  ApiError,
   approveJob,
   deleteJob,
   listAdminJobs,
   type JobAdmin,
 } from "@/lib/api";
+import { TOKEN_KEY } from "@/lib/auth";
 import type { CitySlug } from "@/lib/cities";
 
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -19,11 +21,25 @@ import { EditJobDialog } from "./EditJobDialog";
 
 const PAGE_SIZE = 24;
 
+/** A 401 means the JWT expired: end the session instead of looping on retry. */
+function handleAuthError(err: unknown): boolean {
+  if (err instanceof ApiError && err.status === 401) {
+    try {
+      sessionStorage.removeItem(TOKEN_KEY);
+    } catch {
+      // ignore storage errors
+    }
+    window.location.replace("/admin/paste");
+    return true;
+  }
+  return false;
+}
+
 type Tab = "pending" | "needs_review";
 
 const TAB_LABELS: Record<Tab, string> = {
   pending: "Pendentes",
-  needs_review: "Necessita revisão",
+  needs_review: "Precisam correção",
 };
 
 /**
@@ -32,7 +48,8 @@ const TAB_LABELS: Record<Tab, string> = {
  *
  * O fetch roda em um único efeito com dependências explícitas
  * (token/tab/city/page/refreshKey) — sem loop de refetch. Mutações removem
- * o item da lista na hora e, em erro, restauram o snapshot + toast.
+ * o item da lista na hora e, em erro, restauram o snapshot (lista, total e
+ * badges) sem disparar um novo fetch que pudesse mascarar o rollback.
  */
 export function ReviewQueue() {
   const token = useAdminGuard();
@@ -57,6 +74,10 @@ export function ReviewQueue() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<JobAdmin | null>(null);
 
+  // Serializes mutations: a second approve/delete while one is in flight would
+  // apply an optimistic update on top of a snapshot that is already stale.
+  const mutatingRef = useRef(false);
+
   const reload = useCallback(() => setRefreshKey((key) => key + 1), []);
 
   useEffect(() => {
@@ -79,6 +100,7 @@ export function ReviewQueue() {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        if (handleAuthError(err)) return;
         setItems([]);
         setTotal(0);
         setError(
@@ -97,12 +119,19 @@ export function ReviewQueue() {
   }, [token, tab, city, page, refreshKey]);
 
   // Keep the inactive tab's badge in sync without blocking the main fetch.
+  // The badge respects the active city filter so the numbers match what the
+  // tab will actually show when clicked.
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
     const other: Tab = tab === "pending" ? "needs_review" : "pending";
 
-    listAdminJobs(token, { status: other, page: 1, limit: 1 })
+    listAdminJobs(token, {
+      status: other,
+      city: city ?? undefined,
+      page: 1,
+      limit: 1,
+    })
       .then((result) => {
         if (!cancelled) {
           setCounts((prev) => ({ ...prev, [other]: result.total }));
@@ -115,7 +144,7 @@ export function ReviewQueue() {
     return () => {
       cancelled = true;
     };
-  }, [token, tab, refreshKey]);
+  }, [token, tab, city, refreshKey]);
 
   const handleTabChange = (next: Tab) => {
     if (next === tab) return;
@@ -131,8 +160,14 @@ export function ReviewQueue() {
 
   const handleApprove = async (job: JobAdmin) => {
     if (!token) return;
+    if (mutatingRef.current) {
+      toast("Aguarde a operação anterior.", "error");
+      return;
+    }
+    mutatingRef.current = true;
     const snapshot = items;
     const previousTotal = total;
+    const previousCounts = counts;
 
     setItems((prev) => prev.filter((item) => item.id !== job.id));
     setTotal((prev) => Math.max(0, prev - 1));
@@ -152,20 +187,35 @@ export function ReviewQueue() {
     } catch (err) {
       setItems(snapshot);
       setTotal(previousTotal);
-      reload();
+      setCounts(previousCounts);
+      if (handleAuthError(err)) return;
       const message = err instanceof Error ? err.message : "Falha ao aprovar";
       toast(`Erro: ${message}`, "error");
+    } finally {
+      mutatingRef.current = false;
     }
   };
 
   const handleConfirmDelete = async () => {
     if (!token || !deleteTarget) return;
+    if (mutatingRef.current) {
+      toast("Aguarde a operação anterior.", "error");
+      // Re-throw so DeleteConfirmDialog keeps itself open instead of closing
+      // as if the delete had succeeded.
+      throw new Error("Operação em andamento");
+    }
+    mutatingRef.current = true;
     const target = deleteTarget;
     const snapshot = items;
     const previousTotal = total;
+    const previousCounts = counts;
 
     setItems((prev) => prev.filter((item) => item.id !== target.id));
     setTotal((prev) => Math.max(0, prev - 1));
+    setCounts((prev) => ({
+      ...prev,
+      [tab]: Math.max(0, (prev[tab] ?? 1) - 1),
+    }));
 
     try {
       await deleteJob(token, target.id);
@@ -179,10 +229,13 @@ export function ReviewQueue() {
     } catch (err) {
       setItems(snapshot);
       setTotal(previousTotal);
-      reload();
+      setCounts(previousCounts);
+      if (handleAuthError(err)) throw err;
       const message = err instanceof Error ? err.message : "Falha ao excluir";
       toast(`Erro: ${message}`, "error");
       throw err;
+    } finally {
+      mutatingRef.current = false;
     }
   };
 
@@ -197,7 +250,7 @@ export function ReviewQueue() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const renderSkeleton = () => (
-    <div className="mt-6 space-y-3" aria-busy="true" aria-live="polite">
+    <div className="mt-6 space-y-3" aria-busy="true" aria-hidden="true">
       {Array.from({ length: 6 }).map((_, index) => (
         <div
           key={index}
@@ -270,11 +323,13 @@ export function ReviewQueue() {
               key={key}
               type="button"
               role="tab"
+              id={`review-tab-${key}`}
               aria-selected={active}
+              aria-controls="review-tabpanel"
               onClick={() => handleTabChange(key)}
-              className={`-mb-px min-h-11 rounded-t-lg px-4 text-sm transition-colors ${
+              className={`min-h-11 rounded-t-lg px-4 text-sm transition-colors ${
                 active
-                  ? "border-b-2 border-accent font-semibold text-fg"
+                  ? "bg-accent-strong font-semibold text-white"
                   : "text-fg-muted hover:text-fg"
               }`}
             >
@@ -285,74 +340,88 @@ export function ReviewQueue() {
         })}
       </div>
 
-      <CityChips selected={city} onChange={handleCityChange} />
+      <div
+        id="review-tabpanel"
+        role="tabpanel"
+        aria-labelledby={`review-tab-${tab}`}
+      >
+        <CityChips selected={city} onChange={handleCityChange} />
 
-      {loading ? renderSkeleton() : null}
+        {loading ? (
+          <>
+            <p role="status" className="sr-only">
+              Carregando vagas…
+            </p>
+            {renderSkeleton()}
+          </>
+        ) : null}
 
-      {!loading && error ? (
-        <div className="mt-6 rounded-lg border border-danger bg-[rgba(248,113,113,0.1)] p-4">
-          <p className="text-[14px] text-danger-soft">
-            Não foi possível carregar a fila: {error}
-          </p>
-          <button
-            type="button"
-            onClick={reload}
-            className="mt-2 text-[14px] text-accent-soft hover:text-accent"
+        {!loading && error ? (
+          <div className="mt-6 rounded-lg border border-danger bg-[rgba(248,113,113,0.1)] p-4">
+            <p className="text-[14px] text-danger-soft">
+              Não foi possível carregar a fila: {error}
+            </p>
+            <button
+              type="button"
+              onClick={reload}
+              className="mt-2 text-[14px] text-accent-soft hover:text-accent"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : null}
+
+        {!loading && !error && items.length === 0 ? renderEmpty() : null}
+
+        {!loading && !error && items.length > 0 ? (
+          <ul className="mt-6 grid grid-cols-1 gap-3">
+            {items.map((job) => (
+              <li key={job.id}>
+                <ReviewRow
+                  job={job}
+                  onApprove={() => handleApprove(job)}
+                  onEdit={() => {
+                    setSelectedJob(job);
+                    setEditOpen(true);
+                  }}
+                  onDelete={() => setDeleteTarget(job)}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {!loading && !error && total > PAGE_SIZE ? (
+          <nav
+            aria-label="Paginação"
+            className="mt-6 flex items-center justify-between gap-3"
           >
-            Tentar novamente
-          </button>
-        </div>
-      ) : null}
-
-      {!loading && !error && items.length === 0 ? renderEmpty() : null}
-
-      {!loading && !error && items.length > 0 ? (
-        <ul className="mt-6 grid grid-cols-1 gap-3">
-          {items.map((job) => (
-            <li key={job.id}>
-              <ReviewRow
-                job={job}
-                onApprove={() => handleApprove(job)}
-                onEdit={() => {
-                  setSelectedJob(job);
-                  setEditOpen(true);
-                }}
-                onDelete={() => setDeleteTarget(job)}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {!loading && !error && total > PAGE_SIZE ? (
-        <nav
-          aria-label="Paginação"
-          className="mt-6 flex items-center justify-between gap-3"
-        >
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-            disabled={page <= 1}
-            className="min-h-11 rounded-lg border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-          <span className="text-[14px] text-fg-muted">
-            Página {page} de {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={page >= totalPages}
-            className="min-h-11 rounded-lg border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Próxima
-          </button>
-        </nav>
-      ) : null}
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page <= 1}
+              className="min-h-11 rounded-lg border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Anterior
+            </button>
+            <span className="text-[14px] text-fg-muted">
+              Página {page} de {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={page >= totalPages}
+              className="min-h-11 rounded-lg border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Próxima
+            </button>
+          </nav>
+        ) : null}
+      </div>
 
       <EditJobDialog
         job={selectedJob}
+        token={token}
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onSaved={handleSaved}

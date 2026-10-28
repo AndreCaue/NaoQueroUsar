@@ -8,7 +8,6 @@ export interface DeleteConfirmDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
-  loading?: boolean;
 }
 
 /**
@@ -22,18 +21,19 @@ export function DeleteConfirmDialog({
   open,
   onClose,
   onConfirm,
-  loading = false,
 }: DeleteConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
   const [deleting, setDeleting] = useState(false);
-  const busy = loading || deleting;
+  const busy = deleting;
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) {
       dialog.showModal();
-      dialog.focus();
+      // Destructive dialogs should not start focused on the danger button.
+      cancelRef.current?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
     }
@@ -94,6 +94,7 @@ export function DeleteConfirmDialog({
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
             type="button"
+            ref={cancelRef}
             onClick={close}
             disabled={busy}
             className="min-h-11 rounded-lg border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft disabled:opacity-50 disabled:cursor-not-allowed"
