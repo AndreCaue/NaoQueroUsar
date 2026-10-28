@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 05 UI-SPEC approved
-last_updated: "2026-10-27T02:22:17.698Z"
+status: ready_to_plan
+stopped_at: Phase 05 complete (4/4) — ready to discuss Phase 6
+last_updated: 2026-10-28T01:35:26.202Z
 last_activity: 2026-10-27
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 23
   completed_plans: 23
-  percent: 88
+  percent: 83
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-13)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 05 — admin-review-area
+**Current focus:** Phase 6 — lifecycle, trust, legal & launch
 
 ## Current Position
 
-Phase: 05 (admin-review-area) — COMPLETE
-Plan: 4 of 4 (05-04)
-Status: Phase complete — verification pending
-Last activity: 2026-10-27
+Phase: 6
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-10-28
 
 Progress: [██████████] 96%
 
@@ -36,7 +36,7 @@ Progress: [██████████] 96%
 
 **Velocity:**
 
-- Total plans completed: 9
+- Total plans completed: 13
 - Average duration: — min
 - Total execution time: 0.0 hours
 
@@ -46,7 +46,7 @@ Progress: [██████████] 96%
 |-------|-------|-------|----------|
 | 01 | 4 | - | - |
 | 03 | 5 | - | - |
-| 05 | 1 | 4 files | — min |
+| 05 | 4 | - | - |
 
 **Recent Trend:**
 

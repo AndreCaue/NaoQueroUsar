@@ -183,7 +183,7 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 05-03-PLAN.md — Migracao do paste para Tailwind v4
-- [ ] 05-04-PLAN.md — Fila de review (ReviewRow, modais, ReviewQueue, page)
+- [x] 05-04-PLAN.md — Fila de review (ReviewRow, modais, ReviewQueue, page)
 
 **UI hint**: yes
 
