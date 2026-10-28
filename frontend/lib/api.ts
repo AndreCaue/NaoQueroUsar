@@ -1,3 +1,5 @@
+import type { CitySlug } from "./cities";
+
 export type JobStatus = "pending" | "published" | "needs_review" | "invalid";
 
 /**
@@ -274,13 +276,16 @@ export interface DiscardedJob {
 
 /**
  * List admin jobs with optional filters (status, city) and pagination.
- * GET /api/v1/admin/jobs?status=pending&city=SP&page=1&limit=24
+ * GET /api/v1/admin/jobs?status=pending&city=sao-paulo&page=1&limit=24
+ *
+ * The admin endpoint only accepts `pending` / `needs_review`; `city` is a
+ * slug (the backend resolves slug/canonical/label server-side).
  */
 export async function listAdminJobs(
   token: string,
   params?: {
-    status?: JobStatus;
-    city?: "SP" | "RJ" | "BH" | "Remoto";
+    status?: "pending" | "needs_review";
+    city?: CitySlug;
     page?: number;
     limit?: number;
   },

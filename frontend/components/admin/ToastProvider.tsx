@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
+import type { ReactNode } from "react";
 
 /** Toast variant */
 export type ToastVariant = "success" | "error";
@@ -35,31 +36,49 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = (message: string, variant: ToastVariant = "success") => {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    setToasts((prev) => {
-      // Remove oldest if at max capacity
-      if (prev.length >= MAX_VISIBLE) {
-        setToasts((old) => old.slice(1));
-      }
-      const newToast: Toast = { id, message, variant };
-      setToasts((old) => [...old, newToast]);
-      return [...prev, newToast];
-    });
-    return id;
-  };
-
-  const dismiss = (id: string) => {
+  const dismiss = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
 
-  const dismissAll = () => {
+  const dismissAll = useCallback(() => {
     setToasts([]);
-  };
+  }, []);
+
+  const toast = useCallback(
+    (message: string, variant: ToastVariant = "success") => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setToasts((prev) => [
+        ...prev.slice(-(MAX_VISIBLE - 1)),
+        { id, message, variant },
+      ]);
+      window.setTimeout(() => dismiss(id), AUTODISMISS_MS);
+      return id;
+    },
+    [dismiss],
+  );
 
   return (
-    <ToastContext.Provider value={{ toast: addToast, dismiss, dismissAll, toasts }}>
+    <ToastContext.Provider value={{ toast, dismiss, dismissAll, toasts }}>
       {children}
+      <div
+        aria-live="polite"
+        aria-atomic="false"
+        className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4"
+      >
+        {toasts.map((item) => (
+          <div
+            key={item.id}
+            role="status"
+            className={`pointer-events-auto w-full max-w-md rounded-lg border px-4 py-3 text-sm ${
+              item.variant === "error"
+                ? "border-danger bg-[rgba(248,113,113,0.12)] text-danger-soft"
+                : "border-accent bg-[rgba(139,92,246,0.12)] text-fg"
+            }`}
+          >
+            {item.message}
+          </div>
+        ))}
+      </div>
     </ToastContext.Provider>
   );
 }
@@ -71,28 +90,4 @@ export function useToast(): ToastContextValue {
     throw new Error("useToast must be used within a ToastProvider");
   }
   return ctx;
-}
-
-/** Hook to use the admin guard context (companion to AdminGuard) */
-export function useAdminGuardContext() {
-  const ctx = useContext(AdminGuardContext);
-  if (!ctx) {
-    throw new Error("useAdminGuard must be used within an AdminGuardContext");
-  }
-  return ctx;
-}
-
-/** Context for AdminGuard */
-const AdminGuardContext = createContext<{
-  token: string | null;
-  setToken: (token: string | null) => void;
-} | undefined>(undefined);
-
-/** AdminGuard component wrapper */
-export function AdminGuard({ children }: { children: ReactNode }) {
-  const { token, setToken } = useAdminGuardContext();
-
-  // We need to use useEffect here, but AdminGuard is a component
-  // The hook useAdminGuard is the one that uses useEffect
-  return children;
 }

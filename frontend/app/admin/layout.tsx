@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+
 import "./admin.css";
+import { LogoutButton } from "@/components/admin/LogoutButton";
 import { ToastProvider } from "@/components/admin/ToastProvider";
 
 export const metadata: Metadata = {
@@ -18,41 +20,32 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-canvas text-fg">
-      <ToastProvider>{children}</ToastProvider>
-      <header
-        className="sticky top-0 z-40 border-b border-line bg-canvas"
-      >
-        <div className="mx-auto flex h-16 w-full max-w-[1120px] items-center justify-between gap-4 px-4 md:px-6">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-xl font-semibold text-fg">
-              NaoQueroUsar
-              <span aria-hidden="true" className="text-accent-soft">
-                .
+    <ToastProvider>
+      <div className="flex min-h-screen flex-col bg-canvas text-fg">
+        <header className="sticky top-0 z-40 border-b border-line bg-canvas">
+          <div className="mx-auto flex h-16 w-full max-w-[1120px] items-center justify-between gap-4 px-4 md:px-6">
+            <div className="flex items-center gap-4">
+              <Link href="/" className="text-xl font-semibold text-fg">
+                NaoQueroUsar
+                <span aria-hidden="true" className="text-accent-soft">
+                  .
+                </span>
+              </Link>
+              <span className="hidden text-sm font-normal text-fg-muted md:inline">
+                Procurar um emprego, não deve dar trabalho
               </span>
-            </Link>
-            <span className="hidden text-sm font-normal text-fg-muted md:inline">
-              Procurar um emprego, não deve dar trabalho
-            </span>
-          </div>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              className="ghost hover:text-fg rounded-md px-3 py-1.5 text-sm font-medium"
-              onClick={() => {
-                sessionStorage.removeItem("nqu_admin_token");
-                window.location.href = "/admin/paste";
-              }}
-            >
-              Sair
-            </button>
+            <div className="flex items-center gap-2">
+              <LogoutButton />
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="mx-auto w-full max-w-[1120px] flex-1 px-4 py-8 md:px-6">
-        {children}
-      </main>
-    </div>
+        <main className="mx-auto w-full max-w-[1120px] flex-1 px-4 py-8 md:px-6">
+          {children}
+        </main>
+      </div>
+    </ToastProvider>
   );
 }
