@@ -1,13 +1,14 @@
 """CRUD for jobs: public read queries (D-17) and extraction writes (D-03)."""
 
 import uuid
+from sqlalchemy.exc import IntegrityError
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.job import Job, JobStatus
 
-__all__ = ["list_published", "get_published", "bulk_create_pending"]
+__all__ = ["list_published", "get_published", "bulk_create_pending", "list_by_status", "get_job", "approve_job", "update_job", "delete_job"]
 
 
 def _escape_like(term: str) -> str:
@@ -84,6 +85,74 @@ async def list_published(
     items = list((await session.scalars(items_stmt)).all())
     total = int((await session.scalar(count_stmt)) or 0)
     return items, total
+
+
+async def list_by_status(
+    session: AsyncSession,
+    status: str,
+    page: int = 1,
+    limit: int = 24,
+    *,
+    city: str | None = None,
+    sort: str = "recentes",
+) -> tuple[list[Job], int]:
+    """List jobs by status (no expires_at filter — admin sees all pending regardless of age).
+
+    Mirrors ``list_published`` but filters ``Job.status == status`` only.
+    City filter uses canonical DB value (resolved via ``_resolve_city`` like public).
+    Sort ``recentes`` (default, ``created_at DESC``) or ``antigas`` (``ASC``).
+    Tie-break by ``id``.
+    """
+    filters = [Job.status == status]
+    if city:
+        filters.append(Job.city == city)
+    oldest_first = sort == "antigas"
+    direction = Job.created_at.asc() if oldest_first else Job.created_at.desc()
+    tie_break = Job.id.asc() if oldest_first else Job.id.desc()
+
+    items_stmt = (
+        select(Job)
+        .where(*filters)
+        .order_by(direction, tie_break)
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    count_stmt = select(func.count()).select_from(Job).where(*filters)
+
+    items = list((await session.scalars(items_stmt)).all())
+    total = int((await session.scalar(count_stmt)) or 0)
+    return items, total
+
+
+async def get_job(session: AsyncSession, job_id: uuid.UUID) -> Job | None:
+    """Return a job by id, or ``None`` (no status filter — admin can edit any)."""
+    stmt = select(Job).where(Job.id == job_id)
+    return await session.scalar(stmt)
+
+
+async def approve_job(session: AsyncSession, job: Job) -> Job:
+    """Set job.status = ``published`` and flush (caller owns transaction/commit)."""
+    job.status = JobStatus.published
+    await session.flush()
+    return job
+
+
+async def update_job(session: AsyncSession, job: Job, payload) -> Job:
+    """Apply payload fields to existing job via ``JobUpdate`` model.
+
+    Only fields present in the payload (``exclude_unset``) are updated.
+    DB ``CHECK at_least_one_contact`` will raise ``IntegrityError`` if both
+    contacts are cleared; the caller (router) should catch it.
+    """
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(job, k, v)
+    await session.flush()
+    return job
+
+
+async def delete_job(session: AsyncSession, job: Job) -> None:
+    """Delete job from session (caller owns transaction/commit)."""
+    await session.delete(job)
 
 
 async def get_published(session: AsyncSession, job_id: uuid.UUID) -> Job | None:
