@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -12,6 +13,7 @@ from app.schemas.job import (
     ContactRevealResponse,
     JobListResponse,
     JobPublic,
+    ReportRequest,
     RevealRequest,
 )
 from app.services.cities import resolve_city, resolve_sort
@@ -21,6 +23,20 @@ from app.services.turnstile import TurnstileVerifier, turnstile_error_detail
 # /api/v1/public/jobs and /api/v1/public/jobs/{id}. NO auth dependency:
 # the public read surface is anonymous by design (D-16).
 router = APIRouter(prefix="/public", tags=["public"])
+
+logger = logging.getLogger(__name__)
+
+# Reports are relayed to the master through the log only — the reason is
+# truncated and stripped of control characters so a report cannot forge log
+# lines or smuggle personal data into a persistent sink (T-06-05).
+_LOG_REASON_MAX = 500
+
+
+def _log_safe(value: str | None) -> str | None:
+    """Collapse all whitespace/control chars and truncate for the log."""
+    if value is None:
+        return None
+    return " ".join(value.split())[:_LOG_REASON_MAX]
 
 # ``city`` aliases accepted from the URL (D-05/D-06b): the slug, the canonical
 # DB spelling and the accented label all resolve to the value actually stored
@@ -138,3 +154,30 @@ async def reveal_contact(
         contact_email=job.contact_email,
         contact_phone=job.contact_phone,
     )
+
+
+@router.post("/jobs/{job_id}/report")
+async def report_job(
+    request: Request,
+    job_id: uuid.UUID,
+    payload: ReportRequest | None = None,
+) -> dict[str, str]:
+    """Accept an anonymous report and log it — nothing is persisted.
+
+    Accept-and-log by design (TRST-02, D-06): the endpoint never reveals
+    whether the job exists or is published, so it answers
+    ``{"status": "ok"}`` for any well-formed payload instead of 404 —
+    a visitor (or a scraper walking ids) cannot use it as an enumeration
+    oracle. The report goes to the structured log only: no table, no
+    migration, no automatic follow-up; the master reviews the logs.
+    """
+    reason = payload.reason if payload else None
+    # key=value pairs: the project's formatter is plain text, so the fields
+    # travel in the message itself (greppable, one line per report).
+    logger.info(
+        "job_report job_id=%s reason=%s ip=%s",
+        str(job_id),
+        _log_safe(reason),
+        resolve_client_ip(request),
+    )
+    return {"status": "ok"}

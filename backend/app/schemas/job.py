@@ -65,6 +65,25 @@ class RevealRequest(BaseModel):
     cf_token: str = Field(min_length=1, max_length=2048)
 
 
+class ReportRequest(BaseModel):
+    """Body of the public job-report request (Phase 6, TRST-02, D-06).
+
+    The reporter is anonymous and the reason is optional, capped at 500
+    chars. Nothing is persisted — the endpoint logs the report and answers
+    ``{"status": "ok"}`` (no table, no migration).
+    """
+
+    reason: str | None = Field(default=None, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def _strip_reason(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
+
+
 class ContactRevealResponse(BaseModel):
     """The contact of a revealed job (Phase 3, PUBL-05).
 
