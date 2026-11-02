@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     # instead of accepting any request, so an unconfigured deploy fails CLOSED
     # instead of exposing a public hard-delete (T-06-01).
     CRON_SECRET: str = ""
+    # Turns the in-process APScheduler clock off (LIFE-02/D-01). Useful for
+    # multi-worker boxes and for hosts that spin down when idle, where the
+    # external CRON_SECRET trigger is the reliable path instead.
+    SCHEDULER_ENABLED: bool = True
 
     @model_validator(mode="after")
     def _validate_turnstile(self) -> "Settings":

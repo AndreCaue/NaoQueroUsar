@@ -7,6 +7,7 @@ from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.ratelimit import RateLimitExceeded, limiter, rate_limit_exceeded_handler
+from app.core.scheduler import shutdown_scheduler, start_scheduler
 from app.db.session import engine
 
 settings = get_settings()
@@ -14,8 +15,15 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
-    await engine.dispose()
+    # LIFE-02: the daily expiry sweep runs inside this process (D-01). The
+    # scheduler is stopped before the engine is disposed so no sweep starts
+    # against a closed pool during shutdown.
+    start_scheduler()
+    try:
+        yield
+    finally:
+        shutdown_scheduler()
+        await engine.dispose()
 
 
 def create_app() -> FastAPI:
