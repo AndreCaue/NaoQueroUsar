@@ -1,6 +1,7 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
+import secrets
 
 from app.core.config import get_settings
 from app.core.security import decode_access_token
@@ -11,6 +12,7 @@ __all__ = [
     "get_session",
     "get_settings",
     "require_admin",
+    "require_cron_secret",
     "bearer_scheme",
     "get_turnstile_verifier",
 ]
@@ -49,6 +51,38 @@ async def require_admin(
         raise _unauthorized()
 
     return claims
+
+
+def _cron_unauthorized() -> HTTPException:
+    return HTTPException(status_code=401, detail="Não autorizado")
+
+
+async def require_cron_secret(
+    x_cron_secret: str | None = Header(default=None, alias="X-Cron-Secret"),
+) -> None:
+    """Validate ``X-Cron-Secret`` against ``Settings.CRON_SECRET`` (T-06-01).
+
+    Fails CLOSED in both directions:
+
+    - no ``CRON_SECRET`` in the environment → 503, i.e. the manual trigger is
+      disabled. A missing variable must never turn into an open hard-delete
+      endpoint;
+    - missing or wrong header → 401. The comparison uses
+      ``secrets.compare_digest`` so the value cannot be recovered byte by byte
+      from response timing.
+    """
+    settings = get_settings()
+    expected = settings.CRON_SECRET.strip()
+
+    if not expected:
+        raise HTTPException(
+            status_code=503,
+            detail="Expiração manual não configurada",
+        )
+
+    provided = (x_cron_secret or "").strip()
+    if not provided or not secrets.compare_digest(provided, expected):
+        raise _cron_unauthorized()
 
 
 async def get_turnstile_verifier() -> TurnstileVerifier:

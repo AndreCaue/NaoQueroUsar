@@ -5,8 +5,15 @@ from typing import Literal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud.jobs import delete_job, get_job, list_by_status, update_job, approve_job
-from app.deps import require_admin, get_session
+from app.crud.jobs import (
+    approve_job,
+    delete_expired_jobs,
+    delete_job,
+    get_job,
+    list_by_status,
+    update_job,
+)
+from app.deps import get_session, require_admin, require_cron_secret
 from app.models.job import JobStatus
 from app.schemas.job import JobAdmin, JobAdminListResponse, JobUpdate
 from app.services.cities import resolve_city
@@ -176,3 +183,28 @@ async def delete(
         raise HTTPException(status_code=404, detail="Vaga não encontrada")
     await delete_job(session, job)
     await session.commit()
+
+
+# ---------------------------------------------------------------------------
+# LIFE-04: POST /admin/expire — manual / catch-up expiry sweep (D-02)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/expire")
+async def expire_jobs(
+    session: AsyncSession = Depends(get_session),
+    _: None = Depends(require_cron_secret),
+) -> dict:
+    """Hard delete every expired job and return how many rows went away.
+
+    This is the same sweep the APScheduler clock runs at 03:00 UTC, exposed so
+    a free-tier host that spun down (or an external cron service) can trigger
+    the catch-up on demand (LIFE-04). It is authenticated by ``X-Cron-Secret``
+    instead of the admin Bearer token: a cron caller has no admin session, and
+    the two credentials must not be interchangeable (T-06-01).
+
+    Idempotent: a second call with nothing expired answers ``deleted: 0``.
+    """
+    deleted = await delete_expired_jobs(session)
+    await session.commit()
+    return {"deleted": deleted, "status": "ok"}
