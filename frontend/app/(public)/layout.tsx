@@ -58,7 +58,12 @@ export default function PublicLayout({
         <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-fg-muted md:px-6">
           <span>© 2026 NaoQueroUsar</span>
           <span>Procurar um emprego, não deve dar trabalho</span>
-          {/* Phase 6 reserves this row for legal links — no dead links yet (TRST-03). */}
+          <Link
+            href="/privacidade"
+            className="min-h-11 inline-flex items-center hover:text-accent-soft"
+          >
+            Privacidade e termos
+          </Link>
         </div>
       </footer>
     </div>
