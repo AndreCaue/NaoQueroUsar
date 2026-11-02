@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 6 context gathered
-last_updated: "2026-10-28T01:51:22.832Z"
-last_activity: 2026-10-28
+status: executing
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-11-02T15:12:15.096Z"
+last_activity: 2026-11-02
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 23
-  completed_plans: 23
+  total_plans: 27
+  completed_plans: 24
   percent: 83
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-13)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 6 — lifecycle, trust, legal & launch
+**Current focus:** Phase 06 — lifecycle-trust-legal-launch
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-10-28
+Phase: 06 (lifecycle-trust-legal-launch) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-11-02
 
-Progress: [██████████] 96%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [██████████] 96%
 | Phase 04 P02 | 197min | 3 tasks | 5 files |
 | Phase 04 P03 | 13min | 3 tasks | 13 files |
 | Phase 05 P04 | ~45min | 3 tasks | 24 files |
+| Phase 06 P01 | 14min | 4 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,10 @@ Recent decisions affecting current work:
 - [Phase 04]: Phase 04 Plan 03: o deep link ?vaga= e resolvido em page.tsx contra data.items e passado como initialJob (initializer do useState, nao effect), entao o markup do dialog existe no HTML do SSR; o fallback server-side fetchJob e o painel not-found ficam para o 04-04
 - [Phase 04]: Phase 04 Plan 03: o JobGrid remonta por key=buildBoardHref(filters) para zerar o 'Ver mais' dos cards quando filtro/pagina mudam, e os hrefs da paginacao descartam vaga para nao reabrir um dialog da pagina anterior
 - [Phase 04]: Phase 04 Plan 03: no Next 15.5 prerender-manifest.dynamicRoutes vem vazio ({}): a prova de que / e dinamico e a AUSENCIA de '/' em manifest.routes (so /doacoes, /admin/paste e /_not-found), coerente com a linha dinamica do build
+- [Phase 06]: LIFE-01 nao precisou de codigo - expires_at = now() + interval '14 days' ja e server_default no modelo e na migration 0001 (verificado, nao reimplementado)
+- [Phase 06]: o sweep de expiracao usa o relogio do BANCO (func.now()), o mesmo de list_published, e e status-agnostic - published, pending, needs_review e invalid expiram pela mesma regra de 14 dias (LIFE-02/LIFE-03, D-03/D-04)
+- [Phase 06]: o trigger manual e autenticado por header X-Cron-Secret em dependency propria (require_cron_secret) - 503 quando CRON_SECRET nao esta configurado (fail closed) e 401 quando o header falta/erra; um Bearer JWT de admin NAO autoriza /admin/expire (T-06-01)
+- [Phase 06]: SCHEDULER_ENABLED (default true) desliga o APScheduler in-process - necessario para hosts free-tier que hibernam e para multiplos workers; o endpoint /admin/expire idempotente fica como caminho de catch-up (D-01)
 
 ### Pending Todos
 
@@ -139,6 +144,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-10-28T01:51:22.804Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-lifecycle-trust-legal-launch/06-CONTEXT.md
+Last session: 2026-11-02T15:12:15.047Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None

@@ -56,10 +56,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Ciclo de Vida
 
-- [ ] **LIFE-01**: Vaga recebe `expires_at` = `created_at` + 14 dias
-- [ ] **LIFE-02**: Job agendado faz hard delete de vagas `published` expiradas, de forma idempotente e em UTC
-- [ ] **LIFE-03**: Vagas `pending` não revisadas também expiram após 14 dias
-- [ ] **LIFE-04**: Expiração é disparada por endpoint protegido por `CRON_SECRET`, com passe de recuperação (catch-up)
+- [x] **LIFE-01**: Vaga recebe `expires_at` = `created_at` + 14 dias
+- [x] **LIFE-02**: Job agendado faz hard delete de vagas `published` expiradas, de forma idempotente e em UTC
+- [x] **LIFE-03**: Vagas `pending` não revisadas também expiram após 14 dias
+- [x] **LIFE-04**: Expiração é disparada por endpoint protegido por `CRON_SECRET`, com passe de recuperação (catch-up)
 
 ### Tema & UI
 
@@ -145,10 +145,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REVW-03 | Phase 5 | Pending |
 | REVW-04 | Phase 5 | Pending |
 | REVW-05 | Phase 5 | Pending |
-| LIFE-01 | Phase 6 | Pending |
-| LIFE-02 | Phase 6 | Pending |
-| LIFE-03 | Phase 6 | Pending |
-| LIFE-04 | Phase 6 | Pending |
+| LIFE-01 | Phase 6 | Complete |
+| LIFE-02 | Phase 6 | Complete |
+| LIFE-03 | Phase 6 | Complete |
+| LIFE-04 | Phase 6 | Complete |
 | TRST-01 | Phase 6 | Pending |
 | TRST-02 | Phase 6 | Pending |
 | TRST-03 | Phase 6 | Pending |

@@ -203,7 +203,7 @@ Plans:
 **Plans**: 4 plans
 
 **Wave 1**
-- [ ] 06-01-PLAN.md — Lifecycle & expiração (APScheduler, hard delete, endpoint CRON_SECRET)
+- [x] 06-01-PLAN.md — Lifecycle & expiração (APScheduler, hard delete, endpoint CRON_SECRET)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 06-02-PLAN.md — Badge "Vaga revisada" + report de vaga
@@ -229,4 +229,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Contact Reveal & Anti-Spam | 4/5 | In Progress|  |
 | 4. Public Board Frontend | 6/6 | Complete   | 2026-10-27 |
 | 5. Admin Review Area | 3/4 | In Progress|  |
-| 6. Lifecycle, Trust, Legal & Launch | 0/4 | Not started | - |
+| 6. Lifecycle, Trust, Legal & Launch | 1/4 | In Progress|  |
