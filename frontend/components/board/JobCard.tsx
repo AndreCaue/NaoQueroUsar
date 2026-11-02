@@ -46,6 +46,12 @@ export function JobCard({ job, onOpen }: JobCardProps) {
         {job.title}
       </h2>
 
+      {job.status === "published" ? (
+        <span className="inline-flex w-fit items-center rounded-full border border-line-strong px-2 py-0.5 text-xs font-medium text-fg-muted">
+          Vaga revisada
+        </span>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-fg-muted">
         <span className="inline-flex items-center gap-1">
           <MapPin size={16} />

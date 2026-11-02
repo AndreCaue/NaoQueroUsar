@@ -115,6 +115,11 @@ export function JobDetailDialog({
                 {[company, city].filter(Boolean).join(" · ")}
               </p>
             ) : null}
+            {job.status === "published" ? (
+              <span className="mt-2 inline-flex items-center rounded-full border border-line-strong px-2 py-0.5 text-xs font-medium text-fg-muted">
+                Vaga revisada
+              </span>
+            ) : null}
           </div>
           <button
             type="button"
