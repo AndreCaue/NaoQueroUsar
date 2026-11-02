@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     REVEAL_RATE_LIMIT: str = "10/minute"     # D-06 — env-tunable, no deploy needed
     LOGIN_RATE_LIMIT: str = "5/minute"       # D-06 — env-tunable, no deploy needed
 
+    # Expiry sweep trigger (Phase 6 — LIFE-04, D-02).
+    # Optional on purpose: when it is empty the manual endpoint answers 503
+    # instead of accepting any request, so an unconfigured deploy fails CLOSED
+    # instead of exposing a public hard-delete (T-06-01).
+    CRON_SECRET: str = ""
+
     @model_validator(mode="after")
     def _validate_turnstile(self) -> "Settings":
         """Fail closed: no secret (or a known test key) outside dev (D-11/D-12)."""
