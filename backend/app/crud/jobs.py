@@ -5,14 +5,14 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.exc import IntegrityError
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.job import Job, JobStatus
 
 PUBLISHED_TTL = timedelta(days=14)
 
-__all__ = ["list_published", "get_published", "bulk_create_pending", "list_by_status", "get_job", "approve_job", "update_job", "delete_job"]
+__all__ = ["list_published", "get_published", "bulk_create_pending", "list_by_status", "get_job", "approve_job", "update_job", "delete_job", "delete_expired_jobs"]
 
 
 def _escape_like(term: str) -> str:
@@ -164,6 +164,29 @@ async def update_job(session: AsyncSession, job: Job, payload) -> Job:
 async def delete_job(session: AsyncSession, job: Job) -> None:
     """Delete job from session (caller owns transaction/commit)."""
     await session.delete(job)
+
+
+async def delete_expired_jobs(session: AsyncSession) -> int:
+    """Hard delete every job past ``expires_at`` and return the row count (D-04).
+
+    The sweep is deliberately status-agnostic: a row that sat in ``pending`` /
+    ``needs_review`` for 14 days must not escape the clock just because nobody
+    reviewed it (LIFE-03, D-03). ``invalid`` rows expire on the same rule.
+
+    The comparison uses the DATABASE clock (``func.now()``) rather than the
+    application clock, so the sweep is consistent with ``list_published``
+    (``expires_at > now()``) — a job is never invisible to the board yet still
+    alive in the table.
+
+    Idempotent by construction: deleting nothing is a successful no-op, so the
+    scheduler and the ``CRON_SECRET`` catch-up endpoint can both run at any
+    time (T-06-02). Only ``flush()`` is called — the CALLER owns the
+    transaction/commit.
+    """
+    stmt = delete(Job).where(Job.expires_at < func.now())
+    result = await session.execute(stmt)
+    await session.flush()
+    return int(result.rowcount or 0)
 
 
 async def get_published(session: AsyncSession, job_id: uuid.UUID) -> Job | None:
