@@ -200,9 +200,22 @@ Plans:
   4. As páginas de privacidade, termos e o aviso "somos apenas meio de divulgação" (LGPD) existem e são acessíveis.
   5. Frontend (Vercel) e backend (Railway/Render) estão deployados com CORS travado à origem do front e segredos configurados; o caminho de leitura pública permanece rápido quando o backend está acordando (cold-start documentado).
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+**Wave 1**
+- [ ] 06-01-PLAN.md — Lifecycle & expiração (APScheduler, hard delete, endpoint CRON_SECRET)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 06-02-PLAN.md — Badge "Vaga revisada" + report de vaga
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 06-03-PLAN.md — Páginas legais (privacidade, termos, aviso LGPD/intermediário)
+
+**Wave 4** *(blocked on Waves 1–3 completion)*
+- [ ] 06-04-PLAN.md — Deploy real (Vercel + Render, CORS, segredos, cron de catch-up, cold-start)
+
 **UI hint**: yes
-**⚠️ HIGH RISK**: Pitfalls operacionais (cron do Vercel Hobby 1x/dia UTC sem retry, spin-down Render, locks do Neon, timezones) + wiring de infra. Pode precisar de `/gsd-research-phase` — escolher scheduler externo, confirmar comportamento de CU-hour/pooling do Neon e mecânica dos free-tiers Render/Railway empiricamente.
+**⚠️ HIGH RISK**: Pitfalls operacionais (cron do Vercel Hobby 1x/dia UTC sem retry, spin-down Render, locks do Neon, timezones) + wiring de infra. Pode precisar de `/gsd-research-phase` — escolher scheduler externo, confirmar comportamento de CU-hour/pooling do Neon e mecânica dos free-tiers Render/Railway empiricamente. O `06-04-PLAN.md` converte esse risco em checklist de deploy verificável (health check, CORS travado, segredos por env, cron externo de catch-up e cold-start documentado).
 
 ## Progress
 
@@ -216,4 +229,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Contact Reveal & Anti-Spam | 4/5 | In Progress|  |
 | 4. Public Board Frontend | 6/6 | Complete   | 2026-10-27 |
 | 5. Admin Review Area | 3/4 | In Progress|  |
-| 6. Lifecycle, Trust, Legal & Launch | 0/TBD | Not started | - |
+| 6. Lifecycle, Trust, Legal & Launch | 0/4 | Not started | - |

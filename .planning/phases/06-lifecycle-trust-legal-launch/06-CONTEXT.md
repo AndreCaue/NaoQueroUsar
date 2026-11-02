@@ -8,7 +8,7 @@
 
 O board se mantém honesto e seguro — vagas somem em 14 dias de forma confiável — e a plataforma tem postura de confiança/legal e deploy prontos para lançar.
 
-**Entregue nesta fase (LIFE-01 a LIFE-04, TRST-01 a TRST-03):**
+**Entregue nesta fase (LIFE-01 a LIFE-04, TRST-01 a TRST-03 + critério de sucesso 5):**
 
 - **LIFE-01:** Cada vaga nasce com `expires_at` = `created_at` + 14 dias.
 - **LIFE-02:** Job agendado (APScheduler no processo) hard-deleta vagas publicadas expiradas, de forma idempotente em UTC.
@@ -17,8 +17,11 @@ O board se mantém honesto e seguro — vagas somem em 14 dias de forma confiáv
 - **TRST-01:** Vaga publicada exibe badge "Vaga revisada" (automático via status).
 - **TRST-02:** Visitante pode reportar uma vaga (endpoint + log estruturado no backend).
 - **TRST-03:** Páginas de privacidade, termos e aviso de intermediário (LGPD) acessíveis.
+- **Deploy (critério de sucesso 5):** frontend na Vercel + backend no Render/Railway, CORS travado à origem do front, segredos por env e cold-start documentado — plano `06-04-PLAN.md`.
 
-**Fora desta fase:** deploy real (frontend Vercel + backend Railway/Render) com CORS travado, segredos e cold-start (critério de sucesso 5); PIX real; AdSense/consentimento LGPD; SEO avançado; alerts/retention (v2).
+**Fora desta fase:** PIX real; AdSense/consentimento LGPD; SEO avançado; alerts/retention (v2); revisão jurídica humana (task externa).
+
+> **Revisão 2026-10-31:** o deploy real deixou de ser Deferred e passou a ser entregue nesta fase, por decisão do usuário após o plan-check (B-01). O `06-DISCUSSION-LOG.md` continua registrando a decisão original de adiamento; este CONTEXT é a fonte vigente.
 
 </domain>
 
@@ -106,7 +109,8 @@ O board se mantém honesto e seguro — vagas somem em 14 dias de forma confiáv
 <deferred>
 ## Deferred Ideas
 
-- **Deploy real:** frontend no Vercel + backend no Railway/Render; CORS travado à origem do front; segredos (`CRON_SECRET`, Cloudflare, Groq, DB); cold-start do backend documentado (critério de sucesso 5).
+> **Revisão 2026-10-31 (B-01):** o item "Deploy real" abaixo foi **promovido** para o escopo da fase como `06-04-PLAN.md`; ele não é mais Deferred. As demais linhas continuam valendo.
+
 - **Chaves Cloudflare reais + widget de produção** — Phase 6.
 - **PIX real / doações** — Phase 6 (TRST-03 adjacent) / já adiado.
 - **AdSense / banner de consentimento LGPD** — Phase 6 / v2.
@@ -114,7 +118,7 @@ O board se mantém honesto e seguro — vagas somem em 14 dias de forma confiáv
 - **SEO avançado** (sitemap, JSON-LD `JobPosting`, OG) — v2 (SEO-01/02).
 - **Alerts/retention** (ALRT-01) — v2.
 - **LGPD:** revisão jurídica por advogado brasileiro antes do lançamento — task humana, não de código (registrada em STATE.md).
-- **`/gsd-research-phase`** para scheduler externo, comportamento de CU-hour/pooling do Neon e empirismo dos free-tiers Render/Railway — fase HIGH RISK aberta.
+- **`/gsd-research-phase`** para scheduler externo e empirismo dos free-tiers Render/Railway — opcional; o `06-04-PLAN.md` documenta o comportamento observado (spin-down, cron atrasado, latência do Neon) e pode gerar um research retroativo se a operação exigir.
 
 ### Reviewed Todos (not folded)
 

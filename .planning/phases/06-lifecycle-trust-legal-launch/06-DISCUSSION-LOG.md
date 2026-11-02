@@ -96,6 +96,7 @@
 ## Deferred Ideas
 
 - Deploy real (Vercel + Railway/Render): CORS travado, segredos, cold-start (sucesso 5 de SC).
+  - **Resolução 2026-10-31:** reincorporado ao escopo da Fase 6 como `06-04-PLAN.md` (Wave 4), por decisão do usuário após o plan-check (B-01). O `06-CONTEXT.md` é a fonte vigente; esta linha permanece como registro histórico do adiamento original.
 - Chaves Cloudflare reais + wiring de deploy.
 - PIX real / doacoes; AdSense / consentimento LGPD; limiter distribuido; SEO avancado; alerts/retention (v2).
 - Revisao juridica (advogado brasileiro) antes do lancamento — task humana.
