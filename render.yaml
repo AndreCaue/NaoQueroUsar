@@ -1,0 +1,51 @@
+# Blueprint do backend NQU no Render (free tier).
+#
+# O que sobe aqui: UM serviço web FastAPI (uv + uv.lock), com migrações
+# Alembic no boot e health check em /api/v1/health.
+#
+# Notas operacionais:
+# - ENV=prod ativa o validador fail-closed que RECUSA chaves de teste do
+#   Cloudflare Turnstile fora de dev (D-11/D-12) e exige TURNSTILE_SECRET_KEY
+#   preenchida — sem ela o processo não sobe.
+# - `alembic upgrade head` roda a CADA boot (inclusive redeploys e wake-ups
+#   do spin-down). As migrações são forward-only: corrija com uma nova
+#   migration, nunca editando o histórico.
+# - `region: ohio` deve ser alinhada à região do projeto Neon de produção
+#   (Neon: Project → Settings → General → Region) para minimizar latência.
+# - Todos os segredos ficam com `sync: false`: o valor é definido SOMENTE no
+#   dashboard (Environment) ou via CLI do Render — nunca neste arquivo.
+services:
+  - type: web
+    name: nqu-backend
+    runtime: python
+    plan: free
+    region: ohio # alinhar à região do Neon de produção
+    rootDir: backend
+    autoDeploy: true
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    startCommand: uv run alembic upgrade head && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: ENV
+        value: prod
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: JWT_EXPIRES_IN
+        value: "43200"
+      # ---- Segredos / configuração sensível: valor SÓ no dashboard ----
+      - key: DATABASE_URL # Neon pooled connection string + ?ssl=require
+        sync: false
+      - key: ADMIN_PASSWORD_HASH # bcrypt hash gerado localmente (ver docs/DEPLOY.md)
+        sync: false
+      - key: JWT_SECRET # 64+ caracteres aleatórios
+        sync: false
+      - key: CORS_ORIGINS # origem exata da Vercel, sem barra final, sem *
+        sync: false
+      - key: TURNSTILE_SITE_KEY # site key pública do widget de produção
+        sync: false
+      - key: TURNSTILE_SECRET_KEY # secret privada; ENV=prod recusa chave de teste
+        sync: false
+      - key: GROQ_API_KEY # https://console.groq.com/keys
+        sync: false
+      - key: CRON_SECRET # 32+ caracteres; o mesmo valor vai em GitHub secrets.CRON_SECRET
+        sync: false

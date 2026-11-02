@@ -1,0 +1,44 @@
+name: expire-jobs
+
+# Cron de catch-up para a expiração de jobs (LIFE-04).
+# O mecanismo primário é o APScheduler in-process (03:00 UTC, ver backend/app/core/scheduler.py);
+# este workflow existe porque o plano free do Render dorme após ~15 min sem tráfego e o
+# Vercel Hobby só agenda 1x/dia sem retry. Ele chama o endpoint idempotente
+# POST /api/v1/admin/expire com o segredo de repositório — nunca com o JWT de admin.
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC, mesma janela do scheduler interno
+  workflow_dispatch: # execução manual pelo botão "Run workflow"
+
+concurrency:
+  group: expire-jobs
+  cancel-in-progress: false
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Chamar POST /api/v1/admin/expire
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${API_BASE_URL:-}" ]; then
+            echo "::error::vars.API_BASE_URL não está configurada. Configure em Settings → Secrets and variables → Actions → Variables (ex.: https://<backend>.onrender.com, sem barra final)."
+            exit 1
+          fi
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::secrets.CRON_SECRET não está configurado. Configure em Settings → Secrets and variables → Actions → Secrets (mesmo valor definido no Render)."
+            exit 1
+          fi
+          # O secret nunca é ecoado; o GitHub mascara secrets.* de qualquer forma.
+          # --fail-with-body deixa a resposta do backend visível no log sem vazamento.
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-delay 15 --retry-all-errors --max-time 120 \
+            -X POST "${API_BASE_URL%/}/api/v1/admin/expire" \
+            -H "X-Cron-Secret: ${CRON_SECRET}"
+          echo
+          echo "expire-jobs: chamada concluída (resposta 200 com {\"deleted\": N, \"status\": \"ok\"})"
