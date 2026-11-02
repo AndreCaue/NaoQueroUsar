@@ -282,6 +282,35 @@ export class RevealError extends Error {
   }
 }
 
+/**
+ * Report a job to the master (TRST-02, D-06).
+ *
+ * Anonymous: no token, no Turnstile. `reason` is optional (max 500 chars,
+ * enforced server-side). The backend only logs the report — nothing is
+ * persisted and the caller cannot tell whether the job exists; on any
+ * non-2xx the `detail` message is surfaced via `ApiError`.
+ */
+export async function reportJob(
+  jobId: string,
+  reason?: string,
+): Promise<{ status: string }> {
+  const trimmed = reason?.trim();
+  const res = await fetch(
+    `${API}/api/v1/public/jobs/${encodeURIComponent(jobId)}/report`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(trimmed ? { reason: trimmed } : {}),
+    },
+  );
+
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+
+  return (await res.json()) as { status: string };
+}
+
 /** Discarded job snippet. */
 export interface DiscardedJob {
   reason: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { JobPublic } from "@/lib/api";
 import { cityLabel } from "@/lib/cities";
@@ -8,6 +8,7 @@ import { formatDateBR } from "@/lib/format";
 
 import { X } from "./icons";
 import { RevealContact } from "./RevealContact";
+import { ReportJobDialog } from "./ReportJobDialog";
 
 interface JobDetailDialogProps {
   job: JobPublic;
@@ -46,6 +47,7 @@ export function JobDetailDialog({
 }: JobDetailDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = `job-dialog-title-${job.id}`;
+  const [reportOpen, setReportOpen] = useState(false);
   // One close path for the X, ESC, backdrop and the reveal footer's 404 state.
   const close = () => dialogRef.current?.close();
 
@@ -84,6 +86,7 @@ export function JobDetailDialog({
   const salary = hasText(job.salary) ? job.salary : null;
 
   return (
+    <>
     <dialog
       ref={dialogRef}
       tabIndex={-1}
@@ -155,7 +158,24 @@ export function JobDetailDialog({
           (UI-SPEC §E). It never receives contact data from the list payload. */}
       <footer className="shrink-0 border-t border-line p-4">
         <RevealContact job={job} onClose={close} />
+        {/* Secondary action, visually subordinate to the reveal CTA
+            (UI-SPEC §B) — never interferes with the reveal flow. */}
+        <div className="mt-3 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setReportOpen(true)}
+            className="inline-flex h-11 items-center justify-center rounded-lg border border-line-strong px-4 text-sm font-semibold text-fg-muted transition-colors hover:border-accent hover:text-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft"
+          >
+            Reportar vaga
+          </button>
+        </div>
       </footer>
     </dialog>
+    <ReportJobDialog
+      jobId={job.id}
+      open={reportOpen}
+      onClose={() => setReportOpen(false)}
+    />
+    </>
   );
 }
