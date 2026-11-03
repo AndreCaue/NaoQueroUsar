@@ -3,7 +3,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacidade, Termos e Aviso Legal — NaoQueroUsar",
   description:
-    "Saiba como o NaoQueroUsar trata dados pessoais, quais são os termos de uso do board e o aviso de intermediário: somos apenas meio de divulgação de vagas.",
+    "Página provisória (conteúdo fictício) sobre dados, termos de uso e o aviso de intermediário: o NaoQueroUsar é apenas meio de divulgação de vagas. Revisão jurídica e canal LGPD oficial pendentes.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function PrivacidadePage() {
@@ -12,6 +16,18 @@ export default function PrivacidadePage() {
       <h1 className="text-[28px] font-semibold leading-[1.2] [text-wrap:balance]">
         Privacidade, Termos e Aviso Legal
       </h1>
+
+      <div
+        role="note"
+        className="mt-6 rounded-[12px] border border-[rgba(250,204,21,0.45)] bg-[rgba(250,204,21,0.08)] p-4 text-sm leading-normal text-fg"
+      >
+        <strong>Conteúdo provisório e fictício (Lorem Ipsum).</strong>{" "}
+        Esta página existe apenas para visualização antes do lançamento.
+        Não é política de privacidade, termo de uso ou aviso jurídico
+        definitivo, e esta versão não pode ser usada como sinal de
+        conformidade com a LGPD. Substituir por texto revisado por
+        advogado e por canal LGPD oficial antes da publicação.
+      </div>
 
       <nav
         aria-label="Índice desta página"
@@ -67,9 +83,10 @@ export default function PrivacidadePage() {
           <p>
             <strong>Contatos publicados nas vagas:</strong> os dados de
             contato (e-mail, telefone, WhatsApp e endereços de perfis ou
-            formulários informados por quem anuncia a vaga) são exibidos
-            publicamente na página da vaga e tornam-se públicos quando revelados
-            pelo visitante. Ao clicar em “mostrar contato”, o visitante assume
+            formulários informados por quem anuncia a vaga) não aparecem
+            no HTML público da vaga. Eles são exibidos somente ao
+            visitante que aciona “mostrar contato”, após verificação
+            anti-bot. Ao clicar em “mostrar contato”, o visitante assume
             a responsabilidade pelo uso que fizer dessas informações,
             respeitando a legislação aplicável (incluindo a LGPD).
           </p>
@@ -93,13 +110,25 @@ export default function PrivacidadePage() {
             privacidade, entre em contato pelo canal indicado na seção “Aviso
             de Intermediário e LGPD”.
           </p>
-          <p>
-            <em>
-              [Redação jurídica detalhada pendente — sujeito a revisão por
-              advogado antes do lançamento. Texto geral e meramente
-              informativo.]
-            </em>
-          </p>
+          <div
+            className="rounded-[12px] border border-dashed border-line-strong p-4 text-sm leading-normal text-fg-muted"
+            aria-label="Conteúdo fictício — texto legal provisório"
+          >
+            <p>
+              <strong>Lorem ipsum dolor sit amet (texto de teste):</strong>{" "}
+              consectetur adipiscing elit, sed do eiusmod tempor incididunt
+              ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+              quis nostrud exercitation ullamco laboris nisi ut aliquip ex
+              ea commodo consequat.
+            </p>
+            <p className="mt-3">
+              Duis aute irure dolor in reprehenderit in voluptate velit esse
+              cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+              cupidatat non proident, sunt in culpa qui officia deserunt
+              mollit anim id est laborum. Esta seção será substituída por
+              redação jurídica revisada antes do lançamento.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -170,13 +199,25 @@ export default function PrivacidadePage() {
             atualização pode ser indicada no rodapé desta página quando
             aplicável.
           </p>
-          <p>
-            <em>
-              [Redação jurídica detalhada pendente — sujeito a revisão por
-              advogado antes do lançamento. Texto geral e
-              meramente informativo.]
-            </em>
-          </p>
+          <div
+            className="rounded-[12px] border border-dashed border-line-strong p-4 text-sm leading-normal text-fg-muted"
+            aria-label="Conteúdo fictício — texto legal provisório"
+          >
+            <p>
+              <strong>Lorem ipsum dolor sit amet (texto de teste):</strong>{" "}
+              consectetur adipiscing elit, sed do eiusmod tempor incididunt
+              ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+              quis nostrud exercitation ullamco laboris nisi ut aliquip ex
+              ea commodo consequat.
+            </p>
+            <p className="mt-3">
+              Duis aute irure dolor in reprehenderit in voluptate velit esse
+              cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+              cupidatat non proident, sunt in culpa qui officia deserunt
+              mollit anim id est laborum. Esta seção será substituída por
+              redação jurídica revisada antes do lançamento.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -243,29 +284,41 @@ export default function PrivacidadePage() {
             utilizá-los para aprimorar a moderação.
           </p>
           <p>
-            <strong>Contato:</strong> para questões de privacidade, LGPD,
-            avisos de conteúdo indevido ou pedidos de remoção, utilize o
-            canal de contato indicado no rodapé deste site ou responda pelo
-            e-mail oficial informado quando o lançamento for comunicado.
-            {" "}
-            <em>
-              [E-mail de contato para privacidade: pendente — definir endereço
-              oficial antes do lançamento.]
-            </em>
+            <strong>Contato (placeholder de teste):</strong> para questões
+            de privacidade, LGPD ou avisos de conteúdo, este endereço é
+            apenas um marcador visual para desenvolvimento e não é um
+            canal oficial nem monitorado:{" "}
+            <code className="rounded-sm bg-surface px-1 py-0.5">privacidade-lorem@example.invalid</code>.{" "}
+            Antes do lançamento, substituir por endereço oficial fornecido
+            pelo operador e revisado juridicamente.
           </p>
-          <p>
-            <em>
-              [Redação jurídica detalhada pendente — sujeito a revisão por
-              advogado antes do lançamento. Texto geral e meramente
-              informativo.]
-            </em>
-          </p>
+          <div
+            className="rounded-[12px] border border-dashed border-line-strong p-4 text-sm leading-normal text-fg-muted"
+            aria-label="Conteúdo fictício — texto legal provisório"
+          >
+            <p>
+              <strong>Lorem ipsum dolor sit amet (texto de teste):</strong>{" "}
+              consectetur adipiscing elit, sed do eiusmod tempor incididunt
+              ut labore et dolore magna aliqua. Ut enim ad minim veniam,
+              quis nostrud exercitation ullamco laboris nisi ut aliquip ex
+              ea commodo consequat.
+            </p>
+            <p className="mt-3">
+              Duis aute irure dolor in reprehenderit in voluptate velit esse
+              cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
+              cupidatat non proident, sunt in culpa qui officia deserunt
+              mollit anim id est laborum. Esta seção será substituída por
+              redação jurídica revisada antes do lançamento.
+            </p>
+          </div>
         </div>
       </section>
 
       <p className="mt-10 border-t border-line pt-6 text-sm leading-normal text-fg-muted">
-        Esta página contém informações gerais. Para questões jurídicas
-        específicas, consulte um advogado.
+        Esta página contém somente texto provisório de teste. Não constitui
+        parecer, oferta ou garantia jurídica. Para questões jurídicas
+        específicas, consulte um advogado e aguarde revisão antes do
+        lançamento.
       </p>
     </article>
   );
