@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "06-04 Tasks 1-2 complete; awaiting human production deploy (Task 3)"
-last_updated: "2026-11-02T23:58:00-03:00"
+stopped_at: "Project explicitly kept in development; launch deferred by user"
+last_updated: "2026-11-02T23:40:00-03:00"
 last_activity: 2026-11-02
 progress:
   total_phases: 6
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 
 ## Current Position
 
-Phase: 06 (lifecycle-trust-legal-launch) — EXECUTING
+Phase: 06 (lifecycle-trust-legal-launch) — DEVELOPMENT
 Plan: 4 of 4
-Status: Awaiting human production deploy checkpoint
+Status: Development baseline; launch deferred by user
 Last activity: 2026-11-02
 
 Progress: [█████████▋] 96%
@@ -130,6 +130,7 @@ Recent decisions affecting current work:
 - [Phase 06]: Deploy artifact set realized (plan 06-04 Tasks 1-2): Render/uv/Alembic blueprint, UTC GitHub cron catch-up, Vercel config, pt-BR runbook and UTF-8/BOM PowerShell smoke gate; no secret values committed. Completion remains blocked on the human Task 3 production verification.
 - [Phase 06]: Post-review fixes completed: expiry sweep now runs via AsyncIOScheduler on FastAPI's event loop and drains before engine disposal; anonymous report and cron trigger are rate-limited at the correct dependency/IP boundary; frontend fails closed without NEXT_PUBLIC_API_URL in production; Render deploys are manually gated and the smoke gate treats missing CRON_SECRET as WARN. Re-review reduced remaining findings to CR-02.
 - [Phase 06]: User requested temporary Lorem Ipsum/test content and an unreachable `.invalid` placeholder address for the legal page. It is visibly marked non-final, `robots` noindex and the misleading public-contact wording was corrected; it must still be replaced with approved legal text and an official channel before launch.
+- [Phase 06]: User explicitly decided to keep the project in development with the Lorem Ipsum/noindex legal page; production deployment, legal finalization and go-live verification remain deferred and are not implied by code completion.
 - [Phase 06]: Launch gate remains CR-02: final LGPD/privacy legal copy and an existing privacy contact channel are human/legal inputs; software fixes do not authorize go-live or production deploy.
 
 ### Pending Todos
@@ -153,6 +154,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-11-02T23:30:00-03:00
-Stopped at: Technical review findings fixed and re-reviewed; 06-04 Task 3 remains blocked by legal inputs and production deploy checkpoint
+Last session: 2026-11-02T23:40:00-03:00
+Stopped at: Project explicitly kept in development; launch deferred by user
 Resume file: .planning/phases/06-lifecycle-trust-legal-launch/06-04-PLAN.md
