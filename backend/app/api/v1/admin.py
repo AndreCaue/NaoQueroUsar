@@ -204,6 +204,13 @@ async def expire_jobs(
     the two credentials must not be interchangeable (T-06-01).
 
     Idempotent: a second call with nothing expired answers ``deleted: 0``.
+
+    Rate-limited per resolved IP (10/minute, IN-05) at the cron dependency
+    (``require_cron_secret``) — slowapi cannot wrap this route's handler for
+    the probe vector because FastAPI resolves dependencies first and the
+    401/503 short-circuit would bypass the limit. Under the limit the
+    503 (unconfigured) and 401 (wrong secret) semantics are unchanged; over
+    the limit the caller gets the shared 429 (pt-BR, ``Retry-After``).
     """
     deleted = await delete_expired_jobs(session)
     await session.commit()

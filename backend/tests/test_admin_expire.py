@@ -107,6 +107,22 @@ async def test_admin_bearer_token_is_not_a_cron_secret(client, cron_secret, admi
     assert resp.status_code == 401
 
 
+@pytest.mark.asyncio
+async def test_expire_probing_is_rate_limited(client, cron_secret):
+    """The 11th probe inside a minute is answered 429 (IN-05).
+
+    The limiter runs in the cron dependency, so it throttles even the
+    requests that short-circuit with 401 before reaching the handler.
+    """
+    for _ in range(10):
+        resp = await client.post(ENDPOINT, headers={"X-Cron-Secret": "segredo-errado"})
+        assert resp.status_code == 401
+
+    resp = await client.post(ENDPOINT, headers={"X-Cron-Secret": "segredo-errado"})
+    assert resp.status_code == 429
+    assert resp.headers.get("Retry-After")
+
+
 # ---------------------------------------------------------------------------
 # T-06-02 / LIFE-02 / LIFE-03: the sweep itself
 # ---------------------------------------------------------------------------

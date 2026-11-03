@@ -64,3 +64,15 @@ async def test_report_whitespace_only_reason_is_treated_as_absent(client, caplog
     reports = [r for r in caplog.records if r.getMessage().startswith("job_report")]
     assert len(reports) == 1
     assert "reason=None" in reports[0].getMessage()
+
+
+async def test_report_is_rate_limited_per_ip(client):
+    """The 6th report inside a minute is answered 429 (WR-01)."""
+    for _ in range(5):
+        resp = await client.post(f"/api/v1/public/jobs/{uuid.uuid4()}/report")
+        assert resp.status_code == 200
+
+    resp = await client.post(f"/api/v1/public/jobs/{uuid.uuid4()}/report")
+    assert resp.status_code == 429
+    assert resp.json()["detail"]
+    assert resp.headers.get("Retry-After")

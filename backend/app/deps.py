@@ -1,9 +1,10 @@
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 import secrets
 
 from app.core.config import get_settings
+from app.core.ratelimit import limiter
 from app.core.security import decode_access_token
 from app.db.session import get_session
 from app.services.turnstile import TurnstileVerifier
@@ -57,7 +58,9 @@ def _cron_unauthorized() -> HTTPException:
     return HTTPException(status_code=401, detail="Não autorizado")
 
 
+@limiter.limit("10/minute")
 async def require_cron_secret(
+    request: Request,
     x_cron_secret: str | None = Header(default=None, alias="X-Cron-Secret"),
 ) -> None:
     """Validate ``X-Cron-Secret`` against ``Settings.CRON_SECRET`` (T-06-01).
@@ -70,6 +73,14 @@ async def require_cron_secret(
     - missing or wrong header → 401. The comparison uses
       ``secrets.compare_digest`` so the value cannot be recovered byte by byte
       from response timing.
+
+    Rate-limited per resolved IP (10/minute, IN-05): the gate is a static
+    bearer, so without a throttle an unauthenticated client could probe
+    ``X-Cron-Secret`` at full speed. The limit lives on the dependency (not
+    on the route handler) because FastAPI resolves dependencies first —
+    decorating the handler would never see requests that short-circuit
+    here with 401/503. Under the limit the 503/401 semantics are unchanged;
+    over the limit the shared 429 (pt-BR, ``Retry-After``) is returned.
     """
     settings = get_settings()
     expected = settings.CRON_SECRET.strip()

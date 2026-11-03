@@ -157,6 +157,7 @@ async def reveal_contact(
 
 
 @router.post("/jobs/{job_id}/report")
+@limiter.limit("5/minute")
 async def report_job(
     request: Request,
     job_id: uuid.UUID,
@@ -170,6 +171,11 @@ async def report_job(
     a visitor (or a scraper walking ids) cannot use it as an enumeration
     oracle. The report goes to the structured log only: no table, no
     migration, no automatic follow-up; the master reviews the logs.
+
+    Rate-limited per resolved IP (5/minute) — the endpoint is anonymous and
+    unauthenticated by design, so without a throttle it is a log-flooding /
+    disk-exhaustion vector on a free-tier host (WR-01). Over the limit the
+    caller gets the shared 429 (pt-BR, ``Retry-After``).
     """
     reason = payload.reason if payload else None
     # key=value pairs: the project's formatter is plain text, so the fields
