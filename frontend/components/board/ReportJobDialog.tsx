@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
-import { reportJob } from "@/lib/api";
+import { ApiError, reportJob } from "@/lib/api";
 
 import { X } from "./icons";
 
@@ -21,6 +21,8 @@ const DESCRIPTION =
 const SUCCESS_COPY = "Reporte enviado. Obrigado pela colaboração.";
 const ERROR_COPY =
   "Não foi possível enviar o reporte. Tente novamente.";
+const RATE_LIMIT_COPY =
+  "Muitas tentativas. Aguarde alguns segundos e tente novamente.";
 
 const PRIMARY_BUTTON =
   "inline-flex h-12 w-full items-center justify-center rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-strong-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft disabled:cursor-not-allowed disabled:opacity-50";
@@ -46,6 +48,7 @@ export function ReportJobDialog({
   const titleId = `report-dialog-title-${jobId}`;
   const [phase, setPhase] = useState<Phase>("idle");
   const [reason, setReason] = useState("");
+  const [errorCopy, setErrorCopy] = useState(ERROR_COPY);
 
   const close = () => dialogRef.current?.close();
 
@@ -68,6 +71,7 @@ export function ReportJobDialog({
     if (!open) {
       setPhase("idle");
       setReason("");
+      setErrorCopy(ERROR_COPY);
     }
   }, [open]);
 
@@ -81,7 +85,12 @@ export function ReportJobDialog({
       const trimmed = reason.trim();
       await reportJob(jobId, trimmed ? trimmed : undefined);
       setPhase("success");
-    } catch {
+    } catch (error) {
+      setErrorCopy(
+        error instanceof ApiError && error.status === 429
+          ? RATE_LIMIT_COPY
+          : ERROR_COPY,
+      );
       setPhase("error");
     }
   }
@@ -163,7 +172,7 @@ export function ReportJobDialog({
                 role="alert"
                 className="rounded-lg border border-danger bg-[rgba(248,113,113,0.10)] p-3 text-sm leading-relaxed text-danger-soft [overflow-wrap:anywhere]"
               >
-                {ERROR_COPY}
+                {errorCopy}
               </p>
             ) : null}
           </div>

@@ -99,10 +99,31 @@ export interface ExtractSummary {
 }
 
 /**
- * Admin API base — falls back to localhost for local dev.
- * All admin endpoints are under /api/v1/admin/jobs.
+ * Admin API base.
+ *
+ * Production builds (``next build``, ``NODE_ENV === "production"``) refuse to
+ * fall back to localhost: if ``NEXT_PUBLIC_API_URL`` is missing — typo, wrong
+ * Vercel scope, renamed variable — the build fails loudly instead of
+ * shipping a bundle that sends every request (including the admin password
+ * and Turnstile tokens) to the visitor's own machine (WR-04). The localhost
+ * fallback exists only for development.
  */
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+function resolveApiBase(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (fromEnv) {
+    return fromEnv;
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is not set. Configure it in the Vercel project " +
+        "env (Production scope) — production builds cannot fall back to " +
+        "http://localhost:8000.",
+    );
+  }
+  return "http://localhost:8000";
+}
+
+const API = resolveApiBase();
 
 /**
  * HTTP error that preserves the status code so callers can react to 401
@@ -283,28 +304,58 @@ export class RevealError extends Error {
 }
 
 /**
+ * Report submit budget — mirrors revealContact: a cold/half-open backend
+ * must fail into the dialog's retryable error state, not hang forever.
+ */
+const REPORT_TIMEOUT_MS = 10_000;
+
+/**
  * Report a job to the master (TRST-02, D-06).
  *
  * Anonymous: no token, no Turnstile. `reason` is optional (max 500 chars,
  * enforced server-side). The backend only logs the report — nothing is
  * persisted and the caller cannot tell whether the job exists; on any
- * non-2xx the `detail` message is surfaced via `ApiError`.
+ * non-2xx the `detail` message is surfaced via `ApiError`. A 429 (rate
+ * limit, 5/minute per IP) carries the pt-BR message and the `Retry-After`
+ * countdown is not exposed here — the dialog renders its own copy.
  */
 export async function reportJob(
   jobId: string,
   reason?: string,
 ): Promise<{ status: string }> {
   const trimmed = reason?.trim();
-  const res = await fetch(
-    `${API}/api/v1/public/jobs/${encodeURIComponent(jobId)}/report`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(trimmed ? { reason: trimmed } : {}),
-    },
-  );
+  let res: Response;
+  try {
+    res = await fetch(
+      `${API}/api/v1/public/jobs/${encodeURIComponent(jobId)}/report`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(trimmed ? { reason: trimmed } : {}),
+        signal: AbortSignal.timeout(REPORT_TIMEOUT_MS),
+      },
+    );
+  } catch (error) {
+    // Abort/timeout and network failures are retryable — the dialog already
+    // renders the "Tentar novamente" path for any thrown error (IN-03).
+    const timedOut =
+      error instanceof Error &&
+      (error.name === "TimeoutError" || error.name === "AbortError");
+    throw new ApiError(
+      timedOut
+        ? "A requisição demorou demais. Verifique sua conexão e tente novamente."
+        : "Não foi possível enviar o reporte. Verifique sua conexão e tente novamente.",
+      0,
+    );
+  }
 
   if (!res.ok) {
+    if (res.status === 429) {
+      throw new ApiError(
+        "Muitas tentativas. Aguarde alguns segundos e tente novamente.",
+        429,
+      );
+    }
     throw new ApiError(await readError(res), res.status);
   }
 
