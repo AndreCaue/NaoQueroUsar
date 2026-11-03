@@ -85,8 +85,9 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
    → {"status":"ok","env":"prod","turnstile":{"configured":true,"mode":"live","site_key_configured":true}}
    ```
    `turnstile.mode` **precisa** ser `live`. Se vier `test` ou `disabled`, o deploy está errado (ou o validador derrubou o boot).
-4. **Migrações rodam a cada boot** (`alembic upgrade head` no `startCommand`). São idempotentes e forward-only.
-5. **Plano free dorme após ~15 min sem tráfego.** O primeiro request depois do spin-down paga o cold-start (ver seção **Cold-start**).
+4. **Deploys são manuais** (`autoDeploy: false` no `render.yaml`): um push na branch de produção **não** sobe automaticamente — cada deploy é disparado no dashboard do Render após revisão. Isso é de propósito: o `startCommand` roda `alembic upgrade head` a cada boot e migrações são forward-only — um deploy automático aplicaria schema novo em produção sem aprovação e sem rollback. Dispare em **Deploy latest commit** depois de revisar (e, para mudanças de schema, após snapshot/backup do Neon).
+5. **Migrações rodam a cada boot** (`alembic upgrade head` no `startCommand`). São idempotentes e forward-only. Risco conhecido e aceito: uma migration quebrada derruba o boot em loop (inclusive a cada wake-up do plano free) e derruba o board público junto — não existe rollback de schema. Mitigações atuais: deploy manual/gated (a migration é revisada antes do deploy), regra de migrações forward-only, e snapshot do Neon antes de merges que tocam schema. Separar a migração num step de release próprio (pre-deploy do Render) é trabalho futuro — **não remova o `alembic upgrade head` do boot sem que esse step revisado exista e esteja documentado**.
+6. **Plano free dorme após ~15 min sem tráfego.** O primeiro request depois do spin-down paga o cold-start (ver seção **Cold-start**) — e também refaz o upgrade do Alembic no boot.
 
 ---
 
@@ -99,10 +100,13 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
    | Variável | Valor | Escopo |
    |---|---|---|
    | `BACKEND_API_URL` | URL pública do Render, ex.: `https://<backend>.onrender.com` | Server-side fetch (SSR) |
-   | `NEXT_PUBLIC_API_URL` | Mesma URL do Render | Fallback público (inlined no build) |
+   | `NEXT_PUBLIC_API_URL` | Mesma URL do Render | Obrigatória — build de produção **falha** se ausente (WR-04) |
    | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site key pública do widget de produção | Inlined no build |
 
    Não existe `NEXT_PUBLIC_*` para segredos: `CRON_SECRET`, `JWT_SECRET`, `TURNSTILE_SECRET_KEY` etc. **nunca** vão para a Vercel.
+   Todas as variáveis de frontend estão documentadas em `frontend/.env.example` (no desenvolvimento, copie para `.env.local`).
+
+   **Desde WR-04, `next build` falha se `NEXT_PUBLIC_API_URL` estiver ausente em build de produção** — não existe mais fallback silencioso para `http://localhost:8000` (o fallback só vale em desenvolvimento). Se o build falhar com essa mensagem, configure a variável no escopo **Production** e refaça o deploy.
 4. Deploy. Anote o domínio de produção (ex.: `https://<seu-projeto>.vercel.app`).
 5. Volte ao Render e ajuste `CORS_ORIGINS` para **exatamente** esse domínio (sem barra final) e faça **redeploy** do backend — CORS é lido no boot.
 6. Abra o board no navegador e no celular (390 px) e confirme que carrega sem erro de CORS no console.
@@ -130,12 +134,12 @@ Configuração (uma vez, no GitHub):
 1. **Settings → Secrets and variables → Actions → Variables** → crie `API_BASE_URL` = URL pública do Render **sem barra final** (ex.: `https://<backend>.onrender.com`).
 2. **… → Secrets** → crie `CRON_SECRET` = o mesmo valor definido no Render.
 3. O workflow `.github/workflows/expire-cron.yml` roda diariamente às **03:00 UTC** (mesma janela do scheduler interno) e também aceita execução manual: **Actions → expire-jobs → Run workflow**.
-4. O step falha com mensagem clara se `API_BASE_URL`/`CRON_SECRET` estiverem vazios, e usa `curl --fail-with-body --retry 3 --retry-delay 15 --retry-all-errors --max-time 120`. O secret nunca é ecoado no log.
+4. O step falha com mensagem clara se `API_BASE_URL`/`CRON_SECRET` estiverem vazios, e usa `curl --fail-with-body --retry 3 --retry-delay 15 --retry-connrefused --max-time 120` (retry só para falhas de transporte/conexão — 4xx **não** é retentado). O secret nunca é ecoado no log.
 5. Resposta esperada: `{"deleted": N, "status": "ok"}` — `N` pode ser `0` (idempotente).
 
 **Atrasos:** o GitHub pode atrasar o cron (filas, em especial em repos públicos/de baixa atividade). Não é um problema de correção — é a janela do catch-up; o APScheduler in-process cobre o caso em que o processo está acordado. Se o Render ficar dormindo por longos períodos, considere `SCHEDULER_ENABLED=false` (o endpoint vira o único gatilho) ou um plano pago.
 
-**Sem segredo configurado:** `POST /api/v1/admin/expire` responde **503** ("Expiração manual não configurada") — fail-closed, nunca um hard-delete aberto ao público. Com segredo errado/ausente: **401**.
+**Sem segredo configurado:** `POST /api/v1/admin/expire` responde **503** ("Expiração manual não configurada") — **fail-closed**: significa que o gatilho manual está **desativado** (a expiração depende só do scheduler in-process), nunca que o endpoint está aberto. Com segredo errado/ausente: **401**. Em ambos os casos o endpoint destrutivo permanece fechado; um 2xx sem o segredo indicaria configuração incorreta grave. O gate `verify-deploy.ps1` aceita 401/403/503 como recusa válida e só falha (ou aponta erro) para respostas inesperadas — ele nunca trata 503 como "endpoint aberto".
 
 ---
 
@@ -160,7 +164,7 @@ O plano free do Render **dorme após ~15 min sem tráfego**. No primeiro request
 
 ## Gate de fumaça
 
-`scripts/verify-deploy.ps1` valida o deploy de produção de ponta a ponta (health + Turnstile `live`, CORS permitido/negado, board sem dados de contato, página legal, contrato da API, cron 401/403 e idempotência, ausência de vazamento do secret, latência de cold-start).
+`scripts/verify-deploy.ps1` valida o deploy de produção de ponta a ponta (health + Turnstile `live`, CORS permitido/negado, board sem dados de contato, página legal, contrato da API, cron 401/403/503 (fail-closed) e idempotência, ausência de vazamento do secret, latência de cold-start).
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\verify-deploy.ps1 `
@@ -197,15 +201,17 @@ Compatível com PowerShell 5.1, salvo em UTF-8 com BOM.
 - [ ] Região anotada (e `region` do `render.yaml` alinhada)
 
 **Render (backend)**
-- [ ] Blueprint aplicado a partir do `render.yaml`
+- [ ] Blueprint aplicado a partir do `render.yaml` (deploys **manuais** — `autoDeploy: false`; cada deploy é disparado no dashboard após revisão)
 - [ ] Todos os env vars preenchidos (`DATABASE_URL`, `ADMIN_PASSWORD_HASH`, `JWT_SECRET`, `CORS_ORIGINS`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `GROQ_API_KEY`, `CRON_SECRET`)
+- [ ] Snapshot/backup do Neon tirado antes do deploy (migrações são forward-only — sem rollback de schema)
 - [ ] Boot rodou `alembic upgrade head` sem erro
 - [ ] `/api/v1/health` → `status=ok`, `env=prod`, `turnstile.mode=live`
 - [ ] `CORS_ORIGINS` = origem exata da Vercel, sem barra final; redeploy feito após ajuste
 
 **Vercel (frontend)**
 - [ ] Root Directory = `frontend`
-- [ ] `BACKEND_API_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` configurados
+- [ ] `BACKEND_API_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` configurados (ver `frontend/.env.example`)
+- [ ] Build de produção passou (sem `NEXT_PUBLIC_API_URL` ele **falha** de propósito — WR-04)
 - [ ] Deploy de produção concluído; domínio anotado
 - [ ] Board carrega sem erro de CORS no console do navegador
 

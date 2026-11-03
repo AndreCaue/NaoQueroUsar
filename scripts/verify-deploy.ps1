@@ -11,7 +11,7 @@
     4.  Board (/)                      -> 200, contém "Vagas abertas", NÃO vaza contatos
     5.  Legal (/privacidade)           -> 200, contém "LGPD" e "intermedi"
     6.  API pública                    -> 200, JSON com items/total
-    7.  Cron sem segredo               -> 401 ou 403
+    7.  Cron sem segredo               -> 401/403 (recusado) ou 503 (gatilho manual desativado, fail-closed)
     8.  Cron com segredo (idempotente) -> 200 + "deleted" inteiro, 2x
     9.  Não vazamento                  -> secret não aparece no board nem no health
     10. Cold-start (informativo)       -> imprime a latência do primeiro request; avisa se > 15 s
@@ -174,11 +174,18 @@ Assert ($null -ne $apiJson.total) "API pública sem 'total' no JSON"
 Write-Pass "API pública 200 com items/total (total=$($apiJson.total))"
 
 # ---------------------------------------------------------------------------
-# 7. Cron SEM segredo: 401 ou 403 (nunca 200, nunca 5xx)
+# 7. Cron SEM segredo: 401, 403 ou 503 (fail-closed; nunca 2xx)
+#    503 = gatilho manual desativado (CRON_SECRET ausente) — NÃO é "aberto".
 # ---------------------------------------------------------------------------
 $cronAnon = Invoke-Http -Method POST -Url "$BackendUrl/api/v1/admin/expire"
-Assert (($cronAnon.Status -eq 401) -or ($cronAnon.Status -eq 403)) "POST /admin/expire sem segredo retornou $($cronAnon.Status) (esperado 401 ou 403). Endpoint destrutivo aberto!"
-Write-Pass "cron sem segredo recusado ($($cronAnon.Status))"
+if (($cronAnon.Status -eq 401) -or ($cronAnon.Status -eq 403)) {
+    Write-Pass "cron sem segredo recusado ($($cronAnon.Status))"
+} elseif ($cronAnon.Status -eq 503) {
+    Write-Warning "CRON_SECRET não configurado — POST /admin/expire responde 503 (fail-closed). O gatilho manual está desativado; a expiração depende apenas do scheduler in-process. Para habilitar o catch-up, defina CRON_SECRET no backend e em secrets.CRON_SECRET no GitHub."
+    Write-Output "WARN - cron manual desativado (503 fail-closed)"
+} else {
+    throw "POST /admin/expire sem segredo retornou $($cronAnon.Status) (esperado 401/403/503, fail-closed). Um 2xx aqui significa endpoint destrutivo ABERTO."
+}
 
 # ---------------------------------------------------------------------------
 # 8. Cron COM segredo: 200 + deleted inteiro, 2 chamadas (idempotente)

@@ -7,9 +7,22 @@
 # - ENV=prod ativa o validador fail-closed que RECUSA chaves de teste do
 #   Cloudflare Turnstile fora de dev (D-11/D-12) e exige TURNSTILE_SECRET_KEY
 #   preenchida — sem ela o processo não sobe.
+# - Deploys são MANUAIS (autoDeploy: false): cada deploy de produção é um passo
+#   aprovado por uma pessoa, não um efeito colateral de push na branch de
+#   produção. Dispare em "Deploy latest commit" no dashboard do Render após
+#   revisar o que está entrando.
 # - `alembic upgrade head` roda a CADA boot (inclusive redeploys e wake-ups
 #   do spin-down). As migrações são forward-only: corrija com uma nova
-#   migration, nunca editando o histórico.
+#   migration, nunca editando o histórico. Risco conhecido e aceito
+#   temporariamente: uma migration quebrada/não-idempotente derruba o boot em
+#   loop (a cada wake-up do plano free), derrubando o board público junto —
+#   não há rollback de schema. Mantido de propósito para não existirem duas
+#   fontes de verdade sobre a ordem deploy↔migration; mitigado pelo deploy
+#   manual acima (a migration é revisada antes do deploy) e pela regra de
+#   migrações forward-only + backup/snapshot do Neon antes de merge que toca
+#   schema. Separar a migração num step de deploy próprio (ex.: jobs de
+#   pré-deploy do Render) fica como trabalho futuro — NÃO remova o upgrade do
+#   boot sem um passo de deploy revisado e documentado no lugar.
 # - `region: ohio` deve ser alinhada à região do projeto Neon de produção
 #   (Neon: Project → Settings → General → Region) para minimizar latência.
 # - Todos os segredos ficam com `sync: false`: o valor é definido SOMENTE no
@@ -21,7 +34,10 @@ services:
     plan: free
     region: ohio # alinhar à região do Neon de produção
     rootDir: backend
-    autoDeploy: true
+    # Deploy manual e deliberado (WR-03): pushes na branch de produção NÃO
+    # sobem para o Render automaticamente; o operador dispara o deploy no
+    # dashboard após revisão (migrations são forward-only, sem rollback).
+    autoDeploy: false
     buildCommand: pip install uv && uv sync --frozen --no-dev
     startCommand: uv run alembic upgrade head && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
