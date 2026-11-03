@@ -6,6 +6,9 @@ name: expire-jobs
 # Vercel Hobby só agenda 1x/dia sem retry. Ele chama o endpoint idempotente
 # POST /api/v1/admin/expire com o segredo de repositório — nunca com o JWT de admin.
 
+# Least privilege: o job só chama um endpoint HTTP externo e não usa GITHUB_TOKEN (IN-01).
+permissions: {}
+
 on:
   schedule:
     - cron: '0 3 * * *' # 03:00 UTC, mesma janela do scheduler interno
@@ -36,8 +39,11 @@ jobs:
           fi
           # O secret nunca é ecoado; o GitHub mascara secrets.* de qualquer forma.
           # --fail-with-body deixa a resposta do backend visível no log sem vazamento.
+          # --retry 3 --retry-connrefused retenta apenas transporte/conexão
+          # (ECONNREFUSED etc.). 4xx NÃO é retentado — um 401 indica segredo
+          # errado/ausente e repetir só polui o log (IN-02).
           curl --fail-with-body --silent --show-error \
-            --retry 3 --retry-delay 15 --retry-all-errors --max-time 120 \
+            --retry 3 --retry-delay 15 --retry-connrefused --max-time 120 \
             -X POST "${API_BASE_URL%/}/api/v1/admin/expire" \
             -H "X-Cron-Secret: ${CRON_SECRET}"
           echo
