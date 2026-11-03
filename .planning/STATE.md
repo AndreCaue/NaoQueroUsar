@@ -129,6 +129,7 @@ Recent decisions affecting current work:
 - [Phase 06]: D-18 realized (plan 06-03): /privacidade gathers Privacy, Terms and Intermediary/LGPD under one pt-BR page with anchor navigation; drafting is intentionally marked pending legal review, and no invented privacy e-mail was introduced.
 - [Phase 06]: Deploy artifact set realized (plan 06-04 Tasks 1-2): Render/uv/Alembic blueprint, UTC GitHub cron catch-up, Vercel config, pt-BR runbook and UTF-8/BOM PowerShell smoke gate; no secret values committed. Completion remains blocked on the human Task 3 production verification.
 - [Phase 06]: Post-review fixes completed: expiry sweep now runs via AsyncIOScheduler on FastAPI's event loop and drains before engine disposal; anonymous report and cron trigger are rate-limited at the correct dependency/IP boundary; frontend fails closed without NEXT_PUBLIC_API_URL in production; Render deploys are manually gated and the smoke gate treats missing CRON_SECRET as WARN. Re-review reduced remaining findings to CR-02.
+- [Phase 06]: User requested temporary Lorem Ipsum/test content and an unreachable `.invalid` placeholder address for the legal page. It is visibly marked non-final, `robots` noindex and the misleading public-contact wording was corrected; it must still be replaced with approved legal text and an official channel before launch.
 - [Phase 06]: Launch gate remains CR-02: final LGPD/privacy legal copy and an existing privacy contact channel are human/legal inputs; software fixes do not authorize go-live or production deploy.
 
 ### Pending Todos

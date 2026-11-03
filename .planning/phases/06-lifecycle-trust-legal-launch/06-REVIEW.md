@@ -64,16 +64,13 @@ No new defects were found in the fix code. The one remaining launch blocker is C
 **File:** `frontend/app/(public)/privacidade/page.tsx:98, 175, 252, 258` (still present — verified by grep in this re-review), `frontend/app/(public)/layout.tsx`
 **Severity:** BLOCKER (launch blocker — LGPD Art. 18/41; the phase is "trust-legal-launch")
 
-**Issue:** The page that is supposed to establish trust and legal compliance still contains, verbatim:
+**Issue:** The page that is supposed to establish trust and legal compliance still contains, or has been replaced with, non-launchable content. As of the latest remediation it contains clearly marked Lorem Ipsum/test copy, an unreachable `.invalid` placeholder address and a prominent warning that no legal text or LGPD channel is final. This is useful for visual development but does not authorize publication.
 
-- `[Redação jurídica detalhada pendente — sujeito a revisão por advogado antes do lançamento...]` (×3, lines 98, 175, 258)
-- `[E-mail de contato para privacidade: pendente — definir endereço oficial antes do lançamento.]` (line 252)
+There is still no reachable privacy/LGPD contact channel anywhere on the site (the footer renders only the copyright line, slogan and the "Privacidade e termos" link). Under LGPD the controller must provide a reachable channel for data-subject requests; placeholder test content is not a channel. Publishing as-is fails the phase's trust/legal goal.
 
-There is still no reachable privacy/LGPD contact channel anywhere on the site (the footer renders only the copyright line, slogan and the "Privacidade e termos" link). Under LGPD the controller must provide a reachable channel for data-subject requests; an unfinished placeholder page is not a channel. Publishing as-is fails the phase's trust/legal goal.
+The contact reveal wording was corrected to accurately describe that no contacts appear in public HTML and are exposed only after the Turnstile-gated reveal.
 
-Additionally (unchanged): the page wording still states contacts "são exibidos publicamente na página da vaga", which misstates the actual reveal flow (contacts are released only via the Turnstile-gated reveal).
-
-**Status:** NOT FIXED — intentionally out of scope for this pass; remains pending user/legal sign-off.
+**Status:** NOT FIXED — the explicit placeholders are now clearly labelled Lorem Ipsum/test content, and the page is `noindex`, but the launch blocker remains pending user/legal sign-off.
 
 **Fix (unchanged):**
 1. Define and publish a real, monitored privacy/contact address (e.g. `privacidade@<dominio>`) and render it on `/privacidade` and in the footer.
@@ -87,7 +84,7 @@ Both items are prerequisites for honestly ticking the "legal" checkbox in the go
 
 ## Notes for the go-live operator (not counted as findings)
 
-- **Do not run `scripts/verify-deploy.ps1` yet.** CR-02 is open and `/privacidade` still ships placeholders; the gate must not be used to bless a launch. (The script itself was not executed in this review — read-only, no network.)
+- **Do not run `scripts/verify-deploy.ps1` yet.** CR-02 is open; `/privacidade` still ships clearly labelled non-legal test content and no real LGPD channel. The gate must not be used to bless a launch.
 - **Residual risk accepted and documented (WR-03 disposition):** `alembic upgrade head` still runs on every boot, including free-tier wake-ups. A broken/non-idempotent migration will crash-loop the service and take the public board down; there is no schema rollback. Mitigations are procedural only (manual deploys, forward-only migrations, Neon snapshot before schema merges). The pre-deploy migration step remains future work.
 - **Residual risk accepted and documented (WR-05):** if a sweep outlives the 30 s drain, shutdown proceeds to `engine.dispose()` anyway — the in-flight `DELETE` aborts and is retried by the next cycle (idempotent). This is a deliberate bounded trade-off, logged via `logger.warning`.
 - **CR-01 regression coverage depends on `TEST_DATABASE_URL`:** environments without a test database skip `test_expiry_sweep_integration.py`, so the cross-loop defect class is only guarded where the integration suite actually runs.
@@ -110,7 +107,7 @@ Do **not** treat any of the above as executed — none were run in this review (
 | ID | Title | Disposition |
 |----|-------|-------------|
 | CR-01 | Cross-loop pool contamination | Resolved — AsyncIOScheduler on the app loop + bounded drain + integration test |
-| CR-02 | `/privacidade` not shippable | **Open — unchanged (out of scope; pending user/legal sign-off)** |
+| CR-02 | `/privacidade` not shippable | **Open — Lorem/noindex test copy only (out of scope; pending user/legal sign-off)** |
 | WR-01 | No rate limit on report endpoint | Resolved — 5/min per-IP limiter + 429 handling + test |
 | WR-02 | Deploy gate contradicts 503 | Resolved — 401/403 pass, 503 warns, other values fail |
 | WR-03 | autoDeploy + migrate-on-boot | Acceptably dispositioned — manual deploys + documented accepted risk |
