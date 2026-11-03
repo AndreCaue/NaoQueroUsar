@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-11-02T15:12:15.096Z"
+stopped_at: "06-04 Tasks 1-2 complete; awaiting human production deploy (Task 3)"
+last_updated: "2026-11-02T23:58:00-03:00"
 last_activity: 2026-11-02
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 27
-  completed_plans: 24
-  percent: 83
+  completed_plans: 26
+  percent: 96
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 ## Current Position
 
 Phase: 06 (lifecycle-trust-legal-launch) — EXECUTING
-Plan: 2 of 4
-Status: Ready to execute
+Plan: 4 of 4
+Status: Awaiting human production deploy checkpoint
 Last activity: 2026-11-02
 
-Progress: [█████████░] 89%
+Progress: [█████████▋] 96%
 
 ## Performance Metrics
 
@@ -67,6 +67,8 @@ Progress: [█████████░] 89%
 | Phase 04 P03 | 13min | 3 tasks | 13 files |
 | Phase 05 P04 | ~45min | 3 tasks | 24 files |
 | Phase 06 P01 | 14min | 4 tasks | 10 files |
+| Phase 06 P02 | 20min | 3 tasks | 13 files |
+| Phase 06 P03 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -123,6 +125,9 @@ Recent decisions affecting current work:
 - [Phase 06]: o sweep de expiracao usa o relogio do BANCO (func.now()), o mesmo de list_published, e e status-agnostic - published, pending, needs_review e invalid expiram pela mesma regra de 14 dias (LIFE-02/LIFE-03, D-03/D-04)
 - [Phase 06]: o trigger manual e autenticado por header X-Cron-Secret em dependency propria (require_cron_secret) - 503 quando CRON_SECRET nao esta configurado (fail closed) e 401 quando o header falta/erra; um Bearer JWT de admin NAO autoriza /admin/expire (T-06-01)
 - [Phase 06]: SCHEDULER_ENABLED (default true) desliga o APScheduler in-process - necessario para hosts free-tier que hibernam e para multiplos workers; o endpoint /admin/expire idempotente fica como caminho de catch-up (D-01)
+- [Phase 06]: D-16/D-17 realized (plan 06-02): POST /api/v1/public/jobs/{id}/report accepts optional reason (max 500 chars) and emits structured logs without persisting reports; the endpoint intentionally does not expose whether a job exists. "Vaga revisada" badge derives solely from status=published on JobCard and JobDetailDialog.
+- [Phase 06]: D-18 realized (plan 06-03): /privacidade gathers Privacy, Terms and Intermediary/LGPD under one pt-BR page with anchor navigation; drafting is intentionally marked pending legal review, and no invented privacy e-mail was introduced.
+- [Phase 06]: Deploy artifact set realized (plan 06-04 Tasks 1-2): Render/uv/Alembic blueprint, UTC GitHub cron catch-up, Vercel config, pt-BR runbook and UTF-8/BOM PowerShell smoke gate; no secret values committed. Completion remains blocked on the human Task 3 production verification.
 
 ### Pending Todos
 
@@ -144,6 +149,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-11-02T15:12:15.047Z
-Stopped at: Completed 06-01-PLAN.md
-Resume file: None
+Last session: 2026-11-02T23:58:00-03:00
+Stopped at: 06-04 Tasks 1-2 complete; awaiting human production deploy (Task 3)
+Resume file: .planning/phases/06-lifecycle-trust-legal-launch/06-04-PLAN.md
