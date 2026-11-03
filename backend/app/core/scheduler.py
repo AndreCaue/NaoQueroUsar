@@ -1,20 +1,28 @@
 """In-process expiry scheduler (LIFE-02, LIFE-03 — D-01/D-02).
 
-A ``BackgroundScheduler`` runs one sweep a day at 03:00 UTC that hard deletes
+A ``AsyncIOScheduler`` runs one sweep a day at 03:00 UTC that hard deletes
 every job past ``expires_at``. The sweep itself lives in
 ``app.crud.jobs.delete_expired_jobs``; this module only owns the clock and the
 short-lived session it runs in.
 
-Why a thread scheduler and ``asyncio.run``:
-APScheduler 3.x's ``BackgroundScheduler`` calls jobs from a worker thread, so
-the async CRUD entry point is driven through a fresh event loop in that thread
-instead of reusing the request loop (which may not exist — the scheduler also
-runs before/after traffic).
+Why ``AsyncIOScheduler`` (and not a thread + ``asyncio.run``):
+APScheduler's ``AsyncIOScheduler`` schedules coroutine jobs as tasks on the
+*same* event loop that serves FastAPI and owns the shared asyncpg pool. The
+sweep therefore never checks out connections from a different — or an already
+closed — loop. The previous ``BackgroundScheduler`` + ``asyncio.run`` model
+ran each sweep in a worker thread against a brand-new event loop while sharing
+the module-level ``AsyncEngine``; pooled connections could cross loops, and
+subsequent requests could receive connections bound to a dead loop (CR-01).
 
 Operational notes:
 - The job is idempotent (deleting nothing is a no-op), so duplicate runs — a
   restart catching up, or a second worker in the same box — are harmless
   (T-06-02/T-06-03).
+- Shutdown is deterministic: the scheduler is paused (no new sweep starts),
+  in-flight sweeps are awaited with a bounded timeout, and only then is the
+  engine disposed in the lifespan (WR-05). APScheduler's asyncio executor
+  cannot truly wait — it cancels pending futures — so the bounded drain here
+  is the real guarantee that the pool is not disposed mid-``DELETE``.
 - ``SCHEDULER_ENABLED=false`` turns the in-process clock off entirely; the
   ``POST /api/v1/admin/expire`` endpoint remains available for an external
   cron (LIFE-04). Free-tier hosts that spin down do not run the scheduler
@@ -24,7 +32,7 @@ Operational notes:
 import asyncio
 import logging
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from app.core.config import get_settings
@@ -40,6 +48,10 @@ EXPIRY_MINUTE_UTC = 0
 # Stable id so a re-start replaces instead of duplicating the job.
 EXPIRY_JOB_ID = "expire-jobs"
 
+# Upper bound for draining an in-flight sweep during shutdown. The delete is
+# a single statement; 30 s is generous and still bounded.
+_DRAIN_TIMEOUT_SECONDS = 30.0
+
 __all__ = [
     "EXPIRY_HOUR_UTC",
     "EXPIRY_MINUTE_UTC",
@@ -50,7 +62,12 @@ __all__ = [
     "shutdown_scheduler",
 ]
 
-_scheduler: BackgroundScheduler | None = None
+_scheduler: AsyncIOScheduler | None = None
+
+# Tasks currently executing a sweep (registered by ``expire_jobs_job`` itself,
+# since the scheduler creates the task). Tracked so shutdown can drain them
+# before the engine is disposed (WR-05).
+_inflight: set[asyncio.Task] = set()
 
 
 async def _run_expiry_sweep() -> int:
@@ -65,30 +82,40 @@ async def _run_expiry_sweep() -> int:
     return deleted
 
 
-def expire_jobs_job() -> int:
-    """Scheduler entry point: run one expiry sweep in this (worker) thread.
+async def expire_jobs_job() -> int:
+    """Scheduler entry point: run one expiry sweep on the app's event loop.
 
     Never raises: a transient database failure is logged and the next daily
-    run (or the ``CRON_SECRET`` catch-up) retries, so one bad night cannot kill
-    the scheduler's worker thread.
+    run (or the ``CRON_SECRET`` catch-up) retries, so one bad night cannot
+    kill the scheduler.
     """
+    task = asyncio.current_task()
+    if task is not None:
+        _inflight.add(task)
     try:
-        deleted = asyncio.run(_run_expiry_sweep())
+        deleted = await _run_expiry_sweep()
     except Exception:
         logger.exception("expiry sweep falhou; nova tentativa no proximo ciclo")
         return 0
+    finally:
+        if task is not None:
+            _inflight.discard(task)
 
     logger.info("expiry sweep removeu %s vaga(s) expirada(s)", deleted)
     return deleted
 
 
-def get_scheduler() -> BackgroundScheduler | None:
+def get_scheduler() -> AsyncIOScheduler | None:
     """Return the running scheduler, or ``None`` when it was never started."""
     return _scheduler
 
 
-def start_scheduler() -> BackgroundScheduler | None:
-    """Start the daily expiry sweep (idempotent; returns ``None`` if disabled)."""
+def start_scheduler() -> AsyncIOScheduler | None:
+    """Start the daily expiry sweep (idempotent; returns ``None`` if disabled).
+
+    Must be called from inside the event loop (the lifespan does so) —
+    ``AsyncIOScheduler.start`` binds itself to the running loop.
+    """
     global _scheduler
 
     if not get_settings().SCHEDULER_ENABLED:
@@ -98,7 +125,7 @@ def start_scheduler() -> BackgroundScheduler | None:
     if _scheduler is not None and _scheduler.running:
         return _scheduler
 
-    scheduler = BackgroundScheduler(timezone="UTC")
+    scheduler = AsyncIOScheduler(timezone="UTC")
     scheduler.add_job(
         expire_jobs_job,
         CronTrigger(
@@ -124,18 +151,63 @@ def start_scheduler() -> BackgroundScheduler | None:
     return scheduler
 
 
-def shutdown_scheduler() -> None:
-    """Stop the scheduler if it is running (safe to call twice)."""
-    global _scheduler
-
-    if _scheduler is None:
+async def _drain_inflight(timeout: float) -> None:
+    """Wait (bounded, non-cancelling) for in-flight sweeps to finish."""
+    pending = [task for task in _inflight if not task.done()]
+    if not pending:
         return
 
-    if _scheduler.running:
-        # ``wait=False``: never block application shutdown on a sweep that is
-        # already in flight. The delete is idempotent, so an interrupted run is
-        # simply repeated by the next one.
-        _scheduler.shutdown(wait=False)
-        logger.info("scheduler de expiracao encerrado")
+    logger.info(
+        "aguardando %d sweep(s) de expiracao em andamento (ate %.0fs)",
+        len(pending),
+        timeout,
+    )
+    # ``asyncio.wait`` does not cancel the tasks on timeout — an in-flight
+    # DELETE is left to finish (or to be cancelled by the caller's teardown).
+    _, still_pending = await asyncio.wait(pending, timeout=timeout)
+    if still_pending:
+        logger.warning(
+            "sweep de expiracao nao concluiu em %.0fs; seguindo com o shutdown "
+            "(a delecao e idempotente — o proximo ciclo refaz)",
+            timeout,
+        )
 
-    _scheduler = None
+
+async def shutdown_scheduler() -> None:
+    """Stop the scheduler and drain in-flight sweeps (safe to call twice).
+
+    Called by the lifespan **before** ``engine.dispose()``: the scheduler is
+    paused so no new sweep starts, in-flight sweeps are awaited with a
+    bounded timeout, and only then is the clock stopped. Disposal of the
+    pool therefore never happens underneath a running ``DELETE``.
+    """
+    global _scheduler
+
+    scheduler, _scheduler = _scheduler, None
+
+    if scheduler is not None and scheduler.running:
+        # Pause first: no new sweep may start while we drain the current one.
+        # ``pause`` raises only when the scheduler is already stopped.
+        try:
+            scheduler.pause()
+        except Exception:
+            logger.debug("scheduler.pause() ignorado (ja parado?)", exc_info=True)
+
+    # Drain whether or not a scheduler instance exists — a sweep launched
+    # manually (or by an earlier scheduler) shares the same pool, and the
+    # engine is disposed right after this returns.
+    await _drain_inflight(_DRAIN_TIMEOUT_SECONDS)
+
+    if scheduler is not None:
+        # AsyncIOScheduler dispatches shutdown through ``call_soon_threadsafe``;
+        # it also cancels pending futures instead of waiting for them — the
+        # drain above is the real guarantee. ``wait=True`` keeps the contract
+        # explicit and correct for schedulers whose executors do honor it.
+        try:
+            scheduler.shutdown(wait=True)
+        except Exception:
+            logger.warning("scheduler.shutdown falhou", exc_info=True)
+        # Let the loop run the deferred shutdown callback before the lifespan
+        # proceeds to ``engine.dispose()``.
+        await asyncio.sleep(0)
+        logger.info("scheduler de expiracao encerrado")

@@ -22,7 +22,10 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        shutdown_scheduler()
+        # WR-05: stop the scheduler and drain in-flight sweeps BEFORE the
+        # pool is disposed — dispose() must never close connections under a
+        # running DELETE.
+        await shutdown_scheduler()
         await engine.dispose()
 
 

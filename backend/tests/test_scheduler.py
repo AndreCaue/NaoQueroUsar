@@ -2,9 +2,13 @@
 
 The sweep is scheduled at 03:00 UTC once a day. These tests pin the trigger
 and the start/shutdown lifecycle without letting a real sweep run: the
-scheduler thread only executes at the cron instant, so starting it here is
-side-effect free.
+scheduler only executes at the cron instant, so starting it here is
+side-effect free. Sweeps run on the same event loop as the app and the
+shared pool (CR-01); the actual database behaviour is covered by
+``test_expiry_sweep_integration``.
 """
+
+import asyncio
 
 import pytest
 
@@ -13,14 +17,14 @@ from app.core.config import get_settings
 
 
 @pytest.fixture(autouse=True)
-def _clean_scheduler():
+async def _clean_scheduler():
     """Never leak a running scheduler from one test into the next."""
-    scheduler_module.shutdown_scheduler()
+    await scheduler_module.shutdown_scheduler()
     yield
-    scheduler_module.shutdown_scheduler()
+    await scheduler_module.shutdown_scheduler()
 
 
-def test_scheduler_runs_daily_at_0300_utc():
+async def test_scheduler_runs_daily_at_0300_utc():
     scheduler = scheduler_module.start_scheduler()
 
     assert scheduler is not None
@@ -33,7 +37,7 @@ def test_scheduler_runs_daily_at_0300_utc():
     assert job.next_run_time.utcoffset().total_seconds() == 0  # UTC
 
 
-def test_start_scheduler_is_idempotent():
+async def test_start_scheduler_is_idempotent():
     first = scheduler_module.start_scheduler()
     second = scheduler_module.start_scheduler()
 
@@ -41,15 +45,53 @@ def test_start_scheduler_is_idempotent():
     assert len(first.get_jobs()) == 1
 
 
-def test_shutdown_stops_the_scheduler():
+async def test_shutdown_stops_the_scheduler():
     scheduler_module.start_scheduler()
 
-    scheduler_module.shutdown_scheduler()
+    await scheduler_module.shutdown_scheduler()
 
     assert scheduler_module.get_scheduler() is None
 
 
-def test_scheduler_can_be_disabled(monkeypatch):
+async def test_shutdown_is_safe_to_call_twice():
+    scheduler_module.start_scheduler()
+
+    await scheduler_module.shutdown_scheduler()
+    await scheduler_module.shutdown_scheduler()
+
+    assert scheduler_module.get_scheduler() is None
+
+
+async def test_shutdown_waits_for_inflight_sweep():
+    """An in-flight sweep completes before shutdown returns (WR-05)."""
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    async def fake_sweep():
+        started.set()
+        await release.wait()
+        return 7
+
+    original = scheduler_module._run_expiry_sweep
+    scheduler_module._run_expiry_sweep = fake_sweep
+    try:
+        task = asyncio.create_task(scheduler_module.expire_jobs_job())
+        await started.wait()
+
+        shutdown = asyncio.create_task(scheduler_module.shutdown_scheduler())
+        await asyncio.sleep(0.05)
+        assert not shutdown.done()  # drain is blocking on the sweep
+        assert task in scheduler_module._inflight
+
+        release.set()
+        assert await asyncio.wait_for(shutdown, timeout=5) is None
+        assert (await task) == 7
+        assert scheduler_module._inflight == set()
+    finally:
+        scheduler_module._run_expiry_sweep = original
+
+
+async def test_scheduler_can_be_disabled(monkeypatch):
     """SCHEDULER_ENABLED=false leaves the in-process clock off (external cron)."""
     monkeypatch.setattr(get_settings(), "SCHEDULER_ENABLED", False)
 
