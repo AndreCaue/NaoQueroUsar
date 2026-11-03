@@ -128,6 +128,8 @@ Recent decisions affecting current work:
 - [Phase 06]: D-16/D-17 realized (plan 06-02): POST /api/v1/public/jobs/{id}/report accepts optional reason (max 500 chars) and emits structured logs without persisting reports; the endpoint intentionally does not expose whether a job exists. "Vaga revisada" badge derives solely from status=published on JobCard and JobDetailDialog.
 - [Phase 06]: D-18 realized (plan 06-03): /privacidade gathers Privacy, Terms and Intermediary/LGPD under one pt-BR page with anchor navigation; drafting is intentionally marked pending legal review, and no invented privacy e-mail was introduced.
 - [Phase 06]: Deploy artifact set realized (plan 06-04 Tasks 1-2): Render/uv/Alembic blueprint, UTC GitHub cron catch-up, Vercel config, pt-BR runbook and UTF-8/BOM PowerShell smoke gate; no secret values committed. Completion remains blocked on the human Task 3 production verification.
+- [Phase 06]: Post-review fixes completed: expiry sweep now runs via AsyncIOScheduler on FastAPI's event loop and drains before engine disposal; anonymous report and cron trigger are rate-limited at the correct dependency/IP boundary; frontend fails closed without NEXT_PUBLIC_API_URL in production; Render deploys are manually gated and the smoke gate treats missing CRON_SECRET as WARN. Re-review reduced remaining findings to CR-02.
+- [Phase 06]: Launch gate remains CR-02: final LGPD/privacy legal copy and an existing privacy contact channel are human/legal inputs; software fixes do not authorize go-live or production deploy.
 
 ### Pending Todos
 
@@ -136,7 +138,8 @@ None yet.
 ### Blockers/Concerns
 
 - Phase 2/3/6 flagged for possible `/gsd-research-phase` (modelo Groq vivo, strict outputs, TPM; Siteverify; scheduler externo/Neon CU-hour/Render-Railway free-tier).
-- LGPD exige revisão por advogado brasileiro antes do lançamento (tarefa humana, não de código).
+- LGPD exige revisão por advogado brasileiro antes do lançamento (tarefa humana, não de código); `/privacidade` remains blocked until the approved text and monitored privacy contact channel are provided.
+- Production deploy remains blocked: CR-02 legal/LGPD inputs plus the human Render/Vercel/GitHub setup checkpoint in 06-04 Task 3. No production deploy or smoke-gate run has occurred.
 - Turnstile: os segredos publicos de teste da Cloudflare (1x/2x/3x) nao devolvem o campo 'action' na resposta do Siteverify - com eles o login (expected_action='login') e o reveal (expected_action='reveal') devolvem 403 'Verificacao anti-bot falhou - tente novamente', travando o checkpoint de browser da task 3 do plano 03-05. Sintoma medido contra o backend no ar (403, e nao 401 'Senha invalida', o que prova que a chamada real a Cloudflare acontece). Correcao proposta (exigir action so quando a resposta tiver action, ou um flag enforce_action desligado quando turnstile_mode == 'test') aguardando o veredito do usuario - nenhum codigo de producao foi alterado.
 
 ## Deferred Items
@@ -149,6 +152,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-11-02T23:58:00-03:00
-Stopped at: 06-04 Tasks 1-2 complete; awaiting human production deploy (Task 3)
+Last session: 2026-11-02T23:30:00-03:00
+Stopped at: Technical review findings fixed and re-reviewed; 06-04 Task 3 remains blocked by legal inputs and production deploy checkpoint
 Resume file: .planning/phases/06-lifecycle-trust-legal-launch/06-04-PLAN.md
