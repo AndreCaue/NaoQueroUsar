@@ -134,6 +134,7 @@ Recent decisions affecting current work:
 - [Phase 06]: User explicitly decided to keep the project in development with the Lorem Ipsum/noindex legal page; production deployment, legal finalization and go-live verification remain deferred and are not implied by code completion.
 - [Phase 06]: Launch gate remains CR-02: final LGPD/privacy legal copy and an existing privacy contact channel are human/legal inputs; software fixes do not authorize go-live or production deploy.
 - [Phase 02]: Review-fix pass (2026-11-03) closed CR-01 + WR-01..04: blank contacts are normalized to None before the D-05 gate, width-limited fields are clipped with a needs_review reason, ExtractionAPIError maps to a pt-BR 503, +55-expanded phones ground on the national portion, and delimiter tokens in the pasted text are neutralized (count pre-pass included). Full suite 247 passed / 3 skipped; 02-VERIFICATION.md re-verified 5/5. Info findings IN-01..IN-08 intentionally left for a later cleanup pass.
+- [Dependencies]: 2026-11-03 — `next` bumped 15.5.3 → 15.5.29 (patch, stack stays Next 15) and `overrides` added for `postcss@^8.5.32` + `sharp@^0.35.5`. `npm audit`: 0 critical / 0 high (was 1 critical / 2 high); the remaining 18 moderate are ESLint dev-chain only. Validated with lint, `tsc --noEmit` and a full `next build`. Resolves deferred item D-1.
 
 ### Pending Todos
 
