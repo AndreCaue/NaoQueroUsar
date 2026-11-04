@@ -14,6 +14,7 @@ from app.api.v1 import extract as extract_module
 from app.core.config import get_settings
 from app.models.job import Job, JobStatus
 from app.schemas.extract import ALERT_DISCARDED, ALERT_DIVERGENCE, ALERT_TRUNCATED
+from app.services.extraction.client import ExtractionAPIError
 from app.services.extraction.extractor import CandidateOutcome, ExtractionResult
 from app.services.extraction.schema import JobCandidate
 
@@ -257,6 +258,31 @@ async def test_extract_422_from_extractor_value_error(client, admin_password, mo
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 422
+
+
+async def test_extract_503_from_extraction_api_error(client, admin_password, monkeypatch):
+    """WR-02: the client's curated pt-BR failure must reach the admin as 503."""
+    token = await _get_admin_token(client, admin_password)
+    settings = get_settings()
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "test-key")
+
+    detail = (
+        "Limite de taxa do Groq atingido (429) mesmo após retries — "
+        "aguarde alguns minutos e tente novamente (limite de taxa)."
+    )
+
+    async def boom(*args, **kwargs):
+        raise ExtractionAPIError(detail)
+
+    monkeypatch.setattr(extract_module, "extract_jobs", boom)
+
+    resp = await client.post(
+        "/api/v1/admin/extract",
+        json={"text": "texto"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == detail
 
 
 async def test_extract_commit_failure_rolls_back_no_rows(client, admin_password, db_session, monkeypatch):

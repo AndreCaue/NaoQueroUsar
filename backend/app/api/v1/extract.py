@@ -32,6 +32,7 @@ from app.schemas.extract import (
     ExtractRequest,
     ExtractSummaryResponse,
 )
+from app.services.extraction.client import ExtractionAPIError
 from app.services.extraction.extractor import CandidateOutcome, extract_jobs
 
 router = APIRouter(prefix="/admin", tags=["admin-extract"])
@@ -81,6 +82,10 @@ async def extract_admin(
         ) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ExtractionAPIError as exc:
+        # WR-02: the client already carries a curated pt-BR message (rate limit,
+        # dead model, bad key…). 503 = upstream (Groq) unavailable.
+        raise HTTPException(status_code=503, detail=exc.detail) from exc
 
     rows: list[dict[str, Any]] = []
     for candidate, outcome in result.kept:
