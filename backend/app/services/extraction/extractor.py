@@ -40,12 +40,10 @@ from typing import Any, Awaitable, Callable
 
 from app.services.extraction.chunking import chunk_text
 from app.services.extraction.client import (
-    END_DELIM,
-    INSTRUCTION_NOTE,
-    START_DELIM,
     call_extraction,
     model_chain,
     strip_markdown_fences,
+    wrap_untrusted,
 )
 from app.services.extraction.grounding import is_grounded, normalize_for_grounding
 from app.services.extraction.phones import normalize_phone
@@ -328,7 +326,7 @@ async def estimate_job_count(
         },
         {
             "role": "user",
-            "content": f"{START_DELIM}\n{text}\n{END_DELIM}\n\n{INSTRUCTION_NOTE}",
+            "content": wrap_untrusted(text),
         },
     ]
 

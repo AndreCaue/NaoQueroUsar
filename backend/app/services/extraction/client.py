@@ -19,7 +19,9 @@ Failure-mode contract (threat model T-02-04/T-02-06/T-02-07):
   guarantee; Pydantic re-validation stays on top (semantic rules are the
   extractor's job).
 - **Prompt injection (EXTR-08)** — untrusted text is wrapped between
-  ``START_DELIM``/``END_DELIM`` and explicitly flagged as raw data.
+  ``START_DELIM``/``END_DELIM`` and explicitly flagged as raw data. Literal
+  delimiter tokens inside the paste are neutralized first (WR-04) so a post
+  cannot close the data region early and turn the remainder into instructions.
 
 The SDK is imported lazily so tests inject a fake ``client`` and never need a
 real ``GROQ_API_KEY`` (or the ``AsyncGroq`` constructor) at all.
@@ -99,13 +101,32 @@ def strict_response_format() -> dict[str, Any]:
     }
 
 
+def sanitize_untrusted(text: str) -> str:
+    """Neutralize the delimiter tokens inside untrusted pasted text (WR-04).
+
+    Posts copied from WhatsApp/Telegram can literally contain
+    ``</TEXTO_FONTE>``; left as-is it closes the data region early and the
+    remainder of the paste is read as prompt content. Replacing both tokens
+    keeps the entire paste inside the data region. Grounding stays
+    chunk-level, so a contact physically present in the attacker's own text
+    can still ground a row from the same chunk — this only stops the
+    delimiter breakout itself.
+    """
+    return (text or "").replace(START_DELIM, "<TEXTO>").replace(END_DELIM, "</TEXTO>")
+
+
+def wrap_untrusted(text: str) -> str:
+    """Delimiter-wrapped, sanitized untrusted text (EXTR-08 + WR-04)."""
+    return f"{START_DELIM}\n{sanitize_untrusted(text)}\n{END_DELIM}\n\n{INSTRUCTION_NOTE}"
+
+
 def build_messages(text: str, *, extra_user: str | None = None) -> list[dict[str, str]]:
     """System + delimiter-wrapped untrusted text (EXTR-08), optional repair turn."""
     messages: list[dict[str, str]] = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
             "role": "user",
-            "content": f"{START_DELIM}\n{text}\n{END_DELIM}\n\n{INSTRUCTION_NOTE}",
+            "content": wrap_untrusted(text),
         },
     ]
     if extra_user:
