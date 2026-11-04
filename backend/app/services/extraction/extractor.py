@@ -225,8 +225,15 @@ def _process_row(row: ExtractedJobRaw, chunk: str) -> tuple[JobCandidate | None,
     contact_phone = normalize_phone(row.contact_phone)
     if contact_phone is not None:
         raw_digits = _digits(row.contact_phone)
-        grounded = is_grounded(contact_phone, haystack) or (
-            bool(raw_digits) and raw_digits in chunk_digits
+        # WR-03: the LLM often canonicalizes to +55…, while the source only
+        # carries the national number — ground the national portion too.
+        national = (
+            contact_phone[3:] if contact_phone.startswith("+55") else contact_phone
+        )
+        grounded = (
+            is_grounded(contact_phone, haystack)
+            or (bool(raw_digits) and raw_digits in chunk_digits)
+            or (len(national) >= 10 and national in chunk_digits)
         )
         if not grounded:
             contact_phone = None

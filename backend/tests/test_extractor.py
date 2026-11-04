@@ -599,6 +599,28 @@ async def test_hallucinated_title_is_discarded():
     assert "Gerente" in result.discarded[0]["snippet"] or result.discarded[0]["snippet"]
 
 
+async def test_phone_with_country_code_added_by_llm_is_kept():
+    """WR-03: LLM returns +5511912345678 while the chunk only has (11) 91234-5678."""
+    row = clean_row(contact_email=None, contact_phone="+5511912345678")
+    fake = FakeGroq([rows_response([row])])
+    result = await extract_jobs(CLEAN_PASTE, make_settings(), client=fake, sleep=SleepRecorder())
+
+    assert len(result.kept) == 1
+    candidate, outcome = result.kept[0]
+    assert candidate.contact_phone == "+5511912345678"
+    assert outcome == CandidateOutcome.save
+
+
+async def test_fabricated_phone_is_still_discarded():
+    """WR-03 must not weaken grounding: a number absent from the chunk is cut."""
+    row = clean_row(contact_email=None, contact_phone="+5521988887777")
+    fake = FakeGroq([rows_response([row])])
+    result = await extract_jobs(CLEAN_PASTE, make_settings(), client=fake, sleep=SleepRecorder())
+
+    assert result.kept == []
+    assert result.discarded[0]["reason"] == "sem contato válido"
+
+
 async def test_ungrounded_contact_is_cleared_then_discarded():
     row = clean_row(contact_email="inventado@fantasma.com")
     # phone is also absent from a paste without a phone number
