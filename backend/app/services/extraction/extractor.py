@@ -168,7 +168,10 @@ def _process_row(row: ExtractedJobRaw, chunk: str) -> tuple[JobCandidate | None,
             "título não encontrado no texto-fonte (possível alucinação)",
         )
 
-    contact_email = row.contact_email
+    # "" is absence of contact, not a contact (CR-01): normalize it to None so
+    # the D-05 check below discards the row instead of handing it to the DB,
+    # where the ``at_least_one_contact`` CHECK would abort the WHOLE batch.
+    contact_email = (row.contact_email or "").strip() or None
     if contact_email and not is_grounded(contact_email, haystack):
         contact_email = None  # ungrounded contact is cleared (T-02-05)
 

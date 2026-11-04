@@ -518,6 +518,18 @@ async def test_row_without_contact_is_discarded_with_snippet():
     assert entry["raw"]["title"] == "Operador de Produção"
 
 
+@pytest.mark.parametrize("empty_email", ["", "   "])
+async def test_empty_email_is_treated_as_no_contact(empty_email):
+    """CR-01: "" (or blank) is absence of contact → discard, never a DB CHECK crash."""
+    row = clean_row(contact_email=empty_email, contact_phone=None)
+    fake = FakeGroq([rows_response([row])])
+    result = await extract_jobs(CLEAN_PASTE, make_settings(), client=fake, sleep=SleepRecorder())
+
+    assert result.kept == []
+    assert len(result.discarded) == 1
+    assert result.discarded[0]["reason"] == "sem contato válido"
+
+
 async def test_hallucinated_title_is_discarded():
     row = clean_row(title="Gerente Fantasma")
     fake = FakeGroq([rows_response([row])])
