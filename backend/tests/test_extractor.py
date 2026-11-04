@@ -530,6 +530,65 @@ async def test_empty_email_is_treated_as_no_contact(empty_email):
     assert result.discarded[0]["reason"] == "sem contato válido"
 
 
+async def test_overlong_title_is_truncated_without_failing_the_batch():
+    """WR-01: one over-long field must NEVER abort the whole single-transaction batch."""
+    long_title = "Operador de Produção " + "muito " * 40
+    assert len(long_title) > 200
+    paste = (
+        f"{long_title}\nrh@empresa.com\nSão Paulo\n"
+        "Auxiliar de Limpeza rh2@empresa.com São Paulo\n"
+    )
+    rows = [
+        clean_row(title=long_title, contact_email="rh@empresa.com", contact_phone=None),
+        {
+            "title": "Auxiliar de Limpeza",
+            "city": "São Paulo",
+            "contact_email": "rh2@empresa.com",
+        },
+    ]
+    fake = FakeGroq([rows_response(rows)])
+    result = await extract_jobs(paste, make_settings(), client=fake, sleep=SleepRecorder())
+
+    assert result.extracted_count == 2
+    assert len(result.kept) == 2  # the long row did not poison the batch
+    long_candidate, long_outcome = result.kept[0]
+    assert long_outcome == CandidateOutcome.save_needs_review
+    assert len(long_candidate.title) == 200
+    assert long_candidate.title == long_title[:200]
+    # the healthy row is untouched
+    assert result.kept[1][0].title == "Auxiliar de Limpeza"
+    assert result.kept[1][1] == CandidateOutcome.save
+
+
+async def test_overlong_optional_fields_are_truncated_to_column_widths():
+    """WR-01: company/salary are capped at their DB widths and flagged."""
+    long_company = "Empresa " + "X" * 200
+    long_salary = "R$ " + "9" * 100
+    paste = (
+        f"Operador de Produção\n{long_company}\nSalário {long_salary}\n"
+        "rh@empresa.com\nSão Paulo\n"
+    )
+    row = clean_row(company=long_company, salary=long_salary)
+    fake = FakeGroq([rows_response([row])])
+    result = await extract_jobs(paste, make_settings(), client=fake, sleep=SleepRecorder())
+
+    candidate, outcome = result.kept[0]
+    assert outcome == CandidateOutcome.save_needs_review
+    assert len(candidate.company) == 150
+    assert len(candidate.salary) == 80
+
+
+async def test_blank_city_is_flagged_for_review():
+    """WR-01: city="" means a missing city — needs_review, never a silent save."""
+    row = clean_row(city="")
+    fake = FakeGroq([rows_response([row])])
+    result = await extract_jobs(CLEAN_PASTE, make_settings(), client=fake, sleep=SleepRecorder())
+
+    candidate, outcome = result.kept[0]
+    assert candidate.city == ""
+    assert outcome == CandidateOutcome.save_needs_review
+
+
 async def test_hallucinated_title_is_discarded():
     row = clean_row(title="Gerente Fantasma")
     fake = FakeGroq([rows_response([row])])

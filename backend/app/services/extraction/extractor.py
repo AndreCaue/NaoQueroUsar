@@ -79,6 +79,20 @@ _STATE_SUFFIX = re.compile(r"\s*/\s*[a-zA-Z]{2}\s*$")
 SNIPPET_CAP = 300
 SNIPPET_RADIUS = 150
 
+# --- DB column widths (app/models/job.py) -----------------------------------
+# WR-01: clip the fields the LLM returns at the column width before they ever
+# reach persistence, so one over-long string can never abort the entire
+# single-transaction batch with ``StringDataRightTruncation``. The limits are
+# deliberately NOT enforced on ``ExtractedJobRaw``: a Pydantic ValidationError
+# there triggers the client's schema-repair turn and, on a second failure,
+# fails the WHOLE batch — the exact failure mode this avoids.
+TITLE_MAX = 200
+COMPANY_MAX = 150
+SALARY_MAX = 80
+BENEFITS_MAX = 255
+CITY_MAX = 80
+EMAIL_MAX = 254
+
 COUNT_JSON_SCHEMA = {
     "type": "object",
     "properties": {"count": {"type": "integer", "minimum": 0}},
@@ -143,16 +157,40 @@ def _digits(value: str | None) -> str:
     return re.sub(r"\D", "", value or "")
 
 
+def _clip(
+    value: str | None,
+    limit: int,
+    field: str,
+    reasons: list[str],
+) -> str | None:
+    """Strip + cap an optional field at its DB column width (WR-01).
+
+    Blank values become ``None`` (so ``""`` is never persisted as data) and a
+    value that had to be cut is flagged in ``reasons`` so the row lands in
+    ``needs_review`` instead of being saved silently altered.
+    """
+    text = (value or "").strip()
+    if not text:
+        return None
+    if len(text) > limit:
+        reasons.append(
+            f"campo '{field}' truncado em {limit} caracteres (limite do banco)"
+        )
+        return text[:limit]
+    return text
+
+
 def _process_row(row: ExtractedJobRaw, chunk: str) -> tuple[JobCandidate | None, CandidateOutcome, str | None]:
     """Ground + classify one LLM row against its source chunk.
 
     Returns ``(candidate, outcome, discard_reason)``; ``candidate`` is ``None``
     when the row is discarded (D-05: only title/contact failures discard).
     """
+    needs_review_reasons: list[str] = []
     snippet = _snippet_for(row.title, chunk)
     raw_city = (row.city or "").strip()
-    city = normalize_city(raw_city)
-    needs_review_reasons: list[str] = []
+    # WR-01: cap the city at its column width and treat a blank city as missing.
+    city = _clip(normalize_city(raw_city), CITY_MAX, "city", needs_review_reasons) or ""
 
     haystack = normalize_for_grounding(chunk)
     chunk_digits = _digits(chunk)
@@ -167,6 +205,12 @@ def _process_row(row: ExtractedJobRaw, chunk: str) -> tuple[JobCandidate | None,
             CandidateOutcome.discard,
             "título não encontrado no texto-fonte (possível alucinação)",
         )
+    if len(title) > TITLE_MAX:
+        # WR-01: ground the full title first, then cap it at the column width.
+        needs_review_reasons.append(
+            f"campo 'title' truncado em {TITLE_MAX} caracteres (limite do banco)"
+        )
+        title = title[:TITLE_MAX]
 
     # "" is absence of contact, not a contact (CR-01): normalize it to None so
     # the D-05 check below discards the row instead of handing it to the DB,
@@ -174,6 +218,9 @@ def _process_row(row: ExtractedJobRaw, chunk: str) -> tuple[JobCandidate | None,
     contact_email = (row.contact_email or "").strip() or None
     if contact_email and not is_grounded(contact_email, haystack):
         contact_email = None  # ungrounded contact is cleared (T-02-05)
+    if contact_email is not None and len(contact_email) > EMAIL_MAX:
+        # WR-01: never persist a truncated address — it would be unusable.
+        contact_email = None
 
     contact_phone = normalize_phone(row.contact_phone)
     if contact_phone is not None:
@@ -200,6 +247,14 @@ def _process_row(row: ExtractedJobRaw, chunk: str) -> tuple[JobCandidate | None,
             minor[name] = None
             needs_review_reasons.append(f"campo '{name}' não confere com o texto-fonte")
 
+    # WR-01: cap the width-limited minor columns (activities/requirements are
+    # Text columns and need no clipping).
+    minor["company"] = _clip(minor["company"], COMPANY_MAX, "company", needs_review_reasons)
+    minor["salary"] = _clip(minor["salary"], SALARY_MAX, "salary", needs_review_reasons)
+    minor["benefits"] = _clip(
+        minor["benefits"], BENEFITS_MAX, "benefits", needs_review_reasons
+    )
+
     # City grounding (D-06): try the RAW form first, then the MAPPED canonical
     # ("SP" in the source ~ "São Paulo"; "São Paulo" in the source ~ mapped
     # value). Ungrounded as either → needs_review (the value stays raw anyway,
@@ -223,7 +278,11 @@ def _process_row(row: ExtractedJobRaw, chunk: str) -> tuple[JobCandidate | None,
         raw_city=raw_city,
     )
 
-    if city not in ALLOWED_CITIES:
+    # WR-01: a blank city is a MISSING city (never a silent save); anything
+    # else outside the canonical set keeps its raw text and needs review (D-06).
+    if not raw_city:
+        needs_review_reasons.append("cidade ausente ou vazia no texto-fonte")
+    elif city not in ALLOWED_CITIES:
         needs_review_reasons.append("cidade fora do conjunto permitido (D-06)")
 
     if needs_review_reasons:
