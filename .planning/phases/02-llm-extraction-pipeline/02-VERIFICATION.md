@@ -9,7 +9,7 @@ previous_verified: 2026-10-20T23:23:43Z
 previous_status: gaps_found
 previous_score: 3/5 must-haves verified
 gaps: []
-human_verification: pending (post-fix live re-smoke — needs a real GROQ_API_KEY)
+human_verification: passed (2026-11-03 — live Groq run against TEST_DATABASE_URL)
 ---
 
 # Phase 02: LLM Extraction Pipeline — Verification Report
@@ -76,12 +76,28 @@ IN-02 (per-chunk `AsyncGroq` not closed), IN-07 (`passlib` declared but `bcrypt`
 IN-08 (admin paste form has no logout path after token expiry) are worth a later cleanup pass.
 IN-06 is stale: a `jobs_updated_at` BEFORE UPDATE trigger already maintains `updated_at` in the DB.
 
-### Human Verification Required (post-fix)
+### Live Re-Smoke Executed (2026-11-03, real Groq)
 
-The original live smoke (plan 02-04 task 2, approved 2026-10-20) still stands for the happy path. Recommended re-smoke with a real `GROQ_API_KEY`:
+Run in-process against the real FastAPI app with the developer's `GROQ_API_KEY`,
+targeting **`TEST_DATABASE_URL`** (not the production Neon branch). Rows created by
+the run were deleted afterwards (test DB back to 0 jobs).
 
-1. **Empty-contact paste** via `/admin/paste`: expect 200 with the contact-less vaga in `discarded` ("sem contato válido") and the other saved `pending` — no 500.
-2. **Model failure**: point `GROQ_MODEL` and fallback at a nonexistent model; expect a pt-BR error naming `GROQ_MODEL` in the UI (not "Erro 500").
+| # | Scenario | HTTP | Result | Verdict |
+| --- | -------- | ---- | ------ | ------- |
+| 1 | Vaga **com** contato | 200 | `saved_pending=1`, `extracted_count=1`, row persisted as `pending`, `model_used=openai/gpt-oss-20b` | ✓ PASS |
+| 2 | Vaga **sem** contato (`Contato: nao informado`) | 200 | `saved_pending=0`, `discarded=[{reason: "sem contato válido"}]`, alert "1 vaga(s) descartada(s)" | ✓ PASS — no 500, no DB write |
+| 3 | Lote misto (1 com + 1 sem contato) | 200 | `saved_pending=1`, `discarded=1`, `extracted_count=2`; only the contact vaga hit the DB | ✓ PASS — CR-01 path holds, atomic batch |
+| 4 | `GROQ_MODEL` + fallback inexistentes | 503 | `detail` pt-BR: "Todos os modelos falharam — verifique a variável GROQ_MODEL no backend/.env (modelos: …). Último erro: modelo … indisponível/aposentado." | ✓ PASS — WR-02 path: curated message, not a generic 500 |
+
+Notes:
+
+- The console output shows `�` because of the Windows console encoding; the API JSON
+  payload carried correct UTF-8 accents (`sem contato válido`, `indisponível/aposentado`).
+- `detected_count` was `None` in all three successful runs: the best-effort count
+  pre-pass failed and degraded silently, exactly as designed (D-07 — never blocks
+  the pipeline and never causes a false divergence alert).
+- Scenario 4 did not consume extraction quota beyond two 404 model lookups; scenario 1–3
+  used 4 real chat completions (count pre-pass + extraction per paste).
 
 ---
 
