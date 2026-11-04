@@ -15,15 +15,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Ingestão & Extração
 
-- [ ] **EXTR-01**: Admin cola um texto grande contendo várias vagas de uma só vez
-- [ ] **EXTR-02**: LLM extrai automaticamente os campos de cada vaga em uma lista estruturada
-- [ ] **EXTR-03**: Extração usa schema estrito com validação; saídas inválidas viram `needs_review`/`invalid`
-- [ ] **EXTR-04**: Sistema faz chunking e throttling para respeitar os limites de taxa do Groq
-- [ ] **EXTR-05**: Telefones em pt-BR são normalizados (E.164) para links `wa.me` confiáveis
-- [ ] **EXTR-06**: Cada vaga extraída entra no banco com status `pending`
-- [ ] **EXTR-07**: Vaga só é criada se tiver ao menos um contato (email ou telefone)
-- [ ] **EXTR-08**: Texto de entrada é delimitado para reduzir risco de prompt injection
-- [ ] **EXTR-09**: Sistema detecta truncamento (`finish_reason`) e divergência entre vagas detectadas e extraídas
+- [x] **EXTR-01**: Admin cola um texto grande contendo várias vagas de uma só vez
+- [x] **EXTR-02**: LLM extrai automaticamente os campos de cada vaga em uma lista estruturada
+- [x] **EXTR-03**: Extração usa schema estrito com validação; saídas inválidas viram `needs_review`/`invalid`
+- [x] **EXTR-04**: Sistema faz chunking e throttling para respeitar os limites de taxa do Groq
+- [x] **EXTR-05**: Telefones em pt-BR são normalizados (E.164) para links `wa.me` confiáveis
+- [x] **EXTR-06**: Cada vaga extraída entra no banco com status `pending`
+- [x] **EXTR-07**: Vaga só é criada se tiver ao menos um contato (email ou telefone)
+- [x] **EXTR-08**: Texto de entrada é delimitado para reduzir risco de prompt injection
+- [x] **EXTR-09**: Sistema detecta truncamento (`finish_reason`) e divergência entre vagas detectadas e extraídas
 
 ### Revisão Admin
 
@@ -116,15 +116,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADMN-01 | Phase 1 | Complete |
 | ADMN-02 | Phase 1 | Complete |
 | ADMN-03 | Phase 1 | Complete |
-| EXTR-01 | Phase 2 | Pending |
-| EXTR-02 | Phase 2 | Pending |
-| EXTR-03 | Phase 2 | Pending |
-| EXTR-04 | Phase 2 | Pending |
-| EXTR-05 | Phase 2 | Pending |
-| EXTR-06 | Phase 2 | Pending |
-| EXTR-07 | Phase 2 | Pending |
-| EXTR-08 | Phase 2 | Pending |
-| EXTR-09 | Phase 2 | Pending |
+| EXTR-01 | Phase 2 | Complete |
+| EXTR-02 | Phase 2 | Complete |
+| EXTR-03 | Phase 2 | Complete |
+| EXTR-04 | Phase 2 | Complete |
+| EXTR-05 | Phase 2 | Complete |
+| EXTR-06 | Phase 2 | Complete |
+| EXTR-07 | Phase 2 | Complete |
+| EXTR-08 | Phase 2 | Complete |
+| EXTR-09 | Phase 2 | Complete |
 | SECR-01 | Phase 3 | Complete |
 | SECR-02 | Phase 3 | Complete |
 | SECR-03 | Phase 3 | Complete |

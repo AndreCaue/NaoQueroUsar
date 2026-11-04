@@ -14,7 +14,7 @@ Da fundação de dados ao board público curado e "sem fricção": primeiro gara
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Backend Foundation, Data & Admin Auth** - FastAPI + Neon, schema `jobs` (status/expires_at/contact invariant) e login master por JWT (completed 2026-10-15)
-- [ ] **Phase 2: LLM Extraction Pipeline** - Colar texto bruto → extração estruturada via Groq → cards `pending` (HIGH RISK)
+- [x] **Phase 2: LLM Extraction Pipeline** - Colar texto bruto → extração estruturada via Groq → cards `pending` (HIGH RISK) (completed 2026-11-03)
 - [ ] **Phase 3: Contact Reveal & Anti-Spam** - Contato só via endpoint dedicado, Turnstile server-side + rate limit (HIGH RISK)
 - [x] **Phase 4: Public Board Frontend** - Grade mobile-first, modal, busca/filtro/ordenação, reveal no clique, tema dark roxo (completed 2026-10-27)
 - [ ] **Phase 5: Admin Review Area** - Fila `pending`, aprovar/editar/excluir, texto-fonte ao lado dos campos, publicar
@@ -69,19 +69,19 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Extraction foundations: source_snippet-less schema config (EXTRACT_* envs, .env.example), strict JSON Schema + Pydantic contract, chunking, pt-BR phone normalization, grounding helpers
+- [x] 02-01-PLAN.md — Extraction foundations: source_snippet-less schema config (EXTRACT_* envs, .env.example), strict JSON Schema + Pydantic contract, chunking, pt-BR phone normalization, grounding helpers
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — Groq extraction engine: AsyncGroq client, model fallback chain (gpt-oss-20b/120b), throttled chunked `extract_jobs` with grounding, classification (D-05/D-06), truncation/divergence detection
+- [x] 02-02-PLAN.md — Groq extraction engine: AsyncGroq client, model fallback chain (gpt-oss-20b/120b), throttled chunked `extract_jobs` with grounding, classification (D-05/D-06), truncation/divergence detection
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-03-PLAN.md — Persistence + admin endpoint: Alembic migration adding `jobs.source_snippet`, `POST /api/v1/admin/extract` (JWT, sync timeout, atomic commit, save+summary), API test suite
+- [x] 02-03-PLAN.md — Persistence + admin endpoint: Alembic migration adding `jobs.source_snippet`, `POST /api/v1/admin/extract` (JWT, sync timeout, atomic commit, save+summary), API test suite
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 02-04-PLAN.md — Minimal `/admin/paste` frontend: login → paste → extract → summary with alerts/discards (D-04), plain-CSS dark theme, human smoke checkpoint
+- [x] 02-04-PLAN.md — Minimal `/admin/paste` frontend: login → paste → extract → summary with alerts/discards (D-04), plain-CSS dark theme, human smoke checkpoint
 
 **⚠️ HIGH RISK**: Componente mais frágil (churn de modelo, limites de taxa, truncamento silencioso, hallucination). Pode precisar de `/gsd-research-phase` — confirmar IDs de modelo Groq vivos, suporte a strict structured outputs, limites TPM/TPD atuais e estratégia de chunking. *(Phase 2 research done: `02-RESEARCH.md` — openai/gpt-oss-20b/120b vivos, strict structured outputs OK, 30 RPM/1K RPD/8K TPM/200K TPD.)*
 
@@ -225,7 +225,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Foundation, Data & Admin Auth | 4/4 | Complete   | 2026-10-15 |
-| 2. LLM Extraction Pipeline | 0/TBD | Not started | - |
+| 2. LLM Extraction Pipeline | 4/4 | Complete   | 2026-11-03 |
 | 3. Contact Reveal & Anti-Spam | 4/5 | In Progress|  |
 | 4. Public Board Frontend | 6/6 | Complete   | 2026-10-27 |
 | 5. Admin Review Area | 3/4 | In Progress|  |

@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: "Project explicitly kept in development; launch deferred by user"
-last_updated: "2026-11-02T23:40:00-03:00"
-last_activity: 2026-11-02
+last_updated: "2026-11-03T22:40:00-03:00"
+last_activity: 2026-11-03
 progress:
   total_phases: 6
   completed_phases: 5
@@ -45,6 +45,7 @@ Progress: [█████████▋] 96%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 4 | - | - |
+| 02 | 4 | - | - |
 | 03 | 5 | - | - |
 | 05 | 4 | - | - |
 
@@ -132,6 +133,7 @@ Recent decisions affecting current work:
 - [Phase 06]: User requested temporary Lorem Ipsum/test content and an unreachable `.invalid` placeholder address for the legal page. It is visibly marked non-final, `robots` noindex and the misleading public-contact wording was corrected; it must still be replaced with approved legal text and an official channel before launch.
 - [Phase 06]: User explicitly decided to keep the project in development with the Lorem Ipsum/noindex legal page; production deployment, legal finalization and go-live verification remain deferred and are not implied by code completion.
 - [Phase 06]: Launch gate remains CR-02: final LGPD/privacy legal copy and an existing privacy contact channel are human/legal inputs; software fixes do not authorize go-live or production deploy.
+- [Phase 02]: Review-fix pass (2026-11-03) closed CR-01 + WR-01..04: blank contacts are normalized to None before the D-05 gate, width-limited fields are clipped with a needs_review reason, ExtractionAPIError maps to a pt-BR 503, +55-expanded phones ground on the national portion, and delimiter tokens in the pasted text are neutralized (count pre-pass included). Full suite 247 passed / 3 skipped; 02-VERIFICATION.md re-verified 5/5. Info findings IN-01..IN-08 intentionally left for a later cleanup pass.
 
 ### Pending Todos
 
