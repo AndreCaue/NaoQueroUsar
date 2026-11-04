@@ -51,12 +51,11 @@ def normalize_phone(value: str | None) -> str | None:
         # Mobile: must start with 9.
         if local[0] != "9":
             return None
-    elif len(local) == 8:
-        # Landline (first digit 2–5 in real BR numbering; accept 2–9 as a
-        # permissive-but-structured check — never reject valid legacy ranges).
-        if not local[0].isdigit():
-            return None
-    else:
+    elif len(local) != 8:
         return None
+    # 8-digit landlines are accepted as-is: every character is already a
+    # digit (checked above), so there is no unreachable validation branch
+    # left here (IN-03). Real BR landlines start with 2-5; legacy ranges are
+    # deliberately accepted rather than risk dropping a valid contact.
 
     return f"+55{ddd}{local}"

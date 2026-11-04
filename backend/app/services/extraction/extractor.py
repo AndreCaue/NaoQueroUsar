@@ -32,6 +32,7 @@ extracted count IS the result, so a separate count request is pointless
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import re
 from dataclasses import dataclass
@@ -40,6 +41,7 @@ from typing import Any, Awaitable, Callable
 
 from app.services.extraction.chunking import chunk_text
 from app.services.extraction.client import (
+    _build_real_client,
     call_extraction,
     model_chain,
     strip_markdown_fences,
@@ -300,15 +302,15 @@ async def estimate_job_count(
     settings: Any,
     *,
     client: Any | None = None,
-    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> int | None:
     """Cheap ``{"count": n}`` pre-pass over the FULL text (EXTR-09, D-07).
 
     Best-effort: ANY failure (network, schema, model churn) returns ``None``
     so the divergence check is skipped without ever blocking the pipeline.
-    """
-    from app.services.extraction.client import _build_real_client
 
+    No pacing/retry ``sleep`` seam lives here (IN-01): this is a single
+    best-effort call per extraction, never part of the paced chunk loop.
+    """
     try:
         if client is None:
             client = _build_real_client(settings)
@@ -369,6 +371,10 @@ async def extract_jobs(
     ``sleep`` is injectable so tests never wait on the pacing delay.
     Raises ``ValueError`` (pt-BR) for empty/oversized input and
     ``ExtractionAPIError`` when every model fails.
+
+    One client is built for the whole extraction and closed afterwards
+    (IN-02): a per-chunk ``AsyncGroq`` leaked one connection pool per chunk.
+    An injected client belongs to the caller and is never closed here.
     """
     if not text or not text.strip():
         raise ValueError("Texto vazio — cole o conteúdo de uma ou mais vagas.")
@@ -381,19 +387,44 @@ async def extract_jobs(
             "partes."
         )
 
+    owns_client = client is None
+    if owns_client:
+        client = _build_real_client(settings)
+    try:
+        return await _extract_with_client(text, settings, client=client, sleep=sleep)
+    finally:
+        if owns_client:
+            await _close_quietly(client)
+
+
+async def _close_quietly(client: Any) -> None:
+    """Close a self-built provider client, ignoring a non-async ``close``."""
+    close = getattr(client, "close", None)
+    if close is None:
+        return
+    result = close()
+    if inspect.isawaitable(result):
+        await result
+
+
+async def _extract_with_client(
+    text: str,
+    settings: Any,
+    *,
+    client: Any,
+    sleep: Callable[[float], Awaitable[None]],
+) -> ExtractionResult:
     chunks = chunk_text(text, settings.EXTRACT_CHUNK_MAX_TOKENS)
 
     # --- count pre-pass (EXTR-09 / D-07): only when it costs a real call ----
     detected_count: int | None = None
     if len(chunks) > 1:
-        detected_count = await estimate_job_count(
-            text, settings, client=client, sleep=sleep
-        )
+        detected_count = await estimate_job_count(text, settings, client=client)
 
     # --- chunk loop: throttled strict calls ---------------------------------
     all_rows: list[tuple[ExtractedJobRaw, str]] = []
     finish_reasons: list[str] = []
-    model_used = ""
+    models_used: list[str] = []
     dead_models: set[str] = set()
 
     for index, chunk in enumerate(chunks):
@@ -405,8 +436,10 @@ async def extract_jobs(
         )
         all_rows.extend((row, chunk) for row in raw.rows)
         finish_reasons.extend(raw.finish_reasons)
-        if not model_used:
-            model_used = raw.model_used
+        # IN-05: the primary model can die mid-run, so report every distinct
+        # model that actually produced rows (insertion order, deduplicated).
+        if raw.model_used not in models_used:
+            models_used.append(raw.model_used)
 
     extracted_count = len(all_rows)
 
@@ -426,20 +459,26 @@ async def extract_jobs(
         else:
             kept.append((candidate, outcome))
 
-    # --- EXTRACT_MAX_JOBS cap over kept + discarded (kept first) ------------
-    overflow = len(kept) + len(discarded) - settings.EXTRACT_MAX_JOBS
-    if overflow > 0:
-        dropped_rows = [
-            entry["raw"]
-            for entry in discarded[max(0, settings.EXTRACT_MAX_JOBS - len(kept)):]
-        ]
-        cap = settings.EXTRACT_MAX_JOBS
-        if len(kept) >= cap:
-            kept = kept[: max(cap - 1, 0)]
+    # --- EXTRACT_MAX_JOBS cap over real rows (kept first) -------------------
+    # IN-04: the overflow marker is metadata and does NOT consume one of the
+    # cap slots, so exactly ``cap`` real rows survive and the reported count
+    # matches the rows actually dropped (previously one extra kept row was
+    # silently discarded while the alert under-reported the overflow).
+    cap = settings.EXTRACT_MAX_JOBS
+    total_rows = len(kept) + len(discarded)
+    if total_rows > cap:
+        overflow = total_rows - cap
+        if len(kept) > cap:
+            first_dropped = kept[cap][0].model_dump()
+            kept = kept[:cap]
             discarded = []
         else:
-            discarded = discarded[: cap - len(kept) - 1]
-        first_dropped = dropped_rows[0] if dropped_rows else {}
+            allowance = cap - len(kept)
+            dropped_from_discarded = discarded[allowance:]
+            first_dropped = (
+                dropped_from_discarded[0]["raw"] if dropped_from_discarded else {}
+            )
+            discarded = discarded[:allowance]
         discarded.append(
             {
                 "reason": (
@@ -461,6 +500,6 @@ async def extract_jobs(
         extracted_count=extracted_count,
         truncated=truncated,
         divergent=divergent,
-        model_used=model_used,
+        model_used=", ".join(models_used),
         chunks=len(chunks),
     )

@@ -765,7 +765,9 @@ async def test_max_jobs_cap_truncates_with_flag_entry():
     fake = FakeGroq([rows_response(rows)])
     result = await extract_jobs(paste, settings, client=fake, sleep=SleepRecorder())
 
-    assert len(result.kept) + len(result.discarded) <= settings.EXTRACT_MAX_JOBS
+    # IN-04: the overflow marker is metadata and does NOT consume a cap slot.
+    # Exactly cap real rows survive; the overflow entry is appended to discarded.
+    assert len(result.kept) <= settings.EXTRACT_MAX_JOBS
     assert any("excedeu o limite" in entry["reason"] for entry in result.discarded)
 
 

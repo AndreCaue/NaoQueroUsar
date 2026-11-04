@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Turnstile } from "next-turnstile";
-import { loginAdmin, extractJobs, type ExtractSummary } from "@/lib/api";
+import {
+  ApiError,
+  loginAdmin,
+  extractJobs,
+  type ExtractSummary,
+} from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
 
 // The site key is a public value (the secret never reaches the browser).
@@ -43,6 +48,28 @@ export default function ExtractForm() {
     setTurnstileKey((k) => k + 1);
   };
 
+  // IN-08: one place clears every trace of the admin session — token in memory
+  // and in sessionStorage, pasted text and any stale summary/error.
+  const clearSession = () => {
+    setToken(null);
+    setPassword("");
+    setText("");
+    setSummary(null);
+    setError(null);
+    try {
+      window.sessionStorage.removeItem(TOKEN_KEY);
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    // The login form comes back with a fresh widget, so a new Turnstile token
+    // is required for the next login (the old one was single-use).
+    resetTurnstile();
+  };
+
   const handleLogin = async () => {
     if (!cfToken) return;
     setError(null);
@@ -76,6 +103,15 @@ export default function ExtractForm() {
       const res = await extractJobs(token, text);
       setSummary(res);
     } catch (err) {
+      // IN-08: an expired/invalid JWT must drop the session instead of leaving
+      // the form stuck retrying with a dead token (clearSession first — it
+      // resets the error state, so the message is set afterwards).
+      if (err instanceof ApiError && err.status === 401) {
+        clearSession();
+        resetTurnstile();
+        setError("Sessão expirada — entre novamente.");
+        return;
+      }
       const msg = err instanceof Error ? err.message : "Erro ao extrair";
       setError(msg);
     } finally {
@@ -136,7 +172,17 @@ export default function ExtractForm() {
 
         {token && (
           <div>
-            <h2 className="text-xl font-semibold">Extrair vagas</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-semibold">Extrair vagas</h2>
+              <button
+                type="button"
+                className="min-h-11 rounded-lg border border-line-strong px-4 text-sm font-semibold text-fg-muted hover:text-fg"
+                onClick={handleLogout}
+                disabled={loading}
+              >
+                Sair
+              </button>
+            </div>
             <label>
               Texto bruto
               <textarea
