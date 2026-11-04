@@ -93,11 +93,13 @@ Notes:
 
 - The console output shows `�` because of the Windows console encoding; the API JSON
   payload carried correct UTF-8 accents (`sem contato válido`, `indisponível/aposentado`).
-- `detected_count` was `None` in all three successful runs: the best-effort count
-  pre-pass failed and degraded silently, exactly as designed (D-07 — never blocks
-  the pipeline and never causes a false divergence alert).
-- Scenario 4 did not consume extraction quota beyond two 404 model lookups; scenario 1–3
-  used 4 real chat completions (count pre-pass + extraction per paste).
+- `detected_count` was `None` in all three successful runs **by design**: the count
+  pre-pass only runs for multi-chunk pastes (`extractor.py:388`), because a
+  single-chunk paste's extracted count is already the result. No divergence check
+  is needed (and none is reported).
+- Scenario 4 did not consume extraction quota beyond two 404 model lookups; scenarios 1–3
+  used 3 real chat completions total (one extraction per paste — single-chunk pastes
+  skip the count pre-pass by design).
 
 ---
 
