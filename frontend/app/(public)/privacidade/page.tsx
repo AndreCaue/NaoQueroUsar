@@ -70,7 +70,7 @@ export default function PrivacidadePage() {
             <li>Revogação do consentimento;</li>
             <li>Oposição ao tratamento.</li>
           </ul>
-          <p>Para exercer esses direitos, envie e-mail para: [seu e-mail LGPD]</p>
+          <p>Para exercer esses direitos, envie e-mail para: suportenqs@outlook.com</p>
 
           <h3>8. Segurança</h3>
           <p>Adotamos medidas técnicas e organizacionais razoáveis para proteger os dados pessoais contra acessos não autorizados, perda ou alteração indevida.</p>
@@ -79,7 +79,7 @@ export default function PrivacidadePage() {
           <p>Esta Política pode ser atualizada. A versão mais recente estará sempre disponível nesta página.</p>
 
           <h3>10. Contato</h3>
-          <p>Dúvidas sobre esta Política ou sobre o tratamento de dados pessoais: [seu e-mail]</p>
+          <p>Dúvidas sobre esta Política ou sobre o tratamento de dados pessoais: suportenqs@outlook.com</p>
         </article>
       </div>
     </main>
