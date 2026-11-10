@@ -9,7 +9,7 @@ Runbook de produção: frontend na **Vercel**, backend **FastAPI** no **Render**
 ## Arquitetura
 
 ```text
-Navegador ──HTTPS──► Vercel (Next.js 15/16 App Router, SSR + server fetch)
+Navegador ──HTTPS──► Vercel (Next.js 15 App Router, SSR + server fetch)
                          │ cache: "no-store" com timeout de 15 s (frontend/lib/jobs.ts)
                          ▼
                  Render (FastAPI, plano free)
@@ -40,12 +40,14 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
 - [ ] Repositório no GitHub com este código (branch de produção)
 - [ ] Projeto **Neon de produção** separado do dev/test (nunca reutilize o banco de desenvolvimento)
 - [ ] Cloudflare Turnstile: widget de **produção** criado (site key pública + secret privada). O widget de teste **não** é aceito em `ENV=prod` (o backend recusa a chave de teste — D-11/D-12)
+- [ ] Turnstile → widget de produção → **Hostnames**: o domínio de produção da Vercel cadastrado (o widget recusa domínios não listados; sem isso o reveal e o login falham mesmo com as chaves corretas)
 - [ ] Chave da Groq (`https://console.groq.com/keys`)
-- [ ] Senha de admin definida e hash **bcrypt** gerado localmente:
+- [ ] Senha de admin definida e hash **bcrypt** gerado localmente (o backend usa a biblioteca `bcrypt` diretamente; `passlib` não é mais dependência — IN-07):
   ```powershell
   cd backend
-  uv run python -c "from passlib.context import CryptContext; print(CryptContext(schemes=['bcrypt']).hash('SEU_SEGREDO'))"
+  .\.venv\Scripts\python.exe -c "import bcrypt; print(bcrypt.hashpw(b'SEU_SEGREDO', bcrypt.gensalt()).decode())"
   ```
+  > A senha é truncada em 72 bytes pelo bcrypt (limite do algoritmo). Use uma senha longa, porém <= 72 bytes.
 - [ ] `JWT_SECRET`: 64 caracteres aleatórios
   ```powershell
   python -c "import secrets; print(secrets.token_urlsafe(64))"
@@ -69,7 +71,7 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
    | `ENV` | `prod` (já no blueprint) | Ativa o validador que recusa Turnstile de teste |
    | `PYTHON_VERSION` | `3.11.9` (já no blueprint) | |
    | `JWT_EXPIRES_IN` | `43200` (já no blueprint) | 12 h |
-   | `DATABASE_URL` | Neon → Dashboard → Connection string **pooled** (host com `-pooler`) + `?ssl=require` | Nunca a string "direct" para tráfego web |
+   | `DATABASE_URL` | Neon → Dashboard → Connection string **pooled** (host com `-pooler`), **trocando o esquema** `postgresql://` por `postgresql+asyncpg://`, e acrescentando `?ssl=require` | O backend só usa o driver **asyncpg** (`create_async_engine` + `connect_args={"statement_cache_size": 0}`). Com `postgresql://` o SQLAlchemy tenta carregar o psycopg2 (não instalado) e o boot falha no `alembic upgrade head`. Nunca use a string "direct" para tráfego web |
    | `ADMIN_PASSWORD_HASH` | bcrypt hash gerado no pré-requisito | |
    | `JWT_SECRET` | `token_urlsafe(64)` | |
    | `CORS_ORIGINS` | Origem exata da Vercel (ex.: `https://<seu-projeto>.vercel.app`) | Sem barra final, sem `*`, sem espaços |
@@ -85,6 +87,7 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
    → {"status":"ok","env":"prod","turnstile":{"configured":true,"mode":"live","site_key_configured":true}}
    ```
    `turnstile.mode` **precisa** ser `live`. Se vier `test` ou `disabled`, o deploy está errado (ou o validador derrubou o boot).
+   Se o boot falhar no `alembic upgrade head`, confira primeiro `DATABASE_URL`: ele **precisa** começar com `postgresql+asyncpg://` (não `postgresql://`) e usar o host `-pooler`.
 4. **Deploys são manuais** (`autoDeploy: false` no `render.yaml`): um push na branch de produção **não** sobe automaticamente — cada deploy é disparado no dashboard do Render após revisão. Isso é de propósito: o `startCommand` roda `alembic upgrade head` a cada boot e migrações são forward-only — um deploy automático aplicaria schema novo em produção sem aprovação e sem rollback. Dispare em **Deploy latest commit** depois de revisar (e, para mudanças de schema, após snapshot/backup do Neon).
 5. **Migrações rodam a cada boot** (`alembic upgrade head` no `startCommand`). São idempotentes e forward-only. Risco conhecido e aceito: uma migration quebrada derruba o boot em loop (inclusive a cada wake-up do plano free) e derruba o board público junto — não existe rollback de schema. Mitigações atuais: deploy manual/gated (a migration é revisada antes do deploy), regra de migrações forward-only, e snapshot do Neon antes de merges que tocam schema. Separar a migração num step de release próprio (pre-deploy do Render) é trabalho futuro — **não remova o `alembic upgrade head` do boot sem que esse step revisado exista e esteja documentado**.
 6. **Plano free dorme após ~15 min sem tráfego.** O primeiro request depois do spin-down paga o cold-start (ver seção **Cold-start**) — e também refaz o upgrade do Alembic no boot.
@@ -153,7 +156,7 @@ O plano free do Render **dorme após ~15 min sem tráfego**. No primeiro request
 - Erros não-timeout mostram "Não foi possível carregar as vagas." com o mesmo botão.
 
 **O que fazer na operação:**
-1. Meça e registre o tempo real do primeiro request após spin-down (ver **Registro de verificação** abaixo).
+1. Meça e registre o tempo real do primeiro request após spin-down (ver **Registro de verificação** abaixo). O check 10 de `scripts/verify-deploy.ps1` mede exatamente esse primeiro request (health): rode o gate logo após o período ocioso, antes de abrir o board, para não medir um backend já aquecido.
 2. Se o cold-start for consistentemente maior que 15 s, as opções (sem provisionar nada automaticamente) são:
    - **Plano pago do Render** (instância sempre ligada),
    - **Ping externo opcional** (ex.: cron-job.org / UptimeRobot chamando `/api/v1/health` a cada 10 min) — mantém o processo acordado; é opcional e não é provisionado por este runbook,
@@ -164,18 +167,21 @@ O plano free do Render **dorme após ~15 min sem tráfego**. No primeiro request
 
 ## Gate de fumaça
 
-`scripts/verify-deploy.ps1` valida o deploy de produção de ponta a ponta (health + Turnstile `live`, CORS permitido/negado, board sem dados de contato, página legal, contrato da API, cron 401/403/503 (fail-closed) e idempotência, ausência de vazamento do secret, latência de cold-start).
+`scripts/verify-deploy.ps1` valida o deploy de produção de ponta a ponta (health + Turnstile `live`, CORS permitido/negado, board sem dados de contato, páginas legais `/privacidade` e `/termos-de-uso` sem placeholder, contrato da API, cron 401/403/503 (fail-closed) e idempotência, ausência de vazamento do secret e latência do primeiro request).
 
 ```powershell
+$env:CRON_SECRET = "<CRON_SECRET>"   # não fica no histórico do PowerShell
 powershell -ExecutionPolicy Bypass -File scripts\verify-deploy.ps1 `
   -FrontendUrl https://<seu-projeto>.vercel.app `
-  -BackendUrl  https://<backend>.onrender.com `
-  -CronSecret  <CRON_SECRET>
+  -BackendUrl  https://<backend>.onrender.com
 ```
 
-`-CronSecret` é obrigatório para o check de cron autenticado (ou exporte `CRON_SECRET` na sessão antes de rodar). Cada check imprime `PASS - ...`; ao final: `verify-deploy: all checks passed`. Se qualquer check falhar, o script lança exceção com a mensagem do que falhou — **não** considere o deploy pronto enquanto houver falha.
+- Passe o **domínio canônico de produção** do frontend (sem barra final): o script não segue redirects (`AllowAutoRedirect = $false`), então um alias que responde 308 falha no check 4 com status inesperado.
+- `-CronSecret` é obrigatório para o check de cron autenticado; o script lê `$env:CRON_SECRET` por padrão (evita deixar o segredo no histórico/linha de comando).
+- Cada check imprime `PASS - ...`; ao final: `verify-deploy: all checks passed`. Se qualquer check falhar, o script lança exceção com a mensagem do que falhou — **não** considere o deploy pronto enquanto houver falha.
+- O check 10 mede a latência do **primeiro** request ao backend (health). Para o número representar o cold-start, rode o gate como o **primeiro** tráfego após ~20 min de ociosidade do Render; rodar depois de abrir o board mede apenas o caminho aquecido.
 
-Compatível com PowerShell 5.1, salvo em UTF-8 com BOM.
+Compatível com PowerShell 5.1 (TLS 1.2 fixado no script), salvo em UTF-8 com BOM.
 
 ---
 
@@ -211,6 +217,7 @@ Compatível com PowerShell 5.1, salvo em UTF-8 com BOM.
 **Vercel (frontend)**
 - [ ] Root Directory = `frontend`
 - [ ] `BACKEND_API_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` configurados (ver `frontend/.env.example`)
+- [ ] Widget Turnstile de produção com o domínio da Vercel cadastrado em **Hostnames**
 - [ ] Build de produção passou (sem `NEXT_PUBLIC_API_URL` ele **falha** de propósito — WR-04)
 - [ ] Deploy de produção concluído; domínio anotado
 - [ ] Board carrega sem erro de CORS no console do navegador
@@ -222,10 +229,11 @@ Compatível com PowerShell 5.1, salvo em UTF-8 com BOM.
 
 **Verificação**
 - [ ] `scripts/verify-deploy.ps1` → todas as linhas `PASS` + `verify-deploy: all checks passed`
-- [ ] Cold-start medido e registrado (ver Registro de verificação)
-- [ ] Fluxo real: buscar vaga → abrir modal → revelar contato (Turnstile real) → reportar vaga → `/privacidade`
+- [ ] Cold-start medido e registrado (ver Registro de verificação); gate rodado como primeiro tráfego após ~20 min ocioso
+- [ ] Fluxo real: buscar vaga → abrir modal → revelar contato (Turnstile real) → reportar vaga → `/privacidade` → `/termos-de-uso`
 - [ ] HTML do board sem `contact_email`, `contact_phone`, `mailto:`
-- [ ] `/admin/login`, `/admin/paste` e fila de review funcionando
+- [ ] `/admin` (redireciona para `/admin/paste`, onde fica o login), `/admin/paste` e fila de review funcionando
+- [ ] `/privacidade` e `/termos-de-uso` sem placeholders e com o canal LGPD real
 - [ ] `git status --porcelain` limpo quanto a `.env`/`.env.local`; `render.yaml` sem valores; nenhum secret em logs
 
 ---
@@ -245,6 +253,6 @@ Compatível com PowerShell 5.1, salvo em UTF-8 com BOM.
 | _pendente_ | `verify-deploy.ps1` | | | | todas as linhas `PASS` |
 | _pendente_ | Cold-start após ~20 min ocioso | | | | tempo real + comportamento da UI |
 | _pendente_ | Fluxo público real (buscar/revelar/reportar) | | | | Turnstile real |
-| _pendente_ | Admin (`/admin/login`, `/admin/paste`, review) | | | | |
+| _pendente_ | Admin (`/admin` → `/admin/paste`, review) | | | | |
 
 Qualquer falha acima: parar, registrar URL + observação na tabela, corrigir, re-deploy e re-rodar o gate antes de declarar o go-live.

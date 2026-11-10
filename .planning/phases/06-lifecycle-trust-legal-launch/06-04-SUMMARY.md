@@ -143,15 +143,15 @@ completed: 2026-11-02
 
 **Deploy real ainda NÃO executado — requer o operador humano.** Conforme `docs/DEPLOY.md` e o Task 3 do plano:
 
-1. **Neon:** criar/confirmar projeto de produção (separado do dev/test); connection string **pooled** com `?ssl=require`; anotar região.
-2. **Render:** New → Blueprint → selecionar o repositório; aplicar `render.yaml`; preencher `DATABASE_URL`, `ADMIN_PASSWORD_HASH`, `JWT_SECRET`, `CORS_ORIGINS` (inicial), `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `GROQ_API_KEY`, `CRON_SECRET` (32+ chars). Confirmar no boot: `alembic upgrade head` OK e `https://<backend>.onrender.com/api/v1/health` → `status=ok`, `env=prod`, `turnstile.mode=live`.
-3. **Vercel:** importar repo; **Root Directory = `frontend`**; `BACKEND_API_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`; deploy; anotar o domínio de produção.
+1. **Neon:** criar/confirmar projeto de produção (separado do dev/test); connection string **pooled**, trocando o esquema para `postgresql+asyncpg://` e acrescentando `?ssl=require`; anotar região.
+2. **Render:** New → Blueprint → selecionar o repositório; aplicar `render.yaml`; preencher `DATABASE_URL`, `ADMIN_PASSWORD_HASH` (gerado com `import bcrypt` — passlib removido em IN-07), `JWT_SECRET`, `CORS_ORIGINS` (inicial), `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `GROQ_API_KEY`, `CRON_SECRET` (32+ chars). Disparar o deploy manualmente (`autoDeploy: false`). Confirmar no boot: `alembic upgrade head` OK e `https://<backend>.onrender.com/api/v1/health` → `status=ok`, `env=prod`, `turnstile.mode=live`.
+3. **Vercel:** importar repo; **Root Directory = `frontend`**; `BACKEND_API_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`; cadastrar o domínio da Vercel em **Turnstile → widget → Hostnames**; deploy; anotar o domínio de produção.
 4. **Render → CORS:** trocar `CORS_ORIGINS` para exatamente o domínio da Vercel (sem barra final); redeploy; abrir board e confirmar ausência de erro de CORS.
 5. **GitHub:** criar `vars.API_BASE_URL` (Render, sem barra final) e `secrets.CRON_SECRET` (mesmo valor do Render); rodar `expire-jobs` via **Run workflow**; conferir log sem o secret e resposta `{"deleted": N, "status": "ok"}`.
-6. **Gate:** `powershell -ExecutionPolicy Bypass -File scripts\verify-deploy.ps1 -FrontendUrl https://<frontend> -BackendUrl https://<backend> -CronSecret <secret>` — exigir todas as linhas `PASS` e `verify-deploy: all checks passed`.
-7. **Cold-start:** deixar ocioso ~20 min; abrir o board no celular (390 px); se dormir, a UI deve mostrar **"O servidor está acordando."** e **"Tentar novamente"**; anotar o tempo real na tabela **Registro de verificação** de `docs/DEPLOY.md`.
-8. **Fluxo real:** buscar vaga → abrir modal → revelar contato (Turnstile real) → reportar vaga → `/privacidade`; confirmar HTML sem `contact_email`/`contact_phone`/`mailto:`.
-9. **Admin:** `/admin/login`, `/admin/paste` e fila de review funcionando.
+6. **Gate:** definir `$env:CRON_SECRET` e rodar `powershell -ExecutionPolicy Bypass -File scripts\verify-deploy.ps1 -FrontendUrl https://<frontend> -BackendUrl https://<backend>` — exigir todas as linhas `PASS` e `verify-deploy: all checks passed`.
+7. **Cold-start:** deixar ocioso ~20 min e rodar o gate como primeiro tráfego (check 10 mede o primeiro request); depois abrir o board no celular (390 px); se dormir, a UI deve mostrar **"O servidor está acordando."** e **"Tentar novamente"**; anotar o tempo real na tabela **Registro de verificação** de `docs/DEPLOY.md`.
+8. **Fluxo real:** buscar vaga → abrir modal → revelar contato (Turnstile real) → reportar vaga → `/privacidade` → `/termos-de-uso`; confirmar HTML sem `contact_email`/`contact_phone`/`mailto:`.
+9. **Admin:** `/admin` (redireciona para `/admin/paste`, onde fica o login), `/admin/paste` e fila de review funcionando.
 10. **Segredos:** `git status --porcelain` sem `.env`/`.env.local`; nenhum secret em logs do Render/Vercel/Actions.
 
 Registrar URLs e tempos de cold-start na seção **Registro de verificação** de `docs/DEPLOY.md` antes de declarar go-live.

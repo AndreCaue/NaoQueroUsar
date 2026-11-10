@@ -9,12 +9,15 @@
     2.  Preflight CORS permitido       -> Access-Control-Allow-Origin == origem do frontend
     3.  Preflight CORS negado          -> 400 ou header ausente/diferente de https://evil.example
     4.  Board (/)                      -> 200, contém "Vagas abertas", NÃO vaza contatos
-    5.  Legal (/privacidade)           -> 200, contém "LGPD" e "intermedi"
+    5.  Legal (/privacidade + /termos-de-uso)
+                                       -> 200, LGPD + canal de contato, aviso de
+                                          intermediário, sem texto provisório
     6.  API pública                    -> 200, JSON com items/total
     7.  Cron sem segredo               -> 401/403 (recusado) ou 503 (gatilho manual desativado, fail-closed)
     8.  Cron com segredo (idempotente) -> 200 + "deleted" inteiro, 2x
     9.  Não vazamento                  -> secret não aparece no board nem no health
-    10. Cold-start (informativo)       -> imprime a latência do primeiro request; avisa se > 15 s
+    10. Cold-start (informativo)       -> usa a latência do PRIMEIRO request
+                                          (health), não de um request já aquecido
 
   Compatível com Windows PowerShell 5.1. Salve/edite como UTF-8 **com BOM** —
   o parser de 5.1 precisa do BOM para decodificar corretamente os acentos.
@@ -38,6 +41,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# Windows PowerShell 5.1 pode herdar TLS 1.0 de .NET antigo; Render/Vercel só
+# aceitam TLS 1.2+. Fixar aqui evita "Could not create SSL/TLS secure channel".
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $FrontendUrl = $FrontendUrl.TrimEnd('/')
 $BackendUrl = $BackendUrl.TrimEnd('/')
@@ -110,8 +117,14 @@ function Get-HeaderValue {
 
 # ---------------------------------------------------------------------------
 # 1. Health: deploy de produção de verdade, com Turnstile LIVE
+#    O cronômetro começa AQUI porque este é o primeiro request ao backend:
+#    num deploy com cold-start, é esta chamada que paga o boot.
 # ---------------------------------------------------------------------------
+$firstRequestClock = [System.Diagnostics.Stopwatch]::StartNew()
 $health = Invoke-Http -Method GET -Url "$BackendUrl/api/v1/health"
+$firstRequestClock.Stop()
+$firstRequestSeconds = [math]::Round($firstRequestClock.Elapsed.TotalSeconds, 1)
+
 Assert ($health.Status -eq 200) "Health retornou $($health.Status) em $BackendUrl/api/v1/health (esperado 200)"
 $healthJson = $health.Body | ConvertFrom-Json
 Assert ($healthJson.status -eq "ok") "Health sem status=ok (veio: $($healthJson.status))"
@@ -155,13 +168,23 @@ Assert ($board.Body -notmatch 'mailto:') "Board vaza mailto: no HTML"
 Write-Pass "board 200 sem contact_email/contact_phone/mailto:"
 
 # ---------------------------------------------------------------------------
-# 5. Legal: /privacidade 200 com LGPD e "intermedi"
+# 5. Legal: /privacidade (LGPD + canal) e /termos-de-uso (aviso de intermediário)
+#    O aviso "somos apenas meio de divulgação" vive nos Termos desde que a
+#    Política passou a ser o texto final do operador — não procurar por
+#    "intermedi" em /privacidade (falso negativo).
 # ---------------------------------------------------------------------------
 $legal = Invoke-Http -Method GET -Url "$FrontendUrl/privacidade"
 Assert ($legal.Status -eq 200) "/privacidade retornou $($legal.Status) (esperado 200)"
 Assert ($legal.Body -imatch 'LGPD') "/privacidade não contém 'LGPD'"
-Assert ($legal.Body -imatch 'intermedi') "/privacidade não contém 'intermedi' (Aviso de Intermediário)"
-Write-Pass "/privacidade 200 com LGPD e aviso de intermediário"
+Assert ($legal.Body -imatch '[\w.+-]+@[\w-]+\.[A-Za-z]{2,}') "/privacidade não contém um canal de contato por e-mail (LGPD)"
+Assert ($legal.Body -notmatch 'Lorem ipsum|provisóri|\[Seu Nome|\[seu e-mail') "/privacidade ainda contém texto provisório/placeholder"
+
+$terms = Invoke-Http -Method GET -Url "$FrontendUrl/termos-de-uso"
+Assert ($terms.Status -eq 200) "/termos-de-uso retornou $($terms.Status) (esperado 200)"
+Assert ($terms.Body -imatch 'intermedi') "/termos-de-uso não contém o aviso de intermediário ('intermedi')"
+Assert ($terms.Body -notmatch 'Lorem ipsum|provisóri|\[sua cidade|\[Seu Nome') "/termos-de-uso ainda contém texto provisório/placeholder"
+Write-Pass "/privacidade 200 (LGPD + canal) e /termos-de-uso 200 (aviso de intermediário)"
+
 
 # ---------------------------------------------------------------------------
 # 6. API pública: 200 com envelope items/total
@@ -220,21 +243,23 @@ if (-not [string]::IsNullOrWhiteSpace($CronSecret)) {
     Assert ($board.Body -notmatch [regex]::Escape($CronSecret)) "Vazamento: CRON_SECRET aparece no HTML do board"
     Assert ($health.Body -notmatch [regex]::Escape($CronSecret)) "Vazamento: CRON_SECRET aparece na resposta de /api/v1/health"
     Assert ($legal.Body -notmatch [regex]::Escape($CronSecret)) "Vazamento: CRON_SECRET aparece na página /privacidade"
-    Write-Pass "cron secret não vazou no board, health ou /privacidade"
+    Assert ($terms.Body -notmatch [regex]::Escape($CronSecret)) "Vazamento: CRON_SECRET aparece na página /termos-de-uso"
+    Write-Pass "cron secret não vazou no board, health, /privacidade ou /termos-de-uso"
 }
 
 # ---------------------------------------------------------------------------
-# 10. Cold-start (informativo — nunca falha)
+# 10. Cold-start (informativo — nunca falha por latência)
+#     Usa a latência do PRIMEIRO request (health), medida no check 1: medir o
+#     "primeiro request" aqui, depois de 5+ chamadas ao backend, só mediria o
+#     caminho aquecido e nunca observaria o cold-start que o aviso descreve.
+#     Para o número refletir o spin-down, rode este gate como o primeiro
+#     tráfego após ~20 min de ociosidade do Render.
 # ---------------------------------------------------------------------------
-$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-$latency = Invoke-Http -Method GET -Url "$BackendUrl/api/v1/public/jobs?limit=1"
-$stopwatch.Stop()
-$seconds = [math]::Round($stopwatch.Elapsed.TotalSeconds, 1)
-Write-Output "INFO - latência do primeiro request: ${seconds}s"
-Assert ($latency.Status -eq 200) "GET /api/v1/public/jobs?limit=1 retornou $($latency.Status) (esperado 200)"
-if ($seconds -gt 15) {
-    Write-Warning "Latência acima de 15 s — acima do timeout de 15 s do frontend (frontend/lib/jobs.ts). O board mostrará 'O servidor está acordando.' + 'Tentar novamente'. Considere plano pago, ping externo opcional ou ajustar o timeout documentado."
+Write-Output "INFO - latência do primeiro request (health): ${firstRequestSeconds}s"
+if ($firstRequestSeconds -gt 15) {
+    Write-Warning "Latência do primeiro request acima de 15 s — acima do timeout de 15 s do frontend (frontend/lib/jobs.ts). O board mostrará 'O servidor está acordando.' + 'Tentar novamente'. Considere plano pago, ping externo opcional ou ajustar o timeout documentado."
 }
-Write-Pass "cold-start medido (${seconds}s)"
+Write-Pass "cold-start medido (${firstRequestSeconds}s no primeiro request)"
+
 
 Write-Output "verify-deploy: all checks passed"
