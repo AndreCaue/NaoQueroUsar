@@ -9,7 +9,7 @@ import {
   type ExtractSummary,
 } from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
-import { BLOCKED_TERM_ERROR, isBlockedText } from "@/lib/blocklist";
+import { TERM_REMOVED_NOTICE, stripBlockedTerms } from "@/lib/blocklist";
 
 // The site key is a public value (the secret never reaches the browser).
 // Outside production we fall back to Cloudflare's public always-pass test key
@@ -29,9 +29,7 @@ export default function ExtractForm() {
   const [error, setError] = useState<string | null>(null);
   const [cfToken, setCfToken] = useState<string | null>(null);
   const [turnstileKey, setTurnstileKey] = useState(0);
-  const [blockedNotice, setBlockedNotice] = useState(false);
-
-  const blocked = blockedNotice || isBlockedText(text);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -60,7 +58,7 @@ export default function ExtractForm() {
     setText("");
     setSummary(null);
     setError(null);
-    setBlockedNotice(false);
+    setNotice(null);
     try {
       window.sessionStorage.removeItem(TOKEN_KEY);
     } catch {
@@ -100,16 +98,17 @@ export default function ExtractForm() {
   };
 
   const handleSubmit = async () => {
-    if (!token || !text.trim()) return;
-    if (isBlockedText(text)) {
-      setBlockedNotice(true);
-      return;
+    const cleaned = stripBlockedTerms(text); // defesa final: nada de termo vai à API
+    if (!token || !cleaned.trim()) return;
+    if (cleaned !== text) {
+      setText(cleaned);
+      setNotice(TERM_REMOVED_NOTICE);
     }
     setError(null);
     setSummary(null);
     setLoading(true);
     try {
-      const res = await extractJobs(token, text);
+      const res = await extractJobs(token, cleaned);
       setSummary(res);
     } catch (err) {
       // IN-08: an expired/invalid JWT must drop the session instead of leaving
@@ -132,20 +131,32 @@ export default function ExtractForm() {
     setSummary(null);
     setText("");
     setError(null);
-    setBlockedNotice(false);
+    setNotice(null);
   };
 
-  // D-3: colar conteúdo bloqueado não entra no textarea — o texto do usuário
-  // nunca é apagado/reescrito silenciosamente, só a inserção é recusada.
+  // Colar conteúdo com o termo não é recusado: o termo sai e o resto entra
+  // no cursor. Sem o termo, o paste nativo segue intocado.
   const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
-    if (isBlockedText(e.clipboardData.getData("text"))) {
-      e.preventDefault();
-      setBlockedNotice(true);
-    }
+    const pasted = e.clipboardData.getData("text");
+    const cleaned = stripBlockedTerms(pasted);
+    if (cleaned === pasted) return;
+
+    e.preventDefault();
+    const el = e.currentTarget;
+    const start = el.selectionStart ?? text.length;
+    const end = el.selectionEnd ?? start;
+    const next = text.slice(0, start) + cleaned + text.slice(end);
+    setText(next);
+    setNotice(TERM_REMOVED_NOTICE);
+    const caret = start + cleaned.length;
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(caret, caret);
+    });
   };
 
   const isLoginDisabled = loading || !password.trim() || !cfToken;
-  const isSubmitDisabled = loading || !token || !text.trim() || blocked;
+  const isSubmitDisabled = loading || !token || !stripBlockedTerms(text).trim();
 
   return (
     <div className="max-w-[720px] mx-auto p-6 bg-surface border border-line rounded-lg">
@@ -208,10 +219,9 @@ export default function ExtractForm() {
                 value={text}
                 onChange={(e) => {
                   setText(e.target.value);
-                  if (blockedNotice) setBlockedNotice(false);
+                  if (notice) setNotice(null);
                 }}
                 onPaste={handlePaste}
-                aria-invalid={blocked || undefined}
                 rows={8}
                 minLength={1}
                 placeholder="Cole aqui o texto com uma ou mais vagas..."
@@ -219,9 +229,9 @@ export default function ExtractForm() {
                 className="min-h-[96px] resize-y w-full rounded-lg border border-line-strong bg-canvas px-3 text-base text-fg placeholder:text-fg-muted"
               />
             </label>
-            {blocked && (
-              <div role="alert" className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">
-                {BLOCKED_TERM_ERROR}
+            {notice && (
+              <div role="status" className="rounded-lg border border-line-strong bg-canvas p-3 text-fg-muted">
+                {notice}
               </div>
             )}
             <button className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover" onClick={handleSubmit} disabled={isSubmitDisabled}>

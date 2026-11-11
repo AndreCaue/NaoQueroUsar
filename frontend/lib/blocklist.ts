@@ -1,28 +1,40 @@
 /**
- * Termos bloqueados na extração (admin paste) — regra única do frontend.
- * Espelha backend/app/services/extraction/blocklist.py: case-insensitive,
- * sem acentos (NFKD) e com espaços/quebras de linha colapsados. A comparação
- * é por substring em qualquer ponto do texto. Trocar o termo = trocar aqui e
- * no módulo Python, nada mais.
+ * Remoção do termo residual na extração (admin paste) — regra única do frontend.
+ * Espelha backend/app/services/extraction/blocklist.py: todas as ocorrências
+ * são removidas, em qualquer caixa, ignorando acentos e aceitando qualquer
+ * quantidade de espaços/quebras de linha entre as palavras. Cada ocorrência
+ * vira UM espaço e o resto do texto é preservado — sem normalização global.
+ * O padrão é montado a partir da constante, nunca do texto do usuário.
  */
 
-export const BLOCKED_TERM = "JACIRA CHAVARE";
+export const REMOVED_TERM = "JACIRA CHAVARE";
 
-export const BLOCKED_TERM_ERROR = `Texto bloqueado — remova "${BLOCKED_TERM}" antes de extrair.`;
+export const TERM_REMOVED_NOTICE = `ℹ️ O termo "${REMOVED_TERM}" foi removido do texto antes da extração.`;
 
-function fold(value: string): string {
-  return value
-    .normalize("NFKD")
-    // Marcas combinantes latinas (U+0300–U+036F). NÃO use \p{M}: o tsconfig
-    // do projeto tem target ES2017 e Unicode property escapes exigem ES2018.
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
+// Variantes acentuadas por letra (minúsculas; a maiúscula é derivada).
+const LETTER_VARIANTS: Record<string, string> = {
+  a: "aáàâãä",
+  c: "cç",
+  e: "eéèêë",
+  h: "h",
+  i: "iíìîï",
+  j: "j",
+  r: "r",
+  v: "v",
+};
+
+function charClass(char: string): string {
+  const variants = LETTER_VARIANTS[char.toLowerCase()] ?? char.toLowerCase();
+  return `[${variants}${variants.toUpperCase()}]`;
 }
 
-const FOLDED_TERM = fold(BLOCKED_TERM);
+const TERM_SOURCE = REMOVED_TERM.split("")
+  .map((char) => (char === " " ? "\\s+" : charClass(char)))
+  .join("");
 
-export function isBlockedText(text: string): boolean {
-  return fold(text).includes(FOLDED_TERM);
+export function stripBlockedTerms(text: string): string {
+  if (!text) return "";
+  // RegExp novo a cada chamada: evita o estado de lastIndex de uma /g compartilhada.
+  const cleaned = text.replace(new RegExp(TERM_SOURCE, "g"), " ");
+  return cleaned.trim() === "" ? "" : cleaned;
 }
