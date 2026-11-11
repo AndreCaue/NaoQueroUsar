@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 Phase: 06 (lifecycle-trust-legal-launch) — DEVELOPMENT
 Plan: 4 of 4
 Status: Development baseline; launch deferred by user
-Last activity: 2026-11-11 - Completed quick task 261110-u28: bloquear "JACIRA CHAVARE" no paste do admin
+Last activity: 2026-11-11 - Completed quick task 261110-uik: remover "JACIRA CHAVARE" do texto sem bloquear a vaga (substitui 261110-u28)
 
 Progress: [█████████▋] 96%
 
@@ -156,7 +156,8 @@ None yet.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 261110-u28 | Bloquear a expressão "JACIRA CHAVARE" no paste do admin (frontend + backend) | 2026-11-11 | fd281dd | [261110-u28-bloquear-a-expressao-jacira-chavare-ao-c](./quick/261110-u28-bloquear-a-expressao-jacira-chavare-ao-c/) |
+| 261110-u28 | Bloquear a expressão "JACIRA CHAVARE" no paste do admin — **substituída por 261110-uik** | 2026-11-11 | fd281dd | [261110-u28-bloquear-a-expressao-jacira-chavare-ao-c](./quick/261110-u28-bloquear-a-expressao-jacira-chavare-ao-c/) |
+| 261110-uik | Remover "JACIRA CHAVARE" do texto colado sem bloquear a criação da vaga (strip no backend e no frontend) | 2026-11-11 | 75c19ef | [261110-uik-remover-jacira-chavare-do-texto-colado-s](./quick/261110-uik-remover-jacira-chavare-do-texto-colado-s/) |
 
 ## Deferred Items
 
