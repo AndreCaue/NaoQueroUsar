@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 Phase: 06 (lifecycle-trust-legal-launch) — DEVELOPMENT
 Plan: 4 of 4
 Status: Development baseline; launch deferred by user
-Last activity: 2026-11-02
+Last activity: 2026-11-11 - Completed quick task 261110-u28: bloquear "JACIRA CHAVARE" no paste do admin
 
 Progress: [█████████▋] 96%
 
@@ -151,6 +151,12 @@ None yet.
 - LGPD text is now user-supplied and wired in (CR-02 inputs resolved). A lawyer review is still advisable if the operator wants legal assurance; it is no longer a code/artifact blocker.
 - Production deploy is deferred by user decision (option B, 2026-11-10), not blocked: the remaining work is the human Render/Vercel/GitHub setup checkpoint in 06-04 Task 3 plus the production smoke gate. No production deploy or smoke-gate run has occurred.
 - Turnstile: os segredos publicos de teste da Cloudflare (1x/2x/3x) nao devolvem o campo 'action' na resposta do Siteverify - com eles o login (expected_action='login') e o reveal (expected_action='reveal') devolvem 403 'Verificacao anti-bot falhou - tente novamente', travando o checkpoint de browser da task 3 do plano 03-05. Sintoma medido contra o backend no ar (403, e nao 401 'Senha invalida', o que prova que a chamada real a Cloudflare acontece). Correcao proposta (exigir action so quando a resposta tiver action, ou um flag enforce_action desligado quando turnstile_mode == 'test') aguardando o veredito do usuario - nenhum codigo de producao foi alterado.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 261110-u28 | Bloquear a expressão "JACIRA CHAVARE" no paste do admin (frontend + backend) | 2026-11-11 | fd281dd | [261110-u28-bloquear-a-expressao-jacira-chavare-ao-c](./quick/261110-u28-bloquear-a-expressao-jacira-chavare-ao-c/) |
 
 ## Deferred Items
 
