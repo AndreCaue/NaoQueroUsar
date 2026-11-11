@@ -14,6 +14,7 @@ from app.api.v1 import extract as extract_module
 from app.core.config import get_settings
 from app.models.job import Job, JobStatus
 from app.schemas.extract import ALERT_DISCARDED, ALERT_DIVERGENCE, ALERT_TRUNCATED
+from app.services.extraction.blocklist import BLOCKED_TERM_ERROR
 from app.services.extraction.client import ExtractionAPIError
 from app.services.extraction.extractor import CandidateOutcome, ExtractionResult
 from app.services.extraction.schema import JobCandidate
@@ -191,6 +192,49 @@ async def test_extract_413_oversize(client, admin_password, monkeypatch):
     resp = await client.post(
         "/api/v1/admin/extract",
         json={"text": "12345678901"},  # 11 bytes
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 413
+
+
+async def test_extract_422_blocked_term_skips_groq(client, admin_password, monkeypatch):
+    token = await _get_admin_token(client, admin_password)
+    settings = get_settings()
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "test-key")
+
+    calls: list[str] = []
+
+    async def should_not_run(text, s):
+        calls.append(text)
+        raise AssertionError("extract_jobs não deveria ser chamado para texto bloqueado")
+
+    monkeypatch.setattr(extract_module, "extract_jobs", should_not_run)
+
+    resp = await client.post(
+        "/api/v1/admin/extract",
+        json={"text": "Vaga: jacira\n  chavare — contato segredo-xyz@example.com"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resp.status_code == 422
+    detail = resp.json()["detail"]
+    assert isinstance(detail, str)
+    assert detail == BLOCKED_TERM_ERROR
+    assert "JACIRA CHAVARE" in detail
+    assert "segredo-xyz" not in resp.text  # o texto colado nunca é ecoado
+    assert calls == []
+
+
+async def test_extract_413_wins_over_blocklist(client, admin_password, monkeypatch):
+    """The size gate runs before the blocklist: a blocked AND oversized text is 413."""
+    token = await _get_admin_token(client, admin_password)
+    settings = get_settings()
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "test-key")
+    monkeypatch.setattr(settings, "EXTRACT_MAX_TEXT_BYTES", 10)
+
+    resp = await client.post(
+        "/api/v1/admin/extract",
+        json={"text": "jacira chavare"},  # 14 bytes, also blocked
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 413

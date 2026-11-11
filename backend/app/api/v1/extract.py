@@ -32,6 +32,7 @@ from app.schemas.extract import (
     ExtractRequest,
     ExtractSummaryResponse,
 )
+from app.services.extraction.blocklist import BLOCKED_TERM_ERROR, is_blocked_text
 from app.services.extraction.client import ExtractionAPIError
 from app.services.extraction.extractor import CandidateOutcome, extract_jobs
 
@@ -71,6 +72,11 @@ async def extract_admin(
                 "Cole um trecho menor ou divida o envio."
             ),
         )
+
+    if is_blocked_text(payload.text):
+        # Rejeita antes de qualquer chamada ao Groq. O detail é string pt-BR
+        # e cita apenas o termo — o texto colado nunca é ecoado (T-261110-02).
+        raise HTTPException(status_code=422, detail=BLOCKED_TERM_ERROR)
 
     try:
         async with asyncio.timeout(settings.EXTRACT_TIMEOUT_SECONDS):
