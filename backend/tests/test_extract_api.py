@@ -14,7 +14,7 @@ from app.api.v1 import extract as extract_module
 from app.core.config import get_settings
 from app.models.job import Job, JobStatus
 from app.schemas.extract import ALERT_DISCARDED, ALERT_DIVERGENCE, ALERT_TRUNCATED
-from app.services.extraction.blocklist import BLOCKED_TERM_ERROR
+from app.services.extraction.blocklist import TERM_REMOVED_ALERT, strip_blocked_terms
 from app.services.extraction.client import ExtractionAPIError
 from app.services.extraction.extractor import CandidateOutcome, ExtractionResult
 from app.services.extraction.schema import JobCandidate
@@ -197,7 +197,43 @@ async def test_extract_413_oversize(client, admin_password, monkeypatch):
     assert resp.status_code == 413
 
 
-async def test_extract_422_blocked_term_skips_groq(client, admin_password, monkeypatch):
+async def test_extract_200_strips_term_and_calls_groq_cleaned(
+    client, admin_password, db_session, monkeypatch
+):
+    """O termo é removido e a extração segue: 200, Groq com texto limpo, alerta."""
+    token = await _get_admin_token(client, admin_password)
+    settings = get_settings()
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "test-key")
+
+    calls: list[str] = []
+
+    async def capture(text, s):
+        calls.append(text)
+        return _make_result()
+
+    monkeypatch.setattr(extract_module, "extract_jobs", capture)
+
+    pasted = "Vaga: jacira\n  chavare — contato segredo-xyz@example.com"
+    resp = await client.post(
+        "/api/v1/admin/extract",
+        json={"text": pasted},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert resp.status_code == 200
+    assert len(calls) == 1
+    sent = calls[0]
+    assert sent != pasted
+    assert sent == strip_blocked_terms(pasted)
+    assert "jacira" not in sent.casefold()
+    assert "chavare" not in sent.casefold()
+    assert "segredo-xyz@example.com" in sent  # texto ao redor intacto
+    assert sent.startswith("Vaga:")            # nada foi normalizado/reescrito
+    assert TERM_REMOVED_ALERT in resp.json()["alerts"]
+    assert "segredo-xyz" not in resp.text  # o texto colado nunca é ecoado
+
+
+async def test_extract_422_term_only_text_skips_groq(client, admin_password, monkeypatch):
     token = await _get_admin_token(client, admin_password)
     settings = get_settings()
     monkeypatch.setattr(settings, "GROQ_API_KEY", "test-key")
@@ -206,27 +242,26 @@ async def test_extract_422_blocked_term_skips_groq(client, admin_password, monke
 
     async def should_not_run(text, s):
         calls.append(text)
-        raise AssertionError("extract_jobs não deveria ser chamado para texto bloqueado")
+        raise AssertionError("extract_jobs não deveria ser chamado sem conteúdo")
 
     monkeypatch.setattr(extract_module, "extract_jobs", should_not_run)
 
     resp = await client.post(
         "/api/v1/admin/extract",
-        json={"text": "Vaga: jacira\n  chavare — contato segredo-xyz@example.com"},
+        json={"text": "  JACIRA\n chavare  "},
         headers={"Authorization": f"Bearer {token}"},
     )
 
     assert resp.status_code == 422
     detail = resp.json()["detail"]
     assert isinstance(detail, str)
-    assert detail == BLOCKED_TERM_ERROR
-    assert "JACIRA CHAVARE" in detail
-    assert "segredo-xyz" not in resp.text  # o texto colado nunca é ecoado
+    assert "apenas o termo removido" in detail
+    assert "cole o conteúdo da vaga" in detail
     assert calls == []
 
 
-async def test_extract_413_wins_over_blocklist(client, admin_password, monkeypatch):
-    """The size gate runs before the blocklist: a blocked AND oversized text is 413."""
+async def test_extract_413_wins_over_term_removal(client, admin_password, monkeypatch):
+    """O limite de bytes roda antes da remoção; o texto original é medido."""
     token = await _get_admin_token(client, admin_password)
     settings = get_settings()
     monkeypatch.setattr(settings, "GROQ_API_KEY", "test-key")
@@ -234,7 +269,7 @@ async def test_extract_413_wins_over_blocklist(client, admin_password, monkeypat
 
     resp = await client.post(
         "/api/v1/admin/extract",
-        json={"text": "jacira chavare"},  # 14 bytes, also blocked
+        json={"text": "jacira chavare"},  # 14 bytes, também conteria o termo
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 413

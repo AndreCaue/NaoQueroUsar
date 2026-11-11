@@ -32,7 +32,7 @@ from app.schemas.extract import (
     ExtractRequest,
     ExtractSummaryResponse,
 )
-from app.services.extraction.blocklist import BLOCKED_TERM_ERROR, is_blocked_text
+from app.services.extraction.blocklist import TERM_REMOVED_ALERT, strip_blocked_terms
 from app.services.extraction.client import ExtractionAPIError
 from app.services.extraction.extractor import CandidateOutcome, extract_jobs
 
@@ -73,14 +73,23 @@ async def extract_admin(
             ),
         )
 
-    if is_blocked_text(payload.text):
-        # Rejeita antes de qualquer chamada ao Groq. O detail é string pt-BR
-        # e cita apenas o termo — o texto colado nunca é ecoado (T-261110-02).
-        raise HTTPException(status_code=422, detail=BLOCKED_TERM_ERROR)
+    cleaned_text = strip_blocked_terms(payload.text)
+    if not cleaned_text.strip():
+        # O texto era só o termo removido — nada para extrair. Mensagem
+        # própria (não confundir com corpo vazio do Pydantic) e sem Groq.
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "O texto continha apenas o termo removido — "
+                "cole o conteúdo da vaga."
+            ),
+        )
+
+    term_removed = cleaned_text != payload.text
 
     try:
         async with asyncio.timeout(settings.EXTRACT_TIMEOUT_SECONDS):
-            result = await extract_jobs(payload.text, settings)
+            result = await extract_jobs(cleaned_text, settings)
     except TimeoutError as exc:
         raise HTTPException(
             status_code=504,
@@ -135,6 +144,8 @@ async def extract_admin(
     ]
 
     alerts: list[str] = []
+    if term_removed:
+        alerts.append(TERM_REMOVED_ALERT)
     if result.divergent and result.detected_count is not None:
         alerts.append(
             ALERT_DIVERGENCE.format(
