@@ -1,37 +1,56 @@
-"""Termos bloqueados na extração (admin paste) — regra única do backend.
+"""Remoção do termo residual na extração (admin paste) — regra única do backend.
 
-Regra (espelhada em frontend/lib/blocklist.ts): case-insensitive, sem
-acentos (NFKD) e com espaços/quebras de linha colapsados. A comparação é
-por substring em qualquer ponto do texto.
+Regra (espelhada em frontend/lib/blocklist.ts): todas as ocorrências do termo
+são removidas, em qualquer caixa, ignorando acentos e aceitando qualquer
+quantidade de espaços/quebras de linha entre as palavras. Cada ocorrência é
+substituída por UM espaço e o restante do texto é preservado byte a byte —
+nenhuma normalização global é aplicada.
 
-Nunca logue nem ecoe o texto colado: só o termo bloqueado aparece na
-mensagem, que é exibida ao admin que fez o paste.
+O padrão é construído a partir da constante ``REMOVED_TERM`` (nunca de input
+do usuário), então não há risco de injeção de padrão nem de ReDoS.
+
+Nunca logue nem ecoe o texto colado: a mensagem cita apenas o termo.
 """
 
 import re
-import unicodedata
 
-BLOCKED_TERM = "JACIRA CHAVARE"
+REMOVED_TERM = "JACIRA CHAVARE"
 
-BLOCKED_TERM_ERROR = (
-    'Texto bloqueado — remova "JACIRA CHAVARE" antes de extrair.'
+TERM_REMOVED_ALERT = (
+    'ℹ️ O termo "JACIRA CHAVARE" foi removido do texto antes da extração.'
 )
 
-_WHITESPACE = re.compile(r"\s+")
+# Variantes acentuadas aceitas por letra (minúsculas; a maiúscula é derivada).
+_LETTER_VARIANTS = {
+    "a": "aáàâãä",
+    "c": "cç",
+    "e": "eéèêë",
+    "h": "h",
+    "i": "iíìîï",
+    "j": "j",
+    "r": "r",
+    "v": "v",
+}
 
 
-def _fold(value: str) -> str:
-    """Normaliza para comparar: NFKD, sem marcas, espaços colapsados, casefold."""
-    decomposed = unicodedata.normalize("NFKD", value)
-    without_marks = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
-    return _WHITESPACE.sub(" ", without_marks).strip().casefold()
+def _char_class(char: str) -> str:
+    """Classe de caracteres que aceita a letra em caixa baixa, alta e acentuada."""
+    variants = _LETTER_VARIANTS.get(char.lower(), char.lower())
+    return f"[{variants}{variants.upper()}]"
 
 
-_FOLDED_TERM = _fold(BLOCKED_TERM)
+_TERM_PATTERN = re.compile(
+    "".join(r"\s+" if char == " " else _char_class(char) for char in REMOVED_TERM)
+)
 
 
-def is_blocked_text(text: str) -> bool:
-    """True quando o texto contém o termo bloqueado (substring, qualquer caixa)."""
+def strip_blocked_terms(text: str) -> str:
+    """Remove todas as ocorrências do termo; cada uma vira um único espaço.
+
+    Devolve ``""`` quando o texto é só o termo (ou ficou só com espaços),
+    preservando o restante exatamente como veio do admin.
+    """
     if not text:
-        return False
-    return _FOLDED_TERM in _fold(text)
+        return ""
+    cleaned = _TERM_PATTERN.sub(" ", text)
+    return "" if not cleaned.strip() else cleaned

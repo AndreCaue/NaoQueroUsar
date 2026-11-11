@@ -1,11 +1,11 @@
-"""Unit tests for the extraction blocklist rule (backend authority)."""
+"""Unit tests for the extraction term-removal rule (backend authority)."""
 
 import pytest
 
 from app.services.extraction.blocklist import (
-    BLOCKED_TERM,
-    BLOCKED_TERM_ERROR,
-    is_blocked_text,
+    REMOVED_TERM,
+    TERM_REMOVED_ALERT,
+    strip_blocked_terms,
 )
 
 
@@ -20,29 +20,57 @@ from app.services.extraction.blocklist import (
         "JACIRA\tCHAVARE",
         "JACIRA CHAVÁRE",
         "  jacira chavare  ",
-        (
-            "Vaga: Auxiliar de limpeza — contato rh@empresa.com\n\n"
-            "Bairro: Centro\nNome citado: jacira chavare\nSalário: R$ 1.800"
-        ),
     ],
 )
-def test_bloqueia_variacoes(text):
-    assert is_blocked_text(text) is True
+def test_remove_variacoes(text):
+    assert strip_blocked_terms(text) == ""
+
+
+def test_remove_multiplas_ocorrencias():
+    out = strip_blocked_terms(
+        "Vaga 1: jacira chavare / Vaga 2: JACIRA CHAVARE"
+    )
+    assert "jacira" not in out.casefold()
+    assert "chavare" not in out.casefold()
+    assert "Vaga 1:" in out
+    assert "Vaga 2:" in out
+    assert strip_blocked_terms("jacira chavare jacira chavare") == ""
+
+
+def test_preserva_texto_ao_redor():
+    blob = (
+        "Vaga: Auxiliar de limpeza — contato rh@empresa.com\n\n"
+        "Bairro: Centro\nNome citado: jacira chavare\nSalário: R$ 1.800"
+    )
+    out = strip_blocked_terms(blob)
+    assert out.startswith("Vaga: Auxiliar de limpeza — contato rh@empresa.com")
+    assert out.endswith("Salário: R$ 1.800")
+    assert "rh@empresa.com" in out
+    assert "Bairro: Centro" in out
+    assert "jacira" not in out.casefold()
+    assert "chavare" not in out.casefold()
+    assert out.strip() != ""
 
 
 @pytest.mark.parametrize(
     "text",
     [
         "",
+        "Vaga para desenvolvedor backend em São Paulo — rh@acme.com.br",
         "JACIRA",
         "CHAVARE",
-        "Vaga para desenvolvedor backend em São Paulo — rh@acme.com.br",
+        "Acentuação e\tquebras\npreservadas — ação, coração",
     ],
 )
-def test_permite_texto_sem_termo(text):
-    assert is_blocked_text(text) is False
+def test_texto_sem_termo_fica_intacto(text):
+    assert strip_blocked_terms(text) == text
 
 
-def test_mensagem_pt_br_cita_o_termo():
-    assert BLOCKED_TERM in BLOCKED_TERM_ERROR
-    assert BLOCKED_TERM_ERROR.endswith("antes de extrair.")
+def test_so_o_termo_vira_string_vazia():
+    assert strip_blocked_terms("JACIRA CHAVARE") == ""
+    assert strip_blocked_terms("  Jacira\nChavare  ") == ""
+
+
+def test_alerta_pt_br_cita_o_termo():
+    assert REMOVED_TERM in TERM_REMOVED_ALERT
+    assert "removido" in TERM_REMOVED_ALERT
