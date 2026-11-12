@@ -3,7 +3,8 @@
 Covers:
 - ``TURNSTILE_SECRET_KEY`` is mandatory outside ``ENV=dev`` (D-11).
 - Cloudflare test keys (``1x``/``2x``/``3x``) are rejected outside ``ENV=dev``
-  (D-12).
+  (D-12), unless the temporary escape hatch ``ALLOW_TEST_TURNSTILE=true`` is
+  explicitly set (temporary deviation — see ``docs/DEPLOY.md``).
 - In ``ENV=dev`` the empty secret falls back to Cloudflare's public
   always-pass key, and an explicitly provided key is used as-is.
 - Rate-limit budgets are env-configurable with safe defaults (D-06).
@@ -12,6 +13,8 @@ No test touches the real ``.env`` file nor the database: every ``Settings``
 instance is built with ``_env_file=None`` and explicit init kwargs (init
 kwargs have the highest priority in pydantic-settings).
 """
+
+import logging
 
 import pytest
 from pydantic import ValidationError
@@ -57,6 +60,49 @@ def test_prod_rejects_cloudflare_test_keys(test_key: str):
     """D-12: known Cloudflare test keys must break the startup outside dev."""
     with pytest.raises(ValidationError, match="TURNSTILE_SECRET_KEY|chave de teste"):
         _settings(ENV="prod", TURNSTILE_SECRET_KEY=test_key)
+
+
+def test_prod_rejects_test_keys_when_override_is_off():
+    """The escape hatch is opt-in: ``ALLOW_TEST_TURNSTILE=False`` keeps D-12."""
+    with pytest.raises(ValidationError, match="chave de teste"):
+        _settings(
+            ENV="prod",
+            TURNSTILE_SECRET_KEY=KEY_ALWAYS_PASS,
+            ALLOW_TEST_TURNSTILE=False,
+        )
+
+
+def test_prod_accepts_test_key_with_explicit_override(caplog):
+    """Desvio temporário: com ``ALLOW_TEST_TURNSTILE=True`` o boot prossegue.
+
+    O modo continua ``test`` (o gate e o /health não escondem o desvio) e o
+    boot emite um WARN explícito para o operador.
+    """
+    with caplog.at_level(logging.WARNING, logger="app.core.config"):
+        settings = _settings(
+            ENV="prod",
+            TURNSTILE_SECRET_KEY=KEY_ALWAYS_PASS,
+            ALLOW_TEST_TURNSTILE=True,
+        )
+
+    assert settings.effective_turnstile_secret == KEY_ALWAYS_PASS
+    assert settings.turnstile_mode == "test"
+    assert settings.ALLOW_TEST_TURNSTILE is True
+    assert any("ALLOW_TEST_TURNSTILE" in record.message for record in caplog.records)
+
+
+def test_prod_override_does_not_excuse_a_missing_secret():
+    """D-11 is untouched: the override only relaxes the test-key check."""
+    with pytest.raises(ValidationError, match="TURNSTILE_SECRET_KEY"):
+        _settings(ENV="prod", TURNSTILE_SECRET_KEY="", ALLOW_TEST_TURNSTILE=True)
+
+
+def test_prod_override_keeps_live_mode_for_a_real_secret():
+    """A real secret is still classified as ``live`` even with the flag on."""
+    settings = _settings(
+        ENV="prod", TURNSTILE_SECRET_KEY="z" * 35, ALLOW_TEST_TURNSTILE=True
+    )
+    assert settings.turnstile_mode == "live"
 
 
 def test_prod_accepts_non_test_secret():

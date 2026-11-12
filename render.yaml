@@ -7,6 +7,11 @@
 # - ENV=prod ativa o validador fail-closed que RECUSA chaves de teste do
 #   Cloudflare Turnstile fora de dev (D-11/D-12) e exige TURNSTILE_SECRET_KEY
 #   preenchida — sem ela o processo não sobe.
+# - ALLOW_TEST_TURNSTILE=true e um ESCAPE HATCH TEMPORARIO (2026-11-12) para
+#   subir em prod com as chaves publicas de teste da Cloudflare enquanto nao
+#   houver um widget live. E fail-closed: se a variavel nao existir no
+#   dashboard, o boot continua recusando chave de teste. Desligue assim que as
+#   chaves live entrarem — com o flag ligado qualquer token e aceito.
 # - Deploys são MANUAIS (autoDeploy: false): cada deploy de produção é um passo
 #   aprovado por uma pessoa, não um efeito colateral de push na branch de
 #   produção. Dispare em "Deploy latest commit" no dashboard do Render após
@@ -60,6 +65,8 @@ services:
       - key: TURNSTILE_SITE_KEY # site key pública do widget de produção
         sync: false
       - key: TURNSTILE_SECRET_KEY # secret privada; ENV=prod recusa chave de teste
+        sync: false
+      - key: ALLOW_TEST_TURNSTILE # escape hatch TEMPORARIO: "true" aceita chave de teste em prod
         sync: false
       - key: GROQ_API_KEY # https://console.groq.com/keys
         sync: false

@@ -76,7 +76,8 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
    | `JWT_SECRET` | `token_urlsafe(64)` | |
    | `CORS_ORIGINS` | Origem exata da Vercel (ex.: `https://<seu-projeto>.vercel.app`) | Sem barra final, sem `*`, sem espaços |
    | `TURNSTILE_SITE_KEY` | Site key do widget de produção | Pública, mas fica no backend |
-   | `TURNSTILE_SECRET_KEY` | Secret privada do widget de produção | `ENV=prod` recusa chave de teste |
+   | `TURNSTILE_SECRET_KEY` | Secret privada do widget de produção | `ENV=prod` recusa chave de teste (D-12) |
+   | `ALLOW_TEST_TURNSTILE` | ausente (padrão `false`) | **Desvio temporário.** `true` permite `ENV=prod` com chave de **teste** do Cloudflare — veja "Desvio temporário: Turnstile de teste em produção" |
    | `GROQ_API_KEY` | `https://console.groq.com/keys` | |
    | `CRON_SECRET` | 32+ caracteres aleatórios | Mesmo valor no GitHub `secrets.CRON_SECRET` |
    | `SCHEDULER_ENABLED` | `true` (padrão) | Veja "Cron de catch-up" abaixo |
@@ -86,11 +87,41 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
    https://<backend>.onrender.com/api/v1/health
    → {"status":"ok","env":"prod","turnstile":{"configured":true,"mode":"live","site_key_configured":true}}
    ```
-   `turnstile.mode` **precisa** ser `live`. Se vier `test` ou `disabled`, o deploy está errado (ou o validador derrubou o boot).
+   `turnstile.mode` **precisa** ser `live`. Se vier `test` ou `disabled`, o deploy está errado (ou o validador derrubou o boot) — a única exceção é o desvio temporário documentado abaixo, que exige `ALLOW_TEST_TURNSTILE=true` no Render e reporta `"test_override":true` no health.
    Se o boot falhar no `alembic upgrade head`, confira primeiro `DATABASE_URL`: ele **precisa** começar com `postgresql+asyncpg://` (não `postgresql://`) e usar o host `-pooler`.
 4. **Deploys são manuais** (`autoDeploy: false` no `render.yaml`): um push na branch de produção **não** sobe automaticamente — cada deploy é disparado no dashboard do Render após revisão. Isso é de propósito: o `startCommand` roda `alembic upgrade head` a cada boot e migrações são forward-only — um deploy automático aplicaria schema novo em produção sem aprovação e sem rollback. Dispare em **Deploy latest commit** depois de revisar (e, para mudanças de schema, após snapshot/backup do Neon).
 5. **Migrações rodam a cada boot** (`alembic upgrade head` no `startCommand`). São idempotentes e forward-only. Risco conhecido e aceito: uma migration quebrada derruba o boot em loop (inclusive a cada wake-up do plano free) e derruba o board público junto — não existe rollback de schema. Mitigações atuais: deploy manual/gated (a migration é revisada antes do deploy), regra de migrações forward-only, e snapshot do Neon antes de merges que tocam schema. Separar a migração num step de release próprio (pre-deploy do Render) é trabalho futuro — **não remova o `alembic upgrade head` do boot sem que esse step revisado exista e esteja documentado**.
 6. **Plano free dorme após ~15 min sem tráfego.** O primeiro request depois do spin-down paga o cold-start (ver seção **Cold-start**) — e também refaz o upgrade do Alembic no boot.
+
+---
+
+## Desvio temporário: Turnstile de teste em produção
+
+> **Estado:** ativo desde 2026-11-12 (operador ainda sem domínio próprio). Remover assim que houver um widget live.
+
+Turnstile **não exige domínio próprio**: um widget de produção pode ter o hostname da Vercel (ex.: `nao-quero-usar.vercel.app`). Esse continua sendo o caminho recomendado. Enquanto as chaves live (`0x4AAA…`) não forem configuradas, o backend pode subir em `ENV=prod` com as chaves públicas de teste da Cloudflare **apenas** se o operador ligar o escape hatch explícito:
+
+| Onde | Variável | Valor |
+|---|---|---|
+| Render | `ALLOW_TEST_TURNSTILE` | `true` |
+| Render | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | chaves de teste (`1x…AA`) |
+| Vercel | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | site key de teste + **redeploy** (é inlinada no build) |
+
+Comportamento quando o flag está ligado:
+
+- o boot **não** é recusado; sem o flag, `ENV=prod` + chave de teste continua derrubando o processo (D-12);
+- o boot emite um `WARNING` explícito e `GET /api/v1/health` reporta `turnstile.mode=test` **e** `turnstile.test_override=true`;
+- `TURNSTILE_SECRET_KEY` vazia continua derrubando o boot (D-11 não é relaxada);
+- o gate só aceita `mode=test` se for rodado com `-AllowTestTurnstile` **e** o health declarar `test_override=true`.
+
+**Riscos aceitos neste desvio:** as chaves `1x/2x/3x` são públicas e o Siteverify aceita qualquer token — a proteção anti-bot efetiva fica apenas nos rate limits (`REVEAL_RATE_LIMIT`, `LOGIN_RATE_LIMIT`). Este deploy serve para validar board e fluxos ponta a ponta, não como produção definitiva.
+
+**Para sair do desvio:**
+1. Cloudflare → Turnstile → widget de produção → **Hostnames** → adicionar o domínio (ex.: `nao-quero-usar.vercel.app`). Não precisa de domínio próprio.
+2. Copiar a site key e a secret key de produção (`0x4AAA…`).
+3. Render → Environment: `TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY` live e **remover** (ou pôr `false` em) `ALLOW_TEST_TURNSTILE` → **Manual Deploy**.
+4. Vercel → Environment: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` live → **Redeploy**.
+5. Re-rodar o gate **sem** `-AllowTestTurnstile`: precisa terminar em `turnstile.mode=live` e `all checks passed`.
 
 ---
 
@@ -178,6 +209,7 @@ powershell -ExecutionPolicy Bypass -File scripts\verify-deploy.ps1 `
 
 - Passe o **domínio canônico de produção** do frontend (sem barra final): o script não segue redirects (`AllowAutoRedirect = $false`), então um alias que responde 308 falha no check 4 com status inesperado.
 - `-CronSecret` é obrigatório para o check de cron autenticado; o script lê `$env:CRON_SECRET` por padrão (evita deixar o segredo no histórico/linha de comando).
+- `-AllowTestTurnstile` é o **único** caminho para o check 1 aceitar `turnstile.mode=test`: ele exige que o backend também declare `turnstile.test_override=true` (ou seja, `ALLOW_TEST_TURNSTILE=true` no Render). Use só durante o desvio temporário documentado acima e imprima `WARN -` em vez de `PASS -`.
 - Cada check imprime `PASS - ...`; ao final: `verify-deploy: all checks passed`. Se qualquer check falhar, o script lança exceção com a mensagem do que falhou — **não** considere o deploy pronto enquanto houver falha.
 - O check 10 mede a latência do **primeiro** request ao backend (health). Para o número representar o cold-start, rode o gate como o **primeiro** tráfego após ~20 min de ociosidade do Render; rodar depois de abrir o board mede apenas o caminho aquecido.
 

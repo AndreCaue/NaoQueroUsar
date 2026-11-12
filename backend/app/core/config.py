@@ -1,9 +1,12 @@
+import logging
 import re
 from functools import lru_cache
 from typing import List
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 # Cloudflare's public always-pass test secret (dev/CI only — never a real secret).
 DEV_TURNSTILE_SECRET = "1x0000000000000000000000000000000AA"
@@ -48,6 +51,15 @@ class Settings(BaseSettings):
     REVEAL_RATE_LIMIT: str = "10/minute"     # D-06 — env-tunable, no deploy needed
     LOGIN_RATE_LIMIT: str = "5/minute"       # D-06 — env-tunable, no deploy needed
 
+    # ESCAPE HATCH TEMPORÁRIO (desvio consciente, 2026-11-12).
+    # Permite subir ENV=prod com uma chave de TESTE do Cloudflare Turnstile
+    # enquanto o operador não tem domínio próprio/cadastro de widget live para
+    # cadastrar o hostname da Vercel. Fail-closed por padrão: sem
+    # ALLOW_TEST_TURNSTILE=true o boot continua sendo recusado (D-12). Com o
+    # flag ligado o app aceita qualquer token (as chaves 1x/2x/3x são públicas),
+    # então isto NÃO substitui as chaves live — desligue assim que elas entrarem.
+    ALLOW_TEST_TURNSTILE: bool = False
+
     # Expiry sweep trigger (Phase 6 — LIFE-04, D-02).
     # Optional on purpose: when it is empty the manual endpoint answers 503
     # instead of accepting any request, so an unconfigured deploy fails CLOSED
@@ -60,7 +72,11 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_turnstile(self) -> "Settings":
-        """Fail closed: no secret (or a known test key) outside dev (D-11/D-12)."""
+        """Fail closed: no secret (or a known test key) outside dev (D-11/D-12).
+
+        ``ALLOW_TEST_TURNSTILE`` é a única saída prevista para o desvio, e é
+        explícita: sem ela uma chave de teste continua derrubando o boot.
+        """
         if self.ENV != "dev":
             secret = self.TURNSTILE_SECRET_KEY.strip()
             if not secret:
@@ -68,8 +84,16 @@ class Settings(BaseSettings):
                     "TURNSTILE_SECRET_KEY é obrigatória fora de dev (D-11)"
                 )
             if _TURNSTILE_TEST_KEY_RE.match(secret):
-                raise ValueError(
-                    "chave de teste do Cloudflare (1x/2x/3x) não é permitida fora de dev (D-12)"
+                if not self.ALLOW_TEST_TURNSTILE:
+                    raise ValueError(
+                        "chave de teste do Cloudflare (1x/2x/3x) não é permitida fora de dev (D-12)"
+                    )
+                logger.warning(
+                    "ALLOW_TEST_TURNSTILE=true: ENV=%s está usando uma chave de "
+                    "TESTE do Cloudflare Turnstile. Qualquer token é aceito — isto "
+                    "é um desvio temporário e NÃO deve ser usado em produção real. "
+                    "Desative o flag quando as chaves live estiverem configuradas (D-12).",
+                    self.ENV,
                 )
         return self
 

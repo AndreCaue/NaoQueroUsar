@@ -20,6 +20,8 @@ async def test_health_reports_the_turnstile_status(client):
     assert body["turnstile"]["mode"] == "test"
     assert body["turnstile"]["configured"] is True
     assert body["turnstile"]["site_key_configured"] is False
+    # Escape hatch: reports the flag, never the key. Default is off.
+    assert body["turnstile"]["test_override"] is False
 
 
 async def test_health_never_leaks_the_turnstile_secret(client):

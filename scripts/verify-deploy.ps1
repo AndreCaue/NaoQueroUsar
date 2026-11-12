@@ -6,6 +6,8 @@
 .DESCRIPTION
   Valida o deploy de produção de ponta a ponta:
     1.  GET  /api/v1/health            -> 200, status=ok, env=prod, turnstile.mode=live
+                                          (-AllowTestTurnstile aceita mode=test somente
+                                           com turnstile.test_override=true)
     2.  Preflight CORS permitido       -> Access-Control-Allow-Origin == origem do frontend
     3.  Preflight CORS negado          -> 400 ou header ausente/diferente de https://evil.example
     4.  Board (/)                      -> 200, contém "Vagas abertas", NÃO vaza contatos
@@ -37,7 +39,13 @@ param(
 
     # Segredo do cron (mesmo valor de CRON_SECRET no backend / secrets.CRON_SECRET no GitHub).
     # Padrão: lê $env:CRON_SECRET da sessão. Sem segredo, o check 8 falha com instrução.
-    [string]$CronSecret = $env:CRON_SECRET
+    [string]$CronSecret = $env:CRON_SECRET,
+
+    # DESVIO TEMPORARIO (2026-11-12): aceita o check 1 com turnstile.mode=test
+    # (chave publica de teste do Cloudflare) SOMENTE se o backend tambem
+    # declarar ALLOW_TEST_TURNSTILE=true no /health. Sem este switch o gate
+    # continua exigindo mode=live. Use apenas enquanto nao houver chaves live.
+    [switch]$AllowTestTurnstile
 )
 
 $ErrorActionPreference = "Stop"
@@ -129,8 +137,15 @@ Assert ($health.Status -eq 200) "Health retornou $($health.Status) em $BackendUr
 $healthJson = $health.Body | ConvertFrom-Json
 Assert ($healthJson.status -eq "ok") "Health sem status=ok (veio: $($healthJson.status))"
 Assert ($healthJson.env -eq "prod") "Health sem env=prod (veio: $($healthJson.env)). Verifique ENV no Render."
-Assert ($healthJson.turnstile.mode -eq "live") "Health sem turnstile.mode=live (veio: $($healthJson.turnstile.mode)). Chave de teste/ausente em produção."
-Write-Pass "health 200, env=prod, turnstile.mode=live"
+$turnstileMode = $healthJson.turnstile.mode
+if ($turnstileMode -eq "live") {
+    Write-Pass "health 200, env=prod, turnstile.mode=live"
+} elseif ($AllowTestTurnstile -and $turnstileMode -eq "test" -and $healthJson.turnstile.test_override -eq $true) {
+    Write-Warning "DESVIO TEMPORARIO: backend em ENV=prod usando chave de TESTE do Cloudflare (ALLOW_TEST_TURNSTILE=true). Qualquer token e aceito. Troque pelas chaves live e desligue o flag assim que possivel (D-12)."
+    Write-Output "WARN - health 200, env=prod, turnstile.mode=test (escape hatch explicito)"
+} else {
+    throw "Health sem turnstile.mode=live (veio: $turnstileMode). Chave de teste/ausente em producao. Se for um desvio consciente, suba o backend com ALLOW_TEST_TURNSTILE=true e rode o gate com -AllowTestTurnstile."
+}
 
 # ---------------------------------------------------------------------------
 # 2. Preflight CORS permitido: origem EXATA do frontend
