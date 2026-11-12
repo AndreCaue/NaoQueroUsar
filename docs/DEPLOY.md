@@ -9,7 +9,7 @@ Runbook de produção: frontend na **Vercel**, backend **FastAPI** no **Render**
 ## Arquitetura
 
 ```text
-Navegador ──HTTPS──► Vercel (Next.js 15 App Router, SSR + server fetch)
+Navegador ──HTTPS──► Vercel (Next.js 16 App Router, SSR + server fetch)
                          │ cache: "no-store" com timeout de 15 s (frontend/lib/jobs.ts)
                          ▼
                  Render (FastAPI, plano free)

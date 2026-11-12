@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-13)
 Phase: 06 (lifecycle-trust-legal-launch) — DEVELOPMENT
 Plan: 4 of 4
 Status: Development baseline; launch deferred by user
-Last activity: 2026-11-11 - Completed quick task 261110-uik: remover "JACIRA CHAVARE" do texto sem bloquear a vaga (substitui 261110-u28)
+Last activity: 2026-11-11 - Completed quick task 261111-krt: Next.js 16.4.6 (latest) + ESLint 9 flat config
 
 Progress: [█████████▋] 96%
 
@@ -140,6 +140,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 2026-11-10 — user picked option B for launch: keep the project in local development, no Vercel/Render deploy and no production smoke gate for now. Plan 06-04 remains open; nothing in Phase 06 is marked complete.
 - [Phase 06]: 2026-11-10 — local `CRON_SECRET` generated into `backend/.env` (43 chars, never committed) and the expiry trigger smoke-tested locally through the ASGI app: no header → 401, wrong header → 401, correct header → 200 with `deleted: 0` twice (idempotent; no expired rows in the dev DB). The same value still has to be copied to Render and to the GitHub Actions `CRON_SECRET` secret when the deploy is resumed.
 - [Phase 06]: 2026-11-10 — 06-04 deploy plan reviewed against the code (`06-04-REVIEW.md`, REV-01..REV-14). Three blockers were fixed in the artifacts: the gate looked for the intermediary notice on `/privacidade` (it lives in `/termos-de-uso`), the runbook generated `ADMIN_PASSWORD_HASH` with the removed `passlib`, and `DATABASE_URL` was documented without the `postgresql+asyncpg://` scheme. Also corrected: `/admin` (no `/admin/login` route), `autoDeploy: false` alignment, cold-start measured on the first request, Turnstile Hostnames, gate secret via `$env:CRON_SECRET`, TLS 1.2 and canonical-domain guidance. Still open (non-blocking): REV-08 (legal pages nested in `(public)` layout render a second `<main>`/header and the footer links only `/privacidade`), REV-09 (`uv run` re-syncs on every boot) and REV-10 (`SCHEDULER_ENABLED` not declared in `render.yaml`). No deploy executed; Phase 6 remains open.
+- [Dependencies]: 2026-11-11 — `next` 15.5.29 → **16.4.6** (latest) because Vercel refused the 15.x line with "Vulnerable version of Next.js detected" and 15.5.29 was already the newest 15.x. `eslint-config-next` 16.4.6 + `eslint` 9.39.5, `next lint` replaced by `eslint .` on a flat `eslint.config.mjs` (`.eslintrc.json` removed). Next rewrote `tsconfig.json` (`jsx: react-jsx`, `.next/dev/types`) and `next-env.d.ts`. React stays 19.1.1 (peer `^19.0.0`). Validated: `tsc --noEmit` clean, `npm run lint` exit 0 (8 warnings), `next build` (Turbopack) generating the same 9 pages, `npm audit --omit=dev` → 0 vulnerabilities. Known follow-ups: `react-hooks/set-state-in-effect` demoted to warn (6 pre-existing setState-in-effect sites) and ESLint 10 blocked by `eslint-plugin-react` peer (`^9.7`).
 
 ### Pending Todos
 
@@ -158,6 +159,7 @@ None yet.
 |---|-------------|------|--------|-----------|
 | 261110-u28 | Bloquear a expressão "JACIRA CHAVARE" no paste do admin — **substituída por 261110-uik** | 2026-11-11 | fd281dd | [261110-u28-bloquear-a-expressao-jacira-chavare-ao-c](./quick/261110-u28-bloquear-a-expressao-jacira-chavare-ao-c/) |
 | 261110-uik | Remover "JACIRA CHAVARE" do texto colado sem bloquear a criação da vaga (strip no backend e no frontend) | 2026-11-11 | 75c19ef | [261110-uik-remover-jacira-chavare-do-texto-colado-s](./quick/261110-uik-remover-jacira-chavare-do-texto-colado-s/) |
+| 261111-krt | Atualizar Next.js para 16.4.6 (latest) e migrar o lint para ESLint 9 flat config | 2026-11-11 | 56b0b34 | [261111-krt-atualizar-next-16-4-6-eslint-9](./quick/261111-krt-atualizar-next-16-4-6-eslint-9/) |
 
 ## Deferred Items
 

@@ -61,7 +61,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ## Constraints
 
-- **Tech stack — Frontend:** Next.js 15 (App Router) + Tailwind CSS + dark mode — decisão fixada pelo usuário
+- **Tech stack — Frontend:** Next.js 16 (App Router, `16.4.6`) + Tailwind CSS + dark mode — decisão fixada pelo usuário (major subida de 15 → 16 em 2026-11-11 por exigência de segurança do build Vercel)
 - **Tech stack — Backend:** FastAPI (Python) — decisão fixada pelo usuário
 - **Banco:** Neon (Postgres gratuito) — decisão fixada pelo usuário
 - **LLM de extração:** Groq, modelo gratuito — `openai/gpt-oss-20b` (padrão) com `openai/gpt-oss-120b` como fallback, via env `GROQ_MODEL` — *corrigido pós-pesquisa: `llama-3.1-8b-instant`/`llama-3.3-70b` foram aposentados em 2026-08-16*
