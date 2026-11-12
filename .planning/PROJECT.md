@@ -1,5 +1,14 @@
 # NQU — NaoQueroUsar
 
+## Current Milestone: v1.1 EmpregaNoix
+
+**Goal:** Complete remaining development work and prepare for production deployment — contact reveal finalization, admin review enhancements, and deployment infrastructure under the EmpregaNoix brand.
+
+**Target features:**
+- [ ] Phase 3 P05: Siteverify smoke test e regressão contra Cloudflare real
+- [ ] Phase 5: Plans remanescentes — fila de review admin aprimorada
+- [ ] Phase 6 P04: Deploy Vercel + Render com CORS travado, segredos por env, cron de catch-up
+
 ## What This Is
 
 Plataforma pública de busca de emprego cujo diferencial é eliminar a burocracia de cadastro: qualquer pessoa vê as vagas e o contato **sem criar conta, sem login e sem etapas intermediárias**. Um board enxuto, dark mode e mobile-first, curado manualmente por um único administrador (o master), que transforma textos brutos de grupos de vagas em cards estruturados.

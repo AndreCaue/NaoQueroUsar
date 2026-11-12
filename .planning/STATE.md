@@ -1,42 +1,41 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: "Project explicitly kept in development; launch deferred by user"
-last_updated: "2026-11-03T22:40:00-03:00"
-last_activity: 2026-11-03
+milestone: v1.1
+milestone_name: EmpregaNoix
+status: planning
+last_updated: "2026-11-12T14:30:00-03:00"
+last_activity: 2026-11-12
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 27
-  completed_plans: 26
-  percent: 96
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-13)
+See: .planning/PROJECT.md (updated 2026-11-12)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 06 — lifecycle-trust-legal-launch
+**Current focus:** Defining requirements for milestone v1.1 — EmpregaNoix
 
 ## Current Position
 
-Phase: 06 (lifecycle-trust-legal-launch) — DEVELOPMENT
-Plan: 4 of 4
-Status: Production deployed; smoke gate blocked by ENV/CORS/Turnstile config
-Last activity: 2026-11-12 - Production smoke gate ran: 3 env blockers (ENV=dev, Turnstile test keys, CORS 400)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-11-12 — Milestone v1.1 EmpregaNoix started
 
-Progress: [█████████▋] 96%
+Progress: [██░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 13
+- Total plans completed: 0
 - Average duration: — min
 - Total execution time: 0.0 hours
 
@@ -44,10 +43,12 @@ Progress: [█████████▋] 96%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 4 | - | - |
-| 02 | 4 | - | - |
-| 03 | 5 | - | - |
-| 05 | 4 | - | - |
+| 01 | 0 | 0 | — |
+| 02 | 0 | 0 | — |
+| 03 | 0 | 0 | — |
+| 04 | 0 | 0 | — |
+| 05 | 0 | 0 | — |
+| 06 | 0 | 0 | — |
 
 **Recent Trend:**
 
@@ -55,21 +56,6 @@ Progress: [█████████▋] 96%
 - Trend: Stable
 
 *Updated after each plan completion*
-| Phase 01 P01 | 15 | 2 tasks | 27 files |
-| Phase 01 P02 | 35 min | 2 tasks | 6 files |
-| Phase 01 P03 | 4 min | 2 tasks | 7 files |
-| Phase 01 P04 | ~6min | 2 tasks | 11 files |
-| Phase 03 P01 | 8min | 2 tasks | 6 files |
-| Phase 03 P02 | 93min | 3 tasks | 10 files |
-| Phase 03 P03 | 17min | 2 tasks | 5 files |
-| Phase 03 P04 | 26min | 2 tasks | 9 files |
-| Phase 04 P01 | 7min | 3 tasks | 11 files |
-| Phase 04 P02 | 197min | 3 tasks | 5 files |
-| Phase 04 P03 | 13min | 3 tasks | 13 files |
-| Phase 05 P04 | ~45min | 3 tasks | 24 files |
-| Phase 06 P01 | 14min | 4 tasks | 10 files |
-| Phase 06 P02 | 20min | 3 tasks | 13 files |
-| Phase 06 P03 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -150,19 +136,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 2/3/6 flagged for possible `/gsd-research-phase` (modelo Groq vivo, strict outputs, TPM; Siteverify; scheduler externo/Neon CU-hour/Render-Railway free-tier).
-- LGPD text is now user-supplied and wired in (CR-02 inputs resolved). A lawyer review is still advisable if the operator wants legal assurance; it is no longer a code/artifact blocker.
-- Production deploy was executed by the user (2026-11-11): backend on Render (`https://naoquerousar.onrender.com`) and frontend on Vercel (`https://nao-quero-usar.vercel.app`). The production smoke gate was run on 2026-11-12 and **failed on three environment issues** (recorded in `docs/DEPLOY.md` → Registro de verificação): `ENV` is still `dev` (health returns `env=dev`), Turnstile is still on the test keys (`turnstile.mode=test`), and `CORS_ORIGINS` does not allow the Vercel origin (preflight returns 400 without `Access-Control-Allow-Origin`). Passing already: board 200 without contact leakage, legal pages, public API, cron 401 anonymous / 200 idempotent with the secret, no secret leakage. Go-live is **not** authorized until the three env fixes are applied, both services redeployed and the gate re-run green (plus the three browser flows in 06-04 Task 3).
-- Turnstile: **RESOLVIDO no código** — `backend/app/deps.py` passa `enforce_action=(settings.turnstile_mode == "live")`, então em `mode=test` o `expected_action` não é exigido e o login/reveal não retornam mais 403 com as chaves públicas de teste da Cloudflare. O bloqueador antigo (ação ausente no Siteverify com 1x/2x/3x) deixa de valer; resta apenas a política de `ENV=prod` recusar chave de teste (D-12), que é intencional.
-- Produção (2026-11-12, após a tentativa de correção do usuário): o serviço no ar continua em `env=dev` e o preflight CORS continua 400 para `https://nao-quero-usar.vercel.app` — nenhuma das variáveis novas chegou à instância ativa. Hipótese forte: o deploy do Render falhou no boot porque `ENV=prod` + `TURNSTILE_SECRET_KEY` de teste viola o validador fail-closed (D-12, `ValueError` em `Settings`) e o Render manteve a instância anterior saudável. Confirmar em Render → Events/Logs antes de qualquer conclusão. Detalhe que destrava o caso: Turnstile **não exige domínio próprio**, aceita `nao-quero-usar.vercel.app` como hostname do widget de produção.
+None — fresh milestone start. Previous blockers from v1.0 are tracked in STATE.md history but are not active for this milestone until items are carried forward.
 
 ### Quick Tasks Completed
 
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 261110-u28 | Bloquear a expressão "JACIRA CHAVARE" no paste do admin — **substituída por 261110-uik** | 2026-11-11 | fd281dd | [261110-u28-bloquear-a-expressao-jacira-chavare-ao-c](./quick/261110-u28-bloquear-a-expressao-jacira-chavare-ao-c/) |
-| 261110-uik | Remover "JACIRA CHAVARE" do texto colado sem bloquear a criação da vaga (strip no backend e no frontend) | 2026-11-11 | 75c19ef | [261110-uik-remover-jacira-chavare-do-texto-colado-s](./quick/261110-uik-remover-jacira-chavare-do-texto-colado-s/) |
-| 261111-krt | Atualizar Next.js para 16.4.6 (latest) e migrar o lint para ESLint 9 flat config | 2026-11-11 | 56b0b34 | [261111-krt-atualizar-next-16-4-6-eslint-9](./quick/261111-krt-atualizar-next-16-4-6-eslint-9/) |
+None yet.
 
 ## Deferred Items
 
@@ -174,6 +152,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-11-02T23:40:00-03:00
-Stopped at: Project explicitly kept in development; launch deferred by user
-Resume file: .planning/phases/06-lifecycle-trust-legal-launch/06-04-PLAN.md
+Last session: 2026-11-12T14:30:00-03:00
+Stopped at: Milestone v1.1 EmpregaNoix started
+Resume file: .planning/PROJECT.md

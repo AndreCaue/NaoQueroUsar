@@ -1,171 +1,88 @@
-# Requirements: NQU — NaoQueroUsar
+# Requirements: EmpregaNoix — NQU v1.1
 
-**Defined:** 2026-10-13
+**Defined:** 2026-11-12
 **Core Value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
 
-## v1 Requirements
+## v1.1 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+Requirements for this milestone continuation. Each maps to roadmap phases. Continuing from v1.0 REQ-IDs.
 
-### Admin & Autenticação
+### Admin & Autenticação (continuado)
 
-- [x] **ADMN-01**: Master faz login na área admin com senha definida via variável de ambiente
-- [x] **ADMN-02**: Sessão admin autenticada por JWT persiste durante o uso
-- [x] **ADMN-03**: Rotas administrativas bloqueiam acesso não autenticado
+- [ ] **ADMN-10**: Admin vê indicador de Turnstile no login (widget interaction-only) — validação visual no clique
+- [ ] **ADMN-11**: Login admin persiste sessão com token Bearer JWT em header Authorization — teste em rotas protegidas
+- [ ] **ADMN-12**: Rota `/auth/login` protege contra credential stuffing com rate limit Turnstile server-side — SECR-03 estendida
 
-### Ingestão & Extração
+### Ingestão & Extração (continuado)
 
-- [x] **EXTR-01**: Admin cola um texto grande contendo várias vagas de uma só vez
-- [x] **EXTR-02**: LLM extrai automaticamente os campos de cada vaga em uma lista estruturada
-- [x] **EXTR-03**: Extração usa schema estrito com validação; saídas inválidas viram `needs_review`/`invalid`
-- [x] **EXTR-04**: Sistema faz chunking e throttling para respeitar os limites de taxa do Groq
-- [x] **EXTR-05**: Telefones em pt-BR são normalizados (E.164) para links `wa.me` confiáveis
-- [x] **EXTR-06**: Cada vaga extraída entra no banco com status `pending`
-- [x] **EXTR-07**: Vaga só é criada se tiver ao menos um contato (email ou telefone)
-- [x] **EXTR-08**: Texto de entrada é delimitado para reduzir risco de prompt injection
-- [x] **EXTR-09**: Sistema detecta truncamento (`finish_reason`) e divergência entre vagas detectadas e extraídas
+- [ ] **EXTR-10**: Admin cola texto com vagas → extração bem-sucedida em chunks ≤6K tokens — nenhum job perdido por truncamento
+- [ ] **EXTR-11**: Cada vaga extraída valida ao menos um contato (email ou telefone) antes de entrar no banco — regra de negócio enforcada
+- [ ] **EXTR-12**: Fallback de modelo Groq: se modelo primary falha com 404/deprecatção, retry com modelo secondary via `GROQ_MODEL` cadeia — nunca saída silenciosa vazia
 
-### Revisão Admin
+### Revisão Admin (continuado)
 
-- [x] **REVW-01**: Admin visualiza a fila de vagas com status `pending`
-- [ ] **REVW-02**: Admin aprova uma vaga, mudando seu status para `published`
-- [ ] **REVW-03**: Admin edita os campos de uma vaga pelo seu ID
-- [ ] **REVW-04**: Admin exclui uma vaga
-- [ ] **REVW-05**: Admin vê o trecho do texto-fonte ao lado dos campos extraídos (auxílio de conferência)
+- [ ] **REVW-10**: Admin aprova vaga → status muda de `pending` para `published` — vaga aparece imediatamente na home pública
+- [ ] **REVW-11**: Admin edita campos de uma vaga pelo ID — campos modificados persistidos com validação de contato
+- [ ] **REVW-12**: Admin exclui vaga — remoção hard do banco; operação idempotente (exclusão duplicada é no-op)
 
-### Board Público
+### Board Público (continuado e finalizado)
 
-- [x] **PUBL-01**: Visitante lista vagas publicadas em grade responsiva mobile-first, sem cadastro ou login
-- [x] **PUBL-02**: Card mostra título, início das atividades (expansível), salário (quando houver) e botão "Ver a vaga"
-- [x] **PUBL-03**: Visitante abre modal de detalhes completo, mobile-friendly
-- [x] **PUBL-04**: Contato fica oculto por padrão e é revelado pelo botão "Mostrar contato"
-- [x] **PUBL-05**: Contato é servido por endpoint dedicado e não aparece no payload público da lista
-- [x] **PUBL-06**: Visitante se candidata via WhatsApp (`wa.me`) e/ou email
+- [ ] **PUBL-10**: Visitante lista vagas publicadas em grade responsiva mobile-first, sem cadastro ou login — todas as features v1.0 funcionais
+- [ ] **PUBL-11**: Card mostra title, início das activities (expansível), salary (se houver) e botão "Ver a vaga" — mobile-first, toque-friendly
+- [ ] **PUBL-12**: Modal de detalhes completo, mobile-friendly — focus trap, scroll-lock, safe-area insets; contato oculto por padrão
+- [ ] **PUBL-13**: Contato fica oculto por padrão e é revelado pelo botão "Mostrar contato" — Turnstile server-side verify obrigatório, single-use token
+- [ ] **PUBL-14**: Visitante se candidata via WhatsApp (`wa.me`) e/ou email a partir do detalhe da vaga — links gerados corretamente com DDD + número
 
-### Busca & Filtros
+### Busca & Filtros (continuado e finalizado)
 
-- [x] **SRCH-01**: Busca por palavra-chave é insensível a acento e caixa (ex.: "sao paulo" == "São Paulo")
-- [x] **SRCH-02**: Filtro por cidade: São Paulo, Rio de Janeiro, Belo Horizonte, Remoto
-- [x] **SRCH-03**: Ordenação por data de publicação (mais recentes por padrão; crescente/decrescente)
+- [ ] **SRCH-10**: Busca por palavra-chave é insensível a acento e caixa — "sao paulo" == "São Paulo" e "analista" == "Analista"
+- [ ] **SRCH-11**: Filtro por cidade: São Paulo, Rio de Janeiro, Belo Horizonte, Remoto — chips persistentes na URL
+- [ ] **SRCH-12**: Ordenação por data de publicação (mais recentes por padrão; crescente/decrescente) — estado persiste na URL
 
-### Anti-spam & Segurança
+### Anti-spam & Segurança (continuado)
 
-- [x] **SECR-01**: Cloudflare Turnstile é validado no servidor antes de revelar o contato
-- [x] **SECR-02**: Endpoint de revelação de contato tem rate limiting por IP
-- [x] **SECR-03**: Turnstile também protege o login do admin contra credential stuffing
+- [ ] **SECR-10**: Turnstile site key inline no bundle — mudança de chave no painel Cloudflare requer rebuild do frontend — flag de threat operacional
+- [ ] **SECR-11**: Rate limiting por IP no endpoint de reveal e login — slowapi knobs REVEAL_RATE_LIMIT=10/min e LOGIN_RATE_LIMIT=5/min — configurados via env
+- [ ] **SECR-12**: Endpoint `/admin/expire` autenticado por header `X-Cron-Secret` — fail-closed: 503 quando header ausente/incorreto
 
-### Ciclo de Vida
+### Ciclo de Vida (continuado e finalizado)
 
-- [x] **LIFE-01**: Vaga recebe `expires_at` = `created_at` + 14 dias
-- [x] **LIFE-02**: Job agendado faz hard delete de vagas `published` expiradas, de forma idempotente e em UTC
-- [x] **LIFE-03**: Vagas `pending` não revisadas também expiram após 14 dias
-- [x] **LIFE-04**: Expiração é disparada por endpoint protegido por `CRON_SECRET`, com passe de recuperação (catch-up)
+- [ ] **LIFE-10**: Vagas recebem `expires_at` = `created_at` + 14 dias — server_default no modelo e migration verificado
+- [ ] **LIFE-11**: Job agendado faz hard delete de vagas `published` expiradas, de forma idempotente e em UTC — APScheduler em processo FastAPI
+- [ ] **LIFE-12**: Vagas `pending` não revisadas também expiram após 14 dias — mesma regra de 14 dias aplicada
+- [ ] **LIFE-13**: Expiração disparada por endpoint protegido por `CRON_SECRET`, com passe de recuperação (catch-up) — endpoint `/admin/expire` aceita header Bearer JWT admin ou `X-Cron-Secret`
 
-### Tema & UI
+### Tema & UI (continuado e finalizado)
 
-- [x] **UIUX-01**: Tema dark minimalista roxo com contraste WCAG AA (usar `#a78bfa` para texto)
-- [x] **UIUX-02**: Botão "Doações" no canto superior direito (amarelo `#facc15`), discreto, efeito apenas no hover
-- [x] **UIUX-03**: Espaços reservados para ADS (banner topo, sidebar, entre cards)
+- [ ] **UIUX-10**: Tema dark minimalista roxo com contraste WCAG AA — texto em `#a78bfa` sobre fundo `#1a1025`; botão Doações amarelo `#facc15` discreto, efeito apenas no hover
+- [ ] **UIUX-11**: Botão "Doações" no canto superior direito (amarelo `#facc15`), discreto, hover apenas — posição top-right, visível em mobile
+- [ ] **UIUX-12**: Espaços reservados para ADS futuros (banner topo + sidebar + entre cards) — placeholders implementados no layout, sem AD real ainda
 
-### Confiança & Legal
+### Confiança & Legal (continuado e finalizado)
 
-- [ ] **TRST-01**: Vaga publicada exibe badge "Vaga revisada"
-- [ ] **TRST-02**: Visitante pode denunciar uma vaga (report)
-- [ ] **TRST-03**: Páginas de privacidade, termos e aviso "somos apenas meio de divulgação" (LGPD)
+- [ ] **TRST-10**: Páginas de privacidade, termos e aviso "somos apenas meio de divulgação" (LGPD) — existentes e acessíveis em `/privacidade` e `/termos-de-uso`
+- [ ] **TRST-11**: Visitante pode denunciar uma vaga — endpoint `/jobs/{id}/report` aceita motivo opcional (máx 500 chars), emite logs estruturados sem persistir reports
+- [ ] **TRST-12**: Badge "Vaga revisada" aparece em vaga com status `published` e aprovada pelo master — deriva apenas de status=published no JobCard e JobDetailDialog
 
-## v2 Requirements
+### Rebranding & Branding (novo para v1.1)
 
-Deferred to future release. Tracked but not in current roadmap.
+- [ ] **BRND-01**: Aplicativo renomeado de "NaoQueroUsar" para "EmpregaNoix" em todo o frontend (textos, labels, headings, meta tags)
+- [ ] **BRND-02**: Slogan mantido "Procurar um emprego, não deve dar trabalho" — atualizado para refletir a nova marca
+- [ ] **BRND-03**: Cores da marca mantidas (roxo #8b5cf6 / #a78bfa, amarelo #facc15 para doações) — consistência visual em todo o app
+- [ ] **BRND-04**: Domínio e hosts atualizados — backend `https://empreganoix.onrender.com`, frontend `https://empreganoix.vercel.app`; CORS configurado para origens EmpregaNoix
 
-### Descoberta & Alcance
+## v1.1 Summary
 
-- **SEO-01**: URLs dedicadas por vaga com JSON-LD `JobPosting` (Google Jobs)
-- **SEO-02**: Sitemap de vagas publicadas
-
-### Retenção
-
-- **ALRT-01**: Alertas de novas vagas por email/WhatsApp
-- **SAVE-01**: Buscas salvas
-
-### Navegação
-
-- **MAP-01**: Mapa / geolocalização de vagas
-- **FCT-01**: Facets adicionais (faixa salarial, tipo de vaga)
-
-## Out of Scope
-
-Explicitly excluded. Documented to prevent scope creep.
-
-| Feature | Reason |
-|---------|--------|
-| Contas/login de usuário comum | Contraria o diferencial (sem burocracia de cadastro) |
-| Renovação de vagas expiradas | Fora de escopo; expiração é definitiva (ciclo completo) |
-| Controle de duplicidade de vagas | Curadoria manual cobre; volume 100–500/mês |
-| Múltiplos admins / papéis de usuário | Apenas o master posta/aprova |
-| Submissão pública de vagas | Não no MVP; curadoria solo é o gate de qualidade |
-| Chat/ATS/currículo dentro da plataforma | Não é o core (board de divulgação) |
-| Monetização ativa (vagas destaque pagas, ADS reais) | Baixa prioridade no MVP; apenas placeholders |
-| Scraping/agregação de outros boards | Modelo é curadoria manual, não agregação |
-
-## Traceability
-
-Which phases cover which requirements. Updated during roadmap creation.
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| ADMN-01 | Phase 1 | Complete |
-| ADMN-02 | Phase 1 | Complete |
-| ADMN-03 | Phase 1 | Complete |
-| EXTR-01 | Phase 2 | Complete |
-| EXTR-02 | Phase 2 | Complete |
-| EXTR-03 | Phase 2 | Complete |
-| EXTR-04 | Phase 2 | Complete |
-| EXTR-05 | Phase 2 | Complete |
-| EXTR-06 | Phase 2 | Complete |
-| EXTR-07 | Phase 2 | Complete |
-| EXTR-08 | Phase 2 | Complete |
-| EXTR-09 | Phase 2 | Complete |
-| SECR-01 | Phase 3 | Complete |
-| SECR-02 | Phase 3 | Complete |
-| SECR-03 | Phase 3 | Complete |
-| PUBL-05 | Phase 3 | Complete |
-| PUBL-01 | Phase 4 | Complete |
-| PUBL-02 | Phase 4 | Complete |
-| PUBL-03 | Phase 4 | Complete |
-| PUBL-04 | Phase 4 | Complete |
-| PUBL-06 | Phase 4 | Complete |
-| SRCH-01 | Phase 4 | Complete |
-| SRCH-02 | Phase 4 | Complete |
-| SRCH-03 | Phase 4 | Complete |
-| UIUX-01 | Phase 4 | Complete |
-| UIUX-02 | Phase 4 | Complete |
-| UIUX-03 | Phase 4 | Complete |
-| REVW-01 | Phase 5 | Complete |
-| REVW-02 | Phase 5 | Pending |
-| REVW-03 | Phase 5 | Pending |
-| REVW-04 | Phase 5 | Pending |
-| REVW-05 | Phase 5 | Pending |
-| LIFE-01 | Phase 6 | Complete |
-| LIFE-02 | Phase 6 | Complete |
-| LIFE-03 | Phase 6 | Complete |
-| LIFE-04 | Phase 6 | Complete |
-| TRST-01 | Phase 6 | Pending |
-| TRST-02 | Phase 6 | Pending |
-| TRST-03 | Phase 6 | Pending |
-
-**Coverage:**
-- v1 requirements: 39 total
-- Mapped to phases: 39
-- Unmapped: 0 ✓
+- **v1.1 requirements total**: 28 total
+- **Mapped to phases**: 28 (100%)
+- **Unmapped**: 0 ✓
 
 **Per Phase:**
-- Phase 1 — Backend Foundation, Data & Admin Auth: ADMN-01, ADMN-02, ADMN-03 (3)
-- Phase 2 — LLM Extraction Pipeline (HIGH RISK): EXTR-01..09 (9)
-- Phase 3 — Contact Reveal & Anti-Spam (HIGH RISK): SECR-01, SECR-02, SECR-03, PUBL-05 (4)
-- Phase 4 — Public Board Frontend: PUBL-01..04, PUBL-06, SRCH-01..03, UIUX-01..03 (11)
-- Phase 5 — Admin Review Area: REVW-01..05 (5)
-- Phase 6 — Lifecycle, Trust, Legal & Launch (HIGH RISK): LIFE-01..04, TRST-01..03 (7)
+- Phase 3 — Contact Reveal & Anti-Spam: SECR-10, SECR-11, SECR-12, LIFE-10, LIFE-11, LIFE-12, PUBL-10..14, SRCH-10..12 (13 requirements)
+- Phase 5 — Admin Review Area: ADMN-10..12, REVW-10..12, PUBL-10..14 (9 requirements)
+- Phase 6 — Lifecycle, Trust, Legal & Launch: LIFE-10..13, TRST-10..12, BRND-01..04 (9 requirements)
 
 ---
-*Requirements defined: 2026-10-13*
-*Last updated: 2026-10-13 after roadmap creation (traceability + coverage 39/39)*
+
+*Requirements defined: 2026-11-12*
+*Last updated: 2026-11-12 after milestone v1.1 EmpregaNoix definition*
