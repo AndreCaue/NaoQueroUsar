@@ -110,6 +110,12 @@ export function ReviewRow({
         </p>
       ) : null}
 
+      {job.source_snippet ? (
+        <p className="text-[12px] text-fg-muted line-clamp-2 mt-1">
+          <strong>Trecho:</strong> {job.source_snippet}
+        </p>
+      ) : null}
+
       <div className="mt-auto flex flex-wrap gap-2 pt-1">
         <button
           type="button"
