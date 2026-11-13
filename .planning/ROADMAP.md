@@ -62,6 +62,19 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 4. A área admin é protegida: acesso sem sessão autenticada é negado (401); rota `/admin/extract` e rotas de CRUD exigem `Authorization: Bearer <token>`
 5. Toast notifications e feedback visual para ações de approve/edit/delete; admin vê quais vagas foram descartadas vs aprovadas
 
+**Cross-cutting constraints:** must_haves.truths entries appearing in 2+ plans:
+- D-01: Autorização via JWT Bearer token em todas as rotas admin
+- D-02: Ordenação padrão por `created_at DESC` com tie-break em `id DESC`
+- D-E2E-01: Extração bem-sucedida retorna summary válido mesmo com 0 vagas salvas
+- D-E2E-02: Auto-deduplicação de pastas pelo hash normalizado (lowercase, acentos removidos, espaços collapsed)
+- D-E2E-05: Exclusão é hard delete e idempotente (404 na segunda chamada)
+- D-E2E-06: Feedback via toast próprio, sem dependência de bibliotecas externas
+
+**Wave dependencies:**
+- **Wave 1** (08-01): Admin queue view e proteção de rota — bloqueia waves 2 e 3
+- **Wave 2** (08-02): Ações de approve/editar — depende da wave 1 (lista autenticada)
+- **Wave 3** (08-03): Ação de delete + integração E2E — depende das waves 1 e 2
+
 ### Phase 9: Lifecycle, Trust, Legal & Launch Completeness
 
 **Goal:** Garantir que o board se mantenha honesto e seguro — vagas somem em 14 dias de forma confiável, e a plataforma tem postura de confiança/legal e deploy prontos para lançar.
@@ -102,7 +115,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 7. Contact Reveal & Anti-Spam Completeness | 3/3 | ✓ Complete | 2026-11-12 |
-| 8. Admin Review Area Completeness | 0/4 | Not started | |
+| 8. Admin Review Area Completeness | 3/3 | ✓ Complete | 2026-11-13 |
 | 9. Lifecycle, Trust, Legal & Launch Completeness | 0/4 | Not started | |
 | 10. Rebranding & Launch Preparation (EmpregaNoix) | 0/4 | Not started | |
 
