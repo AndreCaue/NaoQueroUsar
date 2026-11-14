@@ -4,7 +4,7 @@ Revision ID: 0001_initial_jobs
 Revises:
 Create Date: 2026-10-14
 
-Creates the `jobs` data contract for NQU:
+Creates the `jobs` data contract for EmpregaNoix:
 - pg_trgm + unaccent extensions and an IMMUTABLE unaccent wrapper
 - the 4-value `job_status` enum type (D-09)
 - the `jobs` table with the at-least-one-contact CHECK (D-10) and a

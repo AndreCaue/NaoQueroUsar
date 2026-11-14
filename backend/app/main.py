@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     configure_logging(settings.ENV)
 
-    app = FastAPI(title="NQU API", lifespan=lifespan)
+    app = FastAPI(title="EmpregaNoix API", lifespan=lifespan)
 
     app.add_middleware(
         CORSMiddleware,

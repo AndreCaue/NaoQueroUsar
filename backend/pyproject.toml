@@ -1,7 +1,7 @@
 [project]
 name = "nqu-backend"
 version = "0.1.0"
-description = "NQU backend"
+description = "EmpregaNoix backend"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi==0.143.0",

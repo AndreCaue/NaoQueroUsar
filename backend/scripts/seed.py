@@ -26,7 +26,7 @@ async def main() -> None:
     async with async_session_factory() as session:
         job = Job(
             title="Analista de Suporte — SEED",
-            company="NQU Seed",
+            company="EmpregaNoix Seed",
             activities="Atendimento ao cliente e suporte técnico de primeiro nível.",
             requirements="Boa comunicação e disponibilidade para escala.",
             salary="A combinar",
