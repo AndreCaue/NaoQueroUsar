@@ -122,7 +122,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 | 7. Contact Reveal & Anti-Spam Completeness | 3/3 | ✓ Complete | 2026-11-12 |
 | 8. Admin Review Area Completeness | 3/3 | ✓ Complete | 2026-11-13 |
 | 9. Lifecycle, Trust, Legal & Launch Completeness | 0/3 | Planned | |
-| 10. Rebranding & Launch Preparation (EmpregaNoix) | 0/4 | Not started | |
+| 10. Rebranding & Launch Preparation (EmpregaNoix) | 0/4 | Planned | |
 
 ## Commit History Note
 
