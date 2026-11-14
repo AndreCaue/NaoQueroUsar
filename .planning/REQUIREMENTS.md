@@ -66,9 +66,9 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 
 ### Rebranding & Branding (novo para v1.1)
 
-- [ ] **BRND-01**: Aplicativo renomeado de "NaoQueroUsar" para "EmpregaNoix" em todo o frontend (textos, labels, headings, meta tags)
-- [ ] **BRND-02**: Slogan mantido "Procurar um emprego, não deve dar trabalho" — atualizado para refletir a nova marca
-- [ ] **BRND-03**: Cores da marca mantidas (roxo #8b5cf6 / #a78bfa, amarelo #facc15 para doações) — consistência visual em todo o app
+- [x] **BRND-01**: Aplicativo renomeado de "NaoQueroUsar" para "EmpregaNoix" em todo o frontend (textos, labels, headings, meta tags)
+- [x] **BRND-02**: Slogan mantido "Procurar um emprego, não deve dar trabalho" — atualizado para refletir a nova marca
+- [x] **BRND-03**: Cores da marca mantidas (roxo #8b5cf6 / #a78bfa, amarelo #facc15 para doações) — consistência visual em todo o app
 - [ ] **BRND-04**: Domínio e hosts atualizados — backend `https://empreganoix.onrender.com`, frontend `https://empreganoix.vercel.app`; CORS configurado para origens EmpregaNoix
 
 ## v1.1 Summary
