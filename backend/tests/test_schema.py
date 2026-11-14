@@ -55,3 +55,41 @@ async def test_expires_at_defaults_to_14_days(db_session):
     assert job.expires_at is not None
     delta = job.expires_at - job.created_at
     assert timedelta(days=13, hours=23) <= delta <= timedelta(days=14, hours=1)
+
+
+async def test_expires_at_column_is_timestamptz_with_14_day_default(db_session):
+    """LIFE-10: the DDL — not Python — owns the 14-day expiry.
+
+    A migration edit that dropped the server default or changed the column
+    to a naive timestamp would still pass the behavioural test above
+    whenever a client supplies expires_at (nothing does today), so pin the
+    live schema explicitly.
+    """
+    columns = (
+        await db_session.execute(
+            text(
+                "SELECT column_name, data_type, column_default "
+                "FROM information_schema.columns "
+                "WHERE table_name = 'jobs' "
+                "AND column_name IN ('created_at', 'expires_at') "
+                "ORDER BY column_name"
+            )
+        )
+    ).all()
+    by_name = {row.column_name: row for row in columns}
+
+    assert by_name["created_at"].data_type == "timestamp with time zone"
+    assert by_name["expires_at"].data_type == "timestamp with time zone"
+
+    expires_default = (by_name["expires_at"].column_default or "").lower()
+    # Postgres normalizes the expression: (now() + '14 days'::interval)
+    assert "now()" in expires_default
+    assert "'14 days'::interval" in expires_default
+
+    index_name = await db_session.scalar(
+        text(
+            "SELECT indexname FROM pg_indexes "
+            "WHERE tablename = 'jobs' AND indexname = 'ix_jobs_expires_at'"
+        )
+    )
+    assert index_name == "ix_jobs_expires_at"
