@@ -322,23 +322,45 @@ No code change needed beyond dropping the files; Next auto-generates tags. Optio
 
 **Analog:** `backend/tests/test_cors.py` (pytest style + conftest `client` fixture).
 
-**Pattern to copy** (test file skeleton):
+**Pattern to copy** (test file skeleton). Note: docstring must not contain legacy tokens; the guard file is self-excluded.
 ```python
-"""Brand rename guard (BRND-01): no leftover 'NaoQueroUsar'/'NQU'/'suportenqs'."""
+"""Guard (BRND-01): no leftover legacy brand tokens in frontend/backend source."""
 
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+EXCLUDED_DIRS = {"node_modules", ".next", "__pycache__", ".venv", ".planning"}
+EXCLUDED_FILES = {"uv.lock", "test_brand_rename.py"}
+SUFFIXES = {".py", ".toml", ".ini", ".md", ".ps1", ".yaml", ".yml", ".ts", ".tsx", ".js", ".jsx", ".css", ".example"}
+NEEDLES = ("NaoQueroUsar", "NQU", "suportenqs")
 
-def test_no_leftover_brand_in_frontend():
-    frontend = ROOT / "frontend"
+def _is_excluded(path: pathlib.Path) -> bool:
+    if path.name in EXCLUDED_FILES:
+        return True
+    return any(part in EXCLUDED_DIRS for part in path.parts)
+
+def _scan(root: pathlib.Path) -> list[tuple[str, str]]:
     offenders = []
-    for p in frontend.rglob("*"):
-        if p.is_file() and p.suffix in {".ts", ".tsx", ".js", ".jsx", ".css", ".example"}:
+    if not root.exists():
+        return offenders
+    for p in root.rglob("*"):
+        if not p.is_file():
+            continue
+        if _is_excluded(p):
+            continue
+        if p.suffix not in SUFFIXES:
+            continue
+        try:
             text = p.read_text(encoding="utf-8", errors="ignore")
-            for needle in ("NaoQueroUsar", "suportenqs"):
-                if needle in text:
-                    offenders.append((str(p), needle))
+        except OSError:
+            continue
+        for needle in NEEDLES:
+            if needle in text:
+                offenders.append((str(p), needle))
+    return offenders
+
+def test_no_leftover_brand():
+    offenders = _scan(ROOT / "frontend") + _scan(ROOT / "backend")
     assert not offenders, offenders
 ```
 

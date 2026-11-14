@@ -283,19 +283,19 @@ empreganoix@outlook.com
 
 **If this table is empty:** N/A — 4 assumptions listadas.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Logo completo atrasa?**
+1. **Logo completo atrasa?** — RESOLVED: D-05 permite fallback wordmark textual; assets gerados em Wave 1, deploy não bloqueia se faltarem.
    - What we know: D-05 permite fallback wordmark textual.
    - What's unclear: Se o image generation produzirá qualidade aceitável.
    - Recommendation: Gerar assets em Wave 1; se não aprovados, seguir com wordmark e não bloquear deploy.
 
-2. **Turnstile live keys disponíveis?**
+2. **Turnstile live keys disponíveis?** — RESOLVED: preferir modo live (BRND-04 exige `turnstile.mode=live`); escape hatch `ALLOW_TEST_TURNSTILE=true` apenas documentado se live keys não estiverem prontas.
    - What we know: Escape hatch `ALLOW_TEST_TURNSTILE=true` existe (desvio temporário).
    - What's unclear: Se o operador já criou o widget de produção com hostname novo.
    - Recommendation: Preferir modo live (BRND-04 exige `turnstile.mode=live`); usar escape hatch apenas se live keys não estiverem prontas, documentando.
 
-3. **GitHub Actions `vars.API_BASE_URL` já configurado?**
+3. **GitHub Actions `vars.API_BASE_URL` já configurado?** — RESOLVED: atualizar para `https://empreganoix.onrender.com` no checkpoint humano (Task 2 do 10-04).
    - What we know: Workflow lê `vars.API_BASE_URL`.
    - What's unclear: Se já está setado para host antigo.
    - Recommendation: Atualizar para `https://empreganoix.onrender.com` (human checkpoint).
