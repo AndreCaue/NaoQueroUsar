@@ -92,6 +92,11 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 5. Visitante pode denunciar uma vaga via endpoint `/jobs/{id}/report` — motivo opcional (máx 500 chars), logs estruturados sem persistir reports; badge "Vaga revisada" aparece em vaga com status `published` e aprovada pelo master
 6. Frontend (Vercel) e backend (Render) estão deployados com CORS travado à origem do front e segredos configurados por env; cold-start documentado; path de leitura pública permanece rápido quando backend está acordando (first request ~1-2s acceptable)
 
+**Wave dependencies:**
+- **Wave 1** (09-01): Provas de lifecycle/trust no backend — DDL de 14 dias, sweep para todos os status, report 500/no-persistência e correção documental T-06-01 — bloqueia waves 2 e 3
+- **Wave 2** (09-02): Páginas legais dentro do shell público, aviso de intermediário e verificação do badge/relatório — depende da wave 1
+- **Wave 3** (09-03): CORS fail-closed, hardening do blueprint Render e gate de fumaça com o aviso exato — depende das waves 1 e 2
+
 ### Phase 10: Rebranding & Launch Preparation (EmpregaNoix)
 
 **Goal:** Renomear a aplicação de NaoQueroUsar para EmpregaNoix em todo o frontend e infraestrutura, garantindo consistência de marca e configurações de deploy.
@@ -116,7 +121,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 |-------|----------------|--------|-----------|
 | 7. Contact Reveal & Anti-Spam Completeness | 3/3 | ✓ Complete | 2026-11-12 |
 | 8. Admin Review Area Completeness | 3/3 | ✓ Complete | 2026-11-13 |
-| 9. Lifecycle, Trust, Legal & Launch Completeness | 0/4 | Not started | |
+| 9. Lifecycle, Trust, Legal & Launch Completeness | 0/3 | Planned | |
 | 10. Rebranding & Launch Preparation (EmpregaNoix) | 0/4 | Not started | |
 
 ## Commit History Note
