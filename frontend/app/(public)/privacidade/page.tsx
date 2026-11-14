@@ -1,13 +1,21 @@
 /* eslint-disable */
 /* import.meta disable */
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Política de Privacidade — EmpregaNoix",
+  description:
+    "Política de privacidade da plataforma EmpregaNoix. Como coletamos, usamos e protegemos seus dados.",
+};
+
 export default function PrivacidadePage() {
   return (
-    <main className="min-h-screen bg-gray-900 text-white">
+    <main className="min-h-screen bg-canvas text-fg">
       <div className="max-w-3xl mx-auto px-4 py-12">
         <header className="mb-12">
           <div className="flex items-center justify-between mb-8">
-            <span className="text-2xl font-bold">NQU</span>
+            <span className="text-2xl font-bold">EmpregaNoix</span>
             <nav>
               <ul className="flex gap-6 text-sm">
                 <li>
@@ -30,27 +38,27 @@ export default function PrivacidadePage() {
             </nav>
           </div>
 
-          <h2 className="text-3xl font-semibold border-b border-gray-700 pb-4 mb-8">
+          <h1 className="text-3xl font-semibold border-b border-line pb-4 mb-8">
             POLÍTICA DE PRIVACIDADE
-          </h2>
+          </h1>
         </header>
 
         <article className="prose lg:prose-xl text-base leading-relaxed">
           <p>Última atualização: 9 de novembro de 2026</p>
 
-          <h3 className="text-xl font-bold my-2 underline">1. Quem somos</h3>
+          <h2 className="text-xl font-bold my-2 underline">1. Quem somos</h2>
           <p>
-            O site <strong>NQU</strong> é operado por{" "}
+            O site <strong>EmpregaNoix</strong> é operado por{" "}
             <strong>André Cauê G.C</strong>, pessoa física, com o objetivo de
             divulgar oportunidades de emprego e facilitar o contato entre
             candidatos e recrutadores/empresas.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             2. Quais dados tratamos
-          </h3>
+          </h2>
           <p>
-            Atualmente, o NQU{" "}
+            Atualmente, o EmpregaNoix{" "}
             <strong>
               não solicita nem coleta dados pessoais de candidatos
             </strong>{" "}
@@ -75,19 +83,19 @@ export default function PrivacidadePage() {
             </li>
           </ul>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             3. Origem dos dados das vagas
-          </h3>
+          </h2>
           <p>
-            As vagas publicadas no NQU são obtidas a partir de grupos públicos
+            As vagas publicadas no EmpregaNoix são obtidas a partir de grupos públicos
             ou semi-públicos de WhatsApp. Os textos são processados e reescritos
             antes da publicação. Apenas a versão elaborada fica armazenada no
             site. As vagas não são cópia integral das mensagens originais.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             4. Finalidade do tratamento
-          </h3>
+          </h2>
           <p>Os dados são tratados exclusivamente para:</p>
           <ul className="list-disc pl-5 mb-6">
             <li>Divulgar oportunidades de emprego;</li>
@@ -103,7 +111,9 @@ export default function PrivacidadePage() {
             <li>Cumprir obrigações legais.</li>
           </ul>
 
-          <h3 className="text-xl font-bold my-2 underline">5. Base legal</h3>
+          <h2 className="text-xl font-bold my-2 underline">
+            5. Base legal
+          </h2>
           <p>
             O tratamento dos dados se fundamenta principalmente no{" "}
             <strong>legítimo interesse</strong> (divulgação de oportunidades de
@@ -111,9 +121,9 @@ export default function PrivacidadePage() {
             consentimento (ex.: cookies não essenciais).
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             6. Compartilhamento de dados
-          </h3>
+          </h2>
           <ul className="list-disc pl-5 mb-6">
             <li>
               Os dados de contato das vagas ficam disponíveis publicamente no
@@ -127,9 +137,9 @@ export default function PrivacidadePage() {
             </li>
           </ul>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             7. Transferência internacional de dados
-          </h3>
+          </h2>
           <p>
             O site utiliza serviços de infraestrutura localizados fora do Brasil
             (atualmente Vercel e Neon). Dessa forma, dados técnicos de navegação
@@ -138,9 +148,9 @@ export default function PrivacidadePage() {
             forma segura.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             8. Cookies e Google Analytics
-          </h3>
+          </h2>
           <p>
             Caso o Google Analytics seja implementado, utilizaremos cookies e
             tecnologias semelhantes para entender como os visitantes utilizam o
@@ -148,9 +158,9 @@ export default function PrivacidadePage() {
             das configurações do seu navegador.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             9. Retenção dos dados
-          </h3>
+          </h2>
           <ul className="list-disc pl-5 mb-6">
             <li>
               <strong>Vagas</strong>: permanecem publicadas por 14 dias contados
@@ -167,9 +177,9 @@ export default function PrivacidadePage() {
             </li>
           </ul>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             10. Direitos do titular
-          </h3>
+          </h2>
           <p>
             Nos termos da Lei Geral de Proteção de Dados (LGPD), você pode
             solicitar:
@@ -186,31 +196,45 @@ export default function PrivacidadePage() {
           </ul>
           <p>
             Para exercer esses direitos, envie um e-mail para:{" "}
-            <strong>suportenqs@outlook.com</strong>
+            <strong>empreganoix@outlook.com</strong>
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">11. Segurança</h3>
+          <h2 className="text-xl font-bold my-2 underline">
+            11. Segurança
+          </h2>
           <p>
             Adotamos medidas técnicas e organizacionais razoáveis para proteger
             os dados contra acessos não autorizados, perda, alteração ou
             qualquer forma de tratamento inadequado.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             12. Alterações desta Política
-          </h3>
+          </h2>
           <p>
             Esta Política de Privacidade poderá ser atualizada periodicamente. A
             versão mais recente estará sempre disponível nesta página, com a
             data da última atualização.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">13. Contato</h3>
+          <h2 className="text-xl font-bold my-2 underline">
+            13. Contato
+          </h2>
           <p>
             Dúvidas sobre esta Política ou sobre o tratamento de dados pessoais
-            podem ser enviadas para: <strong>suportenqs@outlook.com</strong>
+            podem ser enviadas para: <strong>empreganoix@outlook.com</strong>
           </p>
         </article>
+
+        {/* Required LGPD notice — verbatim */}
+        <div className="mt-12 p-6 bg-surface border border-line rounded-md mb-8">
+          <p className="text-sm text-fg-muted">
+            Somos apenas meio de divulgação. As vagas são obtidas de grupos
+            públicos de WhatsApp e o contato é disponibilizado após validação
+            anti-bot. Não armazenamos dados de candidatura e não nos
+            responsabilizamos por interações entre candidatos e empresas.
+          </p>
+        </div>
       </div>
     </main>
   );

@@ -1,13 +1,21 @@
 /* eslint-disable */
 /* import.meta disable */
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Termos de Uso — EmpregaNoix",
+  description:
+    "Termos de uso da plataforma EmpregaNoix. Regras para uso do site e da plataforma de vagas.",
+};
+
 export default function TermosDeUsoPage() {
   return (
-    <main className="min-h-screen bg-gray-900 text-white">
+    <main className="min-h-screen bg-canvas text-fg">
       <div className="max-w-3xl mx-auto px-4 py-12">
         <header className="mb-12">
           <div className="flex items-center justify-between mb-8">
-            <span className="text-2xl font-bold">NQU</span>
+            <span className="text-2xl font-bold">EmpregaNoix</span>
             <nav>
               <ul className="flex gap-6 text-sm">
                 <li>
@@ -30,28 +38,28 @@ export default function TermosDeUsoPage() {
             </nav>
           </div>
 
-          <h2 className="text-3xl font-semibold border-b border-gray-700 pb-4 mb-8">
+          <h1 className="text-3xl font-semibold border-b border-line pb-4 mb-8">
             TERMOS DE USO
-          </h2>
+          </h1>
         </header>
 
         <article className="prose lg:prose-xl text-base leading-relaxed">
           <p>Última atualização: 9 de novembro de 2026</p>
 
-          <h3 className="text-xl font-bold my-2 underline">1. Objeto</h3>
+          <h2 className="text-xl font-bold my-2 underline">1. Objeto</h2>
           <p>
-            O site <strong>NQU</strong> tem como finalidade exclusiva a
+            O site <strong>EmpregaNoix</strong> tem como finalidade exclusiva a
             divulgação de oportunidades de emprego e a facilitação do contato
-            entre candidatos e recrutadores/empresas. O NQU não realiza
+            entre candidatos e recrutadores/empresas. O EmpregaNoix não realiza
             processos seletivos, não intermediaria contratações e não atua como
             agência de emprego.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             2. Natureza do serviço
-          </h3>
+          </h2>
           <p>
-            O NQU atua apenas como plataforma de divulgação. As vagas publicadas
+            O EmpregaNoix atua apenas como plataforma de divulgação. As vagas publicadas
             são obtidas a partir de grupos públicos ou semi-públicos de
             WhatsApp, sendo processadas e reescritas antes da publicação.
           </p>
@@ -61,9 +69,9 @@ export default function TermosDeUsoPage() {
             recrutadores ou empresas é de inteira responsabilidade do usuário.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             3. Uso do site e responsabilidades do usuário
-          </h3>
+          </h2>
           <ul className="list-disc pl-5 mb-6">
             <li>
               O usuário se compromete a utilizar o site de forma legítima e de
@@ -85,9 +93,9 @@ export default function TermosDeUsoPage() {
             </li>
           </ul>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             4. Publicação de vagas
-          </h3>
+          </h2>
           <p>
             As vagas são publicadas exclusivamente pela administração do site.
             Não há, no momento, funcionalidade de publicação de vagas por
@@ -98,28 +106,30 @@ export default function TermosDeUsoPage() {
             definitiva após esse período.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             5. Propriedade intelectual
-          </h3>
+          </h2>
           <p>
             Todo o conteúdo do site (textos, layout, código, design e demais
-            elementos) é de propriedade do NQU ou de seus licenciadores. É
+            elementos) é de propriedade do EmpregaNoix ou de seus licenciadores. É
             proibida a cópia, reprodução, distribuição ou qualquer forma de uso
             não autorizado.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">
+          <h2 className="text-xl font-bold my-2 underline">
             6. Limitação de responsabilidade
-          </h3>
+          </h2>
           <p>
-            Na máxima extensão permitida pela legislação brasileira, o NQU e seu
+            Na máxima extensão permitida pela legislação brasileira, o EmpregaNoix e seu
             operador não se responsabilizam por:
           </p>
           <ul className="list-disc pl-5 mb-6">
             <li>
               Danos decorrentes do uso do site ou da impossibilidade de uso;
             </li>
-            <li>Conteúdo, veracidade ou legalidade das vagas publicadas;</li>
+            <li>
+              Conteúdo, veracidade ou legalidade das vagas publicadas;
+            </li>
             <li>
               Interações, acordos ou problemas ocorridos entre candidatos e
               recrutadores/empresas;
@@ -130,7 +140,9 @@ export default function TermosDeUsoPage() {
             </li>
           </ul>
 
-          <h3 className="text-xl font-bold my-2 underline">7. Privacidade</h3>
+          <h2 className="text-xl font-bold my-2 underline">
+            7. Privacidade
+          </h2>
           <p>
             O tratamento de dados pessoais é regido pela nossa{" "}
             <a
@@ -142,7 +154,9 @@ export default function TermosDeUsoPage() {
             .
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">8. Alterações</h3>
+          <h2 className="text-xl font-bold my-2 underline">
+            8. Alterações
+          </h2>
           <p>
             Estes Termos de Uso podem ser atualizados a qualquer momento. A
             versão mais recente estará sempre disponível nesta página. O uso
@@ -150,19 +164,33 @@ export default function TermosDeUsoPage() {
             da nova versão.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">9. Foro</h3>
+          <h2 className="text-xl font-bold my-2 underline">
+            9. Foro
+          </h2>
           <p>
             Fica eleito o foro da comarca de Americana, Estado de São Paulo,
             para dirimir quaisquer controvérsias oriundas destes Termos de Uso,
             com renúncia a qualquer outro, por mais privilegiado que seja.
           </p>
 
-          <h3 className="text-xl font-bold my-2 underline">10. Contato</h3>
+          <h2 className="text-xl font-bold my-2 underline">
+            10. Contato
+          </h2>
           <p>
             Dúvidas sobre estes Termos de Uso podem ser enviadas para:{" "}
-            <strong>suportenqs@outlook.com</strong>
+            <strong>empreganoix@outlook.com</strong>
           </p>
         </article>
+
+        {/* Required LGPD notice — verbatim */}
+        <div className="mt-12 p-6 bg-surface border border-line rounded-md mb-8">
+          <p className="text-sm text-fg-muted">
+            Somos apenas meio de divulgação. As vagas são obtidas de grupos
+            públicos de WhatsApp e o contato é disponibilizado após validação
+            anti-bot. Não armazenamos dados de candidatura e não nos
+            responsabilizamos por interações entre candidatos e empresas.
+          </p>
+        </div>
       </div>
     </main>
   );
