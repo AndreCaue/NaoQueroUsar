@@ -50,7 +50,7 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 - [ ] **LIFE-10**: Vagas recebem `expires_at` = `created_at` + 14 dias — server_default no modelo e migration verificado
 - [ ] **LIFE-11**: Job agendado faz hard delete de vagas `published` expiradas, de forma idempotente e em UTC — APScheduler em processo FastAPI
 - [ ] **LIFE-12**: Vagas `pending` não revisadas também expiram após 14 dias — mesma regra de 14 dias aplicada
-- [ ] **LIFE-13**: Expiração disparada por endpoint protegido por `CRON_SECRET`, com passe de recuperação (catch-up) — endpoint `/admin/expire` aceita header Bearer JWT admin ou `X-Cron-Secret`
+- [ ] **LIFE-13**: Expiração disparada por endpoint protegido por `CRON_SECRET`, com passe de recuperação (catch-up) — endpoint `/admin/expire` aceita somente `X-Cron-Secret` (Bearer JWT admin NÃO é aceito - T-06-01)
 
 ### Tema & UI (continuado e finalizado)
 
