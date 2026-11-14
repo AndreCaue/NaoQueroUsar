@@ -13,7 +13,7 @@
 
 /** Pre-filled WhatsApp message — exact approved copy (UI-SPEC §Copywriting). */
 export function messageFor(title: string): string {
-  return `Olá! Vi a vaga "${title}" no NaoQueroUsar e quero me candidatar.`;
+  return `Olá! Vi a vaga "${title}" no EmpregaNoix e quero me candidatar.`;
 }
 
 /** `wa.me` wants digits only: `+55 11 90000-0000` → `5511900000000`. */

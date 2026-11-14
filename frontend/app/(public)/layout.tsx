@@ -4,9 +4,19 @@ import Link from "next/link";
 import "./public.css";
 
 export const metadata: Metadata = {
-  title: "NaoQueroUsar — Vagas sem cadastro",
+  title: "EmpregaNoix — Vagas sem cadastro",
   description:
     "Encontre vagas e o contato para se candidatar em segundos. Sem conta, sem login e sem burocracia.",
+  metadataBase: new URL("https://empreganoix.vercel.app"),
+  icons: {
+    icon: "/icon.svg",
+  },
+  openGraph: {
+    title: "EmpregaNoix — Vagas sem cadastro",
+    description:
+      "Encontre vagas e o contato para se candidatar em segundos. Sem conta, sem login e sem burocracia.",
+    url: "https://empreganoix.vercel.app",
+  },
 };
 
 export const viewport: Viewport = {
@@ -31,7 +41,7 @@ export default function PublicLayout({
         <div className="mx-auto flex h-16 w-full max-w-[1120px] items-center justify-between gap-4 px-4 md:px-6">
           <div className="flex items-center gap-4">
             <Link href="/" className="text-xl font-semibold text-fg">
-              NaoQueroUsar
+              EmpregaNoix
               <span aria-hidden="true" className="text-accent-soft">
                 .
               </span>
@@ -56,14 +66,22 @@ export default function PublicLayout({
 
       <footer className="border-t border-line">
         <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-fg-muted md:px-6">
-          <span>© 2026 NaoQueroUsar</span>
+          <span>© 2026 EmpregaNoix</span>
           <span>Procurar um emprego, não deve dar trabalho</span>
-          <Link
-            href="/privacidade"
-            className="min-h-11 inline-flex items-center hover:text-accent-soft"
-          >
-            Privacidade e termos
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/privacidade"
+              className="min-h-11 inline-flex items-center hover:text-accent-soft"
+            >
+              Privacidade
+            </Link>
+            <Link
+              href="/termos-de-uso"
+              className="min-h-11 inline-flex items-center hover:text-accent-soft"
+            >
+              Termos de Uso
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

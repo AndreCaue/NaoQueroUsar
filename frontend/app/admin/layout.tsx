@@ -6,7 +6,7 @@ import { LogoutButton } from "@/components/admin/LogoutButton";
 import { ToastProvider } from "@/components/admin/ToastProvider";
 
 export const metadata: Metadata = {
-  title: "NaoQueroUsar - Painel admin",
+  title: "EmpregaNoix - Painel admin",
   description: "Painel de administração - curadoria de vagas",
 };
 
@@ -26,7 +26,7 @@ export default function AdminLayout({
           <div className="mx-auto flex h-16 w-full max-w-[1120px] items-center justify-between gap-4 px-4 md:px-6">
             <div className="flex items-center gap-4">
               <Link href="/" className="text-xl font-semibold text-fg">
-                NaoQueroUsar
+                EmpregaNoix
                 <span aria-hidden="true" className="text-accent-soft">
                   .
                 </span>

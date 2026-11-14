@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Doações — NaoQueroUsar",
+  title: "Doações — EmpregaNoix",
 };
 
 export default function DoacoesPage() {
@@ -12,7 +12,7 @@ export default function DoacoesPage() {
         Doações
       </h1>
       <p className="mt-4 text-base leading-normal text-fg">
-        Em breve você poderá apoiar o NaoQueroUsar por PIX. Enquanto isso,
+        Em breve você poderá apoiar o EmpregaNoix por PIX. Enquanto isso,
         compartilhe as vagas com quem está procurando emprego.
       </p>
       <Link
