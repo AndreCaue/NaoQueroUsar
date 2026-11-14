@@ -1,4 +1,4 @@
-# Roadmap: EmpregaNoix — NQU v1.1
+# Roadmap: EmpregaNoix v1.1
 
 ## Overview
 

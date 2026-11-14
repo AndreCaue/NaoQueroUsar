@@ -1,4 +1,4 @@
-# NQU — NaoQueroUsar
+# EmpregaNoix
 
 ## Current Milestone: v1.1 EmpregaNoix
 

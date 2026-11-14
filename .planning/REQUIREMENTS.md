@@ -1,4 +1,4 @@
-# Requirements: EmpregaNoix — NQU v1.1
+# Requirements: EmpregaNoix v1.1
 
 **Defined:** 2026-11-12
 **Core Value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
