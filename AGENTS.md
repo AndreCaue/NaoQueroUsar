@@ -1,7 +1,7 @@
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
-**NQU — NaoQueroUsar**
+**EmpregaNoix**
 
 Plataforma pública de busca de emprego cujo diferencial é eliminar a burocracia de cadastro: qualquer pessoa vê as vagas e o contato **sem criar conta, sem login e sem etapas intermediárias**. Um board enxuto, dark mode e mobile-first, curado manualmente por um único administrador (o master), que transforma textos brutos de grupos de vagas em cards estruturados.
 

@@ -1,7 +1,7 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  Gate de fumaça pós-deploy (produção) do NaoQueroUsar.
+  Gate de fumaça pós-deploy (produção) do EmpregaNoix.
 
 .DESCRIPTION
   Valida o deploy de produção de ponta a ponta:

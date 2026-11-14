@@ -1,4 +1,4 @@
-# Deploy — NaoQueroUsar (NQU)
+# Deploy — EmpregaNoix
 
 Runbook de produção: frontend na **Vercel**, backend **FastAPI** no **Render**, banco **Neon (Postgres)** e **GitHub Actions** como cron de catch-up da expiração.
 
@@ -80,7 +80,7 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
    | `ALLOW_TEST_TURNSTILE` | ausente (padrão `false`) | **Desvio temporário.** `true` permite `ENV=prod` com chave de **teste** do Cloudflare — veja "Desvio temporário: Turnstile de teste em produção" |
    | `GROQ_API_KEY` | `https://console.groq.com/keys` | |
    | `CRON_SECRET` | 32+ caracteres aleatórios | Mesmo valor no GitHub `secrets.CRON_SECRET` |
-   | `SCHEDULER_ENABLED` | `true` (padrão) | Veja "Cron de catch-up" abaixo |
+   | `SCHEDULER_ENABLED` | `true` (padrão, já no blueprint) | Desliga o APScheduler in-process; o cron de catch-up continua |
 
 3. Após o primeiro deploy, confira:
    ```text
@@ -99,7 +99,7 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
 
 > **Estado:** ativo desde 2026-11-12 (operador ainda sem domínio próprio). Remover assim que houver um widget live.
 
-Turnstile **não exige domínio próprio**: um widget de produção pode ter o hostname da Vercel (ex.: `nao-quero-usar.vercel.app`). Esse continua sendo o caminho recomendado. Enquanto as chaves live (`0x4AAA…`) não forem configuradas, o backend pode subir em `ENV=prod` com as chaves públicas de teste da Cloudflare **apenas** se o operador ligar o escape hatch explícito:
+Turnstile **não exige domínio próprio**: um widget de produção pode ter o hostname da Vercel (ex.: `empreganoix.vercel.app`). Esse continua sendo o caminho recomendado. Enquanto as chaves live (`0x4AAA…`) não forem configuradas, o backend pode subir em `ENV=prod` com as chaves públicas de teste da Cloudflare **apenas** se o operador ligar o escape hatch explícito:
 
 | Onde | Variável | Valor |
 |---|---|---|
@@ -117,7 +117,7 @@ Comportamento quando o flag está ligado:
 **Riscos aceitos neste desvio:** as chaves `1x/2x/3x` são públicas e o Siteverify aceita qualquer token — a proteção anti-bot efetiva fica apenas nos rate limits (`REVEAL_RATE_LIMIT`, `LOGIN_RATE_LIMIT`). Este deploy serve para validar board e fluxos ponta a ponta, não como produção definitiva.
 
 **Para sair do desvio:**
-1. Cloudflare → Turnstile → widget de produção → **Hostnames** → adicionar o domínio (ex.: `nao-quero-usar.vercel.app`). Não precisa de domínio próprio.
+1. Cloudflare → Turnstile → widget de produção → **Hostnames** → adicionar o domínio (ex.: `empreganoix.vercel.app`). Não precisa de domínio próprio.
 2. Copiar a site key e a secret key de produção (`0x4AAA…`).
 3. Render → Environment: `TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY` live e **remover** (ou pôr `false` em) `ALLOW_TEST_TURNSTILE` → **Manual Deploy**.
 4. Vercel → Environment: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` live → **Redeploy**.
@@ -174,6 +174,11 @@ Configuração (uma vez, no GitHub):
 **Atrasos:** o GitHub pode atrasar o cron (filas, em especial em repos públicos/de baixa atividade). Não é um problema de correção — é a janela do catch-up; o APScheduler in-process cobre o caso em que o processo está acordado. Se o Render ficar dormindo por longos períodos, considere `SCHEDULER_ENABLED=false` (o endpoint vira o único gatilho) ou um plano pago.
 
 **Sem segredo configurado:** `POST /api/v1/admin/expire` responde **503** ("Expiração manual não configurada") — **fail-closed**: significa que o gatilho manual está **desativado** (a expiração depende só do scheduler in-process), nunca que o endpoint está aberto. Com segredo errado/ausente: **401**. Em ambos os casos o endpoint destrutivo permanece fechado; um 2xx sem o segredo indicaria configuração incorreta grave. O gate `verify-deploy.ps1` aceita 401/403/503 como recusa válida e só falha (ou aponta erro) para respostas inesperadas — ele nunca trata 503 como "endpoint aberto".
+
+> **Credencial única:** `POST /api/v1/admin/expire` aceita **somente** `X-Cron-Secret`.
+> Um Bearer JWT de admin NÃO autoriza o endpoint (T-06-01) — o token do navegador não
+> pode disparar um hard-delete no board. Se um 2xx aparecer sem o header, trate como
+> vazamento de configuração e rotacione `CRON_SECRET`.
 
 ---
 
@@ -278,15 +283,15 @@ Compatível com PowerShell 5.1 (TLS 1.2 fixado no script), salvo em UTF-8 com BO
 |---|---|---|---|---|---|
 | 2026-11-12 | Neon — projeto de produção | — | não verificado por HTTP | — | confirmar no painel (fora do alcance do gate) |
 | 2026-11-12 | Render — blueprint + segredos | — | não verificado por HTTP | — | confirmar `alembic upgrade head` no log do deploy |
-| 2026-11-12 | Render — `/api/v1/health` | `https://naoquerousar.onrender.com/api/v1/health` | 200 `status=ok`, **`env=dev`**, **`turnstile.mode=test`** | — | **FALHA**: falta `ENV=prod` e as chaves Turnstile de produção |
-| 2026-11-12 | Vercel — deploy produção | `https://nao-quero-usar.vercel.app` | 200; board SSR renderiza vagas; bundle cliente aponta para `https://naoquerousar.onrender.com` | — | OK (`BACKEND_API_URL` e `NEXT_PUBLIC_API_URL` corretos no build atual) |
-| 2026-11-12 | CORS — preflight da origem Vercel | `OPTIONS /api/v1/public/jobs?limit=1` ← `https://nao-quero-usar.vercel.app` | **400, sem `Access-Control-Allow-Origin`** | — | **FALHA**: origem ausente em `CORS_ORIGINS` (ou com barra final). Board funciona porque o SSR não passa por CORS; filtros/reveal/report/admin quebram no navegador |
+| 2026-11-12 | Render — `/api/v1/health` | `https://empreganoix.onrender.com/api/v1/health` | 200 `status=ok`, **`env=dev`**, **`turnstile.mode=test`** | — | **FALHA**: falta `ENV=prod` e as chaves Turnstile de produção |
+| 2026-11-12 | Vercel — deploy produção | `https://empreganoix.vercel.app` | 200; board SSR renderiza vagas; bundle cliente aponta para `https://empreganoix.onrender.com` | — | OK (`BACKEND_API_URL` e `NEXT_PUBLIC_API_URL` corretos no build atual) |
+| 2026-11-12 | CORS — preflight da origem Vercel | `OPTIONS /api/v1/public/jobs?limit=1` ← `https://empreganoix.vercel.app` | **400, sem `Access-Control-Allow-Origin`** | — | **FALHA**: origem ausente em `CORS_ORIGINS` (ou com barra final). Board funciona porque o SSR não passa por CORS; filtros/reveal/report/admin quebram no navegador |
 | 2026-11-12 | Legal — `/privacidade` + `/termos-de-uso` | idem frontend | 200/200; LGPD + canal de e-mail; "intermedi" nos Termos; sem placeholder | — | OK |
-| 2026-11-12 | API pública | `GET https://naoquerousar.onrender.com/api/v1/public/jobs?limit=1` | 200 com `items`/`total` | — | OK |
+| 2026-11-12 | API pública | `GET https://empreganoix.onrender.com/api/v1/public/jobs?limit=1` | 200 com `items`/`total` | — | OK |
 | 2026-11-12 | Cron — sem segredo | `POST /api/v1/admin/expire` | 401 | — | OK (fail-closed) |
 | 2026-11-12 | Cron — com segredo (2x) | `POST /api/v1/admin/expire` + `X-Cron-Secret` | 200 `{"deleted":0,"status":"ok"}` nas duas | — | OK, idempotente; `CRON_SECRET` do Render casa com o local |
 | 2026-11-12 | Não vazamento | board/health/privacidade/termos | secret não aparece | — | OK |
-| 2026-11-12 | `verify-deploy.ps1` | `-FrontendUrl https://nao-quero-usar.vercel.app -BackendUrl https://naoquerousar.onrender.com` | **FALHOU no check 1** (`env=dev`) | não medido | Re-rodar como primeiro tráfego após corrigir `ENV`/`CORS`/Turnstile |
+| 2026-11-12 | `verify-deploy.ps1` | `-FrontendUrl https://empreganoix.vercel.app -BackendUrl https://empreganoix.onrender.com` | **FALHOU no check 1** (`env=dev`) | não medido | Re-rodar como primeiro tráfego após corrigir `ENV`/`CORS`/Turnstile |
 | 2026-11-12 | GitHub Actions — `expire-jobs` manual | — | não executado | — | pendente |
 | _pendente_ | Cold-start após ~20 min ocioso | | | | tempo real + comportamento da UI |
 | _pendente_ | Fluxo público real (buscar/revelar/reportar) | | | | Turnstile real |
