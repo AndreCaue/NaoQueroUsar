@@ -5,6 +5,8 @@
 **Latest shipped milestone:** v1.1 EmpregaNoix — **shipped 2026-11-15** (archived with **accepted audit gaps**).  
 **Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`
 
+**v1.2 progress:** Phase 14 complete — fundação social (dados, crypto de tokens, contratos de publicação e configuração SOC-01..SOC-06) implementada e verificada.
+
 ## Current Milestone: v1.2 Integração com Facebook Pages
 
 **Goal:** Ao aprovar uma vaga na revisão, publicar no site e criar/agendar automaticamente uma publicação na Página do Facebook com texto gerado por IA (editável pelo revisor), sem nunca bloquear a publicação no site.
@@ -43,6 +45,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 <!-- Shipped and confirmed valuable (high-confidence). -->
 
 - [x] Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1: Backend Foundation, Data & Admin Auth (ADMN-01/02/03)
+- [x] Fundação social de integração Facebook (modelos/migração `social_*`, crypto Fernet de tokens, contrato `SocialPublisher`/stub Facebook, config/env `.env.example`) — Validated in Phase 14: Fundacao Social, Dados e Configuracao (SOC-01, SOC-02, SOC-03, SOC-04, SOC-05, SOC-06)
 - [~] v1.1 scope (Phases 7–13): implementação/reconciliação avançada em reveal/anti-spam, revisão admin, lifecycle/trust/legal, rebranding e alinhamento canônico de deploy/ops — **com lacunas aceitas** (ver audit/archives). Não tratar como totalmente validado.
 
 ### Active
@@ -119,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-15 after starting v1.2 milestone (Integração com Facebook Pages)*
+*Last updated: 2026-11-15 after completing Phase 14 (Fundação Social, Dados e Configuração)*
