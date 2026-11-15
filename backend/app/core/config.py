@@ -2,7 +2,9 @@ import logging
 import re
 from functools import lru_cache
 from typing import List
+from urllib.parse import urlparse
 
+from cryptography.fernet import Fernet
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -69,6 +71,80 @@ class Settings(BaseSettings):
     # multi-worker boxes and for hosts that spin down when idle, where the
     # external CRON_SECRET trigger is the reliable path instead.
     SCHEDULER_ENABLED: bool = True
+
+    # --- Integração Social / Meta (Phase 14 - Fundação) ---
+    META_APP_ID: str = ""
+    META_APP_SECRET: str = ""
+    META_GRAPH_VERSION: str = "v21.0"
+    META_OAUTH_REDIRECT_URI: str = ""
+    SOCIAL_TOKEN_ENCRYPTION_KEY: str = ""
+    SOCIAL_WORKER_SECRET: str = ""
+    SOCIAL_MAX_ATTEMPTS: int = 5
+    SOCIAL_RETRY_DELAYS: str = "300,900,3600,10800,21600"
+    SITE_PUBLIC_URL: str = ""
+
+    @model_validator(mode="after")
+    def _validate_social_foundation(self) -> "Settings":
+        site_url = self.SITE_PUBLIC_URL.strip()
+        if site_url:
+            parsed = urlparse(site_url)
+            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+                raise ValueError("SITE_PUBLIC_URL deve ser uma URL http/https válida")
+
+        redirect_uri = self.META_OAUTH_REDIRECT_URI.strip()
+        if redirect_uri:
+            parsed = urlparse(redirect_uri)
+            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+                raise ValueError(
+                    "META_OAUTH_REDIRECT_URI deve ser uma URL http/https válida"
+                )
+
+        if self.SOCIAL_MAX_ATTEMPTS <= 0:
+            raise ValueError("SOCIAL_MAX_ATTEMPTS deve ser um inteiro > 0")
+
+        delays = self._parse_social_retry_delays(self.SOCIAL_RETRY_DELAYS)
+        if not delays:
+            raise ValueError(
+                "SOCIAL_RETRY_DELAYS deve conter inteiros > 0 separados por vírgula (segundos)"
+            )
+
+        token_key = self.SOCIAL_TOKEN_ENCRYPTION_KEY.strip()
+        if token_key:
+            try:
+                Fernet(token_key.encode())
+            except Exception as exc:
+                raise ValueError(
+                    "SOCIAL_TOKEN_ENCRYPTION_KEY inválida: informe uma chave Fernet válida (32 bytes url-safe base64)"
+                ) from exc
+
+        return self
+
+    @staticmethod
+    def _parse_social_retry_delays(raw: str) -> list[int]:
+        if raw is None:
+            raise ValueError(
+                "SOCIAL_RETRY_DELAYS deve conter inteiros > 0 separados por vírgula (segundos)"
+            )
+        parts = [part.strip() for part in str(raw).split(",")]
+        if not parts or any(part == "" for part in parts):
+            raise ValueError(
+                "SOCIAL_RETRY_DELAYS deve conter inteiros > 0 separados por vírgula (segundos)"
+            )
+        try:
+            delays = [int(part) for part in parts]
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "SOCIAL_RETRY_DELAYS deve conter inteiros > 0 separados por vírgula (segundos)"
+            ) from exc
+        if any(delay <= 0 for delay in delays):
+            raise ValueError(
+                "SOCIAL_RETRY_DELAYS deve conter inteiros > 0 separados por vírgula (segundos)"
+            )
+        return delays
+
+    @property
+    def social_retry_delays_list(self) -> list[int]:
+        return self._parse_social_retry_delays(self.SOCIAL_RETRY_DELAYS)
 
     @model_validator(mode="after")
     def _validate_turnstile(self) -> "Settings":

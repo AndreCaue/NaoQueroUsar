@@ -19,6 +19,7 @@ dependencies = [
   "groq==1.7.0",
   "slowapi==0.1.10",
   "apscheduler==3.10.4",
+  "cryptography==50.0.2",
 ]
 
 [dependency-groups]
