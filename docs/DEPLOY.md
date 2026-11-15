@@ -1,8 +1,77 @@
 # Deploy — EmpregaNoix
 
-Runbook de produção: frontend na **Vercel**, backend **FastAPI** no **Render**, banco **Neon (Postgres)** e **GitHub Actions** como cron de catch-up da expiração.
+Runbook de produção e **alvo contratual (state-alvo)**: frontend na **Vercel**, backend **FastAPI** no **Render**, banco **Neon (Postgres)** e **GitHub Actions** como cron de catch-up da expiração.
 
-> **Nenhum segredo real entra neste arquivo ou em qualquer arquivo versionado.** Todos os valores sensíveis são configurados apenas em variáveis de ambiente (Render/Vercel/GitHub). Onde este documento mostra `https://<backend>.onrender.com`, substitua pelos endereços reais do seu deploy.
+> **Nenhum segredo real entra neste arquivo ou em qualquer arquivo versionado.** Todos os valores sensíveis são configurados apenas em variáveis de ambiente (Render/Vercel/GitHub). Hosts legados/históricos aparecem apenas como evidência registrada no **Registro de verificação** e no mapeamento canônico↔legado — não substituem o alvo canônico.
+
+---
+
+## Alvo canônico (state-alvo)
+
+Contrato de produção (D-01, D-03, D-07). Estes são os **alvos contratuais**; a execução operacional pode estar pendente e a evidência histórica pode ter sido coletada em hosts legados (ver mapeamento e matriz).
+
+- **Frontend (origem canônica):** `https://empreganoix.vercel.app`
+- **Backend (API canônica):** `https://empreganoix.onrender.com`
+- `CORS_ORIGINS=https://empreganoix.vercel.app` (exato, sem barra final, sem wildcard, sem legados)
+- `NEXT_PUBLIC_API_URL=https://empreganoix.onrender.com`
+- `BACKEND_API_URL=https://empreganoix.onrender.com`
+- Turnstile Hostnames (widget de produção): `empreganoix.vercel.app`
+- GitHub Actions `vars.API_BASE_URL=https://empreganoix.onrender.com`
+- Cron endpoint canônico: `https://empreganoix.onrender.com/api/v1/admin/expire` (somente `X-Cron-Secret`, fail-closed; **T-06-01 preservado** — Bearer JWT de admin **não** autoriza este endpoint)
+
+> **`NEXT_PUBLIC_*` é embutida no build** e exige **rebuild/redeploy** ao alterar (Vercel). `BACKEND_API_URL` é lido em runtime no servidor; ainda assim valide o deploy após mudanças.
+
+**Exemplo de gate (alvo canônico):**
+```powershell
+$env:CRON_SECRET = "<CRON_SECRET>"   # não fica no histórico do PowerShell
+powershell -ExecutionPolicy Bypass -File scripts\verify-deploy.ps1 `
+  -FrontendUrl https://empreganoix.vercel.app `
+  -BackendUrl  https://empreganoix.onrender.com
+```
+O script permanece parametrizado e pode ser executado contra hosts legados/históricos **apenas** para reproduzir/interpretar evidência registrada (ex.: `https://empreganoix-six.vercel.app` / `https://nqu-backend-x60n.onrender.com`).
+
+---
+
+## Mapeamento canônico ↔ legado/histórico
+
+Hosts legados/históricos são **não canônicos**. Desvios/bloqueios de provisionamento devem ser registrados sem trocar o canônico silenciosamente (D-02, D-14). Evidências nesses hosts permanecem válidas como histórico mapeado ao state-alvo.
+
+| Papel | Host canônico (state-alvo) | Host legado/histórico | Notas |
+| --- | --- | --- | --- |
+| Frontend (origem) | `https://empreganoix.vercel.app` | `https://empreganoix-six.vercel.app`, `https://nao-quero-usar.vercel.app` | Evidências de smoke/deploy registradas nesses hosts (2026-11-12/14/15) são históricas; CORS/Turnstile Hostnames em produção devem refletir a origem **real/canônica** provisionada. |
+| Backend (API) | `https://empreganoix.onrender.com` | `https://nqu-backend-x60n.onrender.com`, `https://naoquerousar.onrender.com` | `nqu-backend-x60n` e `naoquerousar` aparecem em verificações anteriores; o contrato operacional canônico aponta para `empreganoix.onrender.com`. |
+
+---
+
+## Matriz de alinhamento (D-10)
+
+Status permitidos: `verificado em host legado` | `alinhado contratualmente ao canônico` | `pendente de execução operacional`.
+
+| Check | Alvo canônico | Host/evidência verificada | Status | Referência / nota |
+| --- | --- | --- | --- | --- |
+| `GET /api/v1/health` (status, `env`, Turnstile configurado/live conforme contrato) | `https://empreganoix.onrender.com/api/v1/health` | 2026-11-12 `https://empreganoix.onrender.com` (env/dev, mode/test — falha registrada); 2026-11-15 smoke gate em `https://nqu-backend-x60n.onrender.com` aprovado (`env=prod`, `turnstile.mode=live`) | `verificado em host legado` | Registro 2026-11-12 e 2026-11-15; gate `scripts/verify-deploy.ps1` check 1. Execução no host canônico pode permanecer pendente de execução operacional até provisionamento. |
+| Preflight CORS da origem canônica (allow/deny conforme gate, `Access-Control-Allow-Origin`) | Origin `https://empreganoix.vercel.app` → `https://empreganoix.onrender.com` | 2026-11-12 falha (400, sem ACAO); 2026-11-15 allow/deny PASS em `https://nqu-backend-x60n.onrender.com` com origin canônica ecoada e `https://evil.example` recusado | `verificado em host legado` | Registro 2026-11-12 e 2026-11-15; `scripts/verify-deploy.ps1` checks 2-3. Contrato: `CORS_ORIGINS=https://empreganoix.vercel.app`. |
+| `POST /api/v1/admin/expire` (rejeição sem/errada credencial fail-closed + idempotência com `X-Cron-Secret`, 200 + `deleted` inteiro 2x) | `https://empreganoix.onrender.com/api/v1/admin/expire` | 2026-11-12 e 2026-11-15: recusado sem/errado; com segredo 200 `{"deleted":0,"status":"ok"}` 2x (idempotente) | `verificado em host legado` | Registro 2026-11-12 e 2026-11-15; `scripts/verify-deploy.ps1` checks 7-8. **T-06-01 preservado** (somente `X-Cron-Secret`; sem reabrir contrato). |
+| Superfície pública board (`/`, SSR sem vazamento de contato) | `https://empreganoix.vercel.app/` | 2026-11-14/15 evidências em hosts legados; board/legal/API/cron/no-leak PASS no smoke de 2026-11-15 | `verificado em host legado` | Registro 2026-11-14 e 2026-11-15; `scripts/verify-deploy.ps1` checks 4,6,9. |
+| Páginas legais `/privacidade` e `/termos-de-uso` | `https://empreganoix.vercel.app/privacidade`, `/termos-de-uso` | 2026-11-12/15 em hosts legados: 200, LGPD/canal, aviso de intermediário, sem placeholder | `verificado em host legado` | Registro 2026-11-12 e 2026-11-15; `scripts/verify-deploy.ps1` check 5. |
+| Superfície login/admin (`/admin` → `/admin/paste`, fluxos autenticados) | `https://empreganoix.vercel.app/admin` | Cobertura parcial por gate; validação manual completa registrada como pendente em linhas `_pendente_` | `pendente de execução operacional` | Registro e `scripts/verify-deploy.ps1` (parcial). Requer provisionamento canônico + verificação humana. |
+
+> **Nota:** BRND-04 e o resíduo ops de SECR-12/LIFE-13 podem ser fechados contratualmente com evidência mapeada/handoff explícito sem reabrir T-06-01 (D-12).
+
+---
+
+## Handoff operacional, riscos e rollback
+
+**Sequência operacional segura (D-13):**
+1. Alinhar/provisionar hosts canônicos (`empreganoix.vercel.app`, `empreganoix.onrender.com`).
+2. Configurar envs, `CORS_ORIGINS=https://empreganoix.vercel.app`, Turnstile Hostnames (`empreganoix.vercel.app`) e segredos de cron.
+3. **Rebuild/redeploy do frontend** por qualquer alteração em `NEXT_PUBLIC_*`.
+4. Validar com `scripts/verify-deploy.ps1 -FrontendUrl https://empreganoix.vercel.app -BackendUrl https://empreganoix.onrender.com`.
+5. Registrar evidência em **Registro de verificação** sem reescrever linhas históricas.
+
+**Rollback:** rollback por reversão de env/config/domínio (reversão de env/config/domínio) e redeploy (ver seção **Rollback**). Migrações são forward-only.
+
+**Riscos (D-15):** execução pode permanecer pendente/dev-local; Turnstile Hostnames/CORS devem coincidir com a origem real; cron/scheduler dependem de envs/segredos; cold-start e split scheduler (APScheduler + GitHub Actions). Código/contrato SECR-12/LIFE-13 já verificados; este alinhamento trata evidência/ops.
 
 ---
 
@@ -31,7 +100,7 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
 **Schedulers de expiração (2 caminhos, 1 regra):**
 
 1. **Primário** — APScheduler in-process (`backend/app/core/scheduler.py`), diário às 03:00 UTC com `misfire_grace_time=3600`, `coalesce=True`, `max_instances=1`.
-2. **Catch-up** — GitHub Actions chamando `POST /api/v1/admin/expire` com `X-Cron-Secret`. Idempotente (re-chamar sem expirados responde `{"deleted": 0, "status": "ok"}`).
+2. **Catch-up** — GitHub Actions chamando `POST /api/v1/admin/expire` com `X-Cron-Secret`. Idempotente.
 
 ---
 
@@ -39,263 +108,130 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
 
 - [ ] Contas: **Vercel**, **Render**, **Neon**, **Cloudflare** (Turnstile), **Groq**, **GitHub**
 - [ ] Repositório no GitHub com este código (branch de produção)
-- [ ] Projeto **Neon de produção** separado do dev/test (nunca reutilize o banco de desenvolvimento)
-- [ ] Cloudflare Turnstile: widget de **produção** criado (site key pública + secret privada). O widget de teste **não** é aceito em `ENV=prod` (o backend recusa a chave de teste — D-11/D-12)
-- [ ] Turnstile → widget de produção → **Hostnames**: o domínio de produção da Vercel cadastrado (o widget recusa domínios não listados; sem isso o reveal e o login falham mesmo com as chaves corretas)
+- [ ] Projeto **Neon de produção** separado do dev/test
+- [ ] Cloudflare Turnstile: widget de **produção** criado. Turnstile → Hostnames: `empreganoix.vercel.app` (state-alvo). Widget de teste **não** aceito em `ENV=prod` (exceto desvio temporário).
 - [ ] Chave da Groq (`https://console.groq.com/keys`)
-- [ ] Senha de admin definida e hash **bcrypt** gerado localmente (o backend usa a biblioteca `bcrypt` diretamente; `passlib` não é mais dependência — IN-07):
+- [ ] Senha de admin e hash **bcrypt** gerado localmente:
   ```powershell
   cd backend
   .\.venv\Scripts\python.exe -c "import bcrypt; print(bcrypt.hashpw(b'SEU_SEGREDO', bcrypt.gensalt()).decode())"
   ```
-  > A senha é truncada em 72 bytes pelo bcrypt (limite do algoritmo). Use uma senha longa, porém <= 72 bytes.
 - [ ] `JWT_SECRET`: 64 caracteres aleatórios
   ```powershell
   python -c "import secrets; print(secrets.token_urlsafe(64))"
   ```
-- [ ] `CRON_SECRET`: 32+ caracteres aleatórios; o **mesmo valor** será usado no Render e no GitHub (`secrets.CRON_SECRET`)
+- [ ] `CRON_SECRET`: 32+ caracteres aleatórios; mesmo valor no Render e no GitHub (`secrets.CRON_SECRET`)
 
 ---
 
 ## Backend no Render
 
-1. **New → Blueprint** e selecione este repositório. O Render lê `render.yaml` da raiz:
-   - `rootDir: backend` (o backend não vive na raiz do repo)
-   - `buildCommand: pip install uv && uv sync --frozen --no-dev` (usa `pyproject.toml` + `uv.lock`; **não** há `requirements.txt`)
-   - `startCommand: uv run --no-sync alembic upgrade head && uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - `healthCheckPath: /api/v1/health`
-   - `region: ohio` — **alinhe à região do seu projeto Neon** (Neon → Project → Settings → General → Region)
-2. Preencha os env vars abaixo no dashboard (Environment). Os marcados `sync: false` no `render.yaml` **não** têm valor no git:
+1. **New → Blueprint** (lê `render.yaml`): `rootDir: backend`, `buildCommand: pip install uv && uv sync --frozen --no-dev`, `startCommand: uv run --no-sync alembic upgrade head && uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT`, `healthCheckPath: /api/v1/health`, `region: ohio` (alinhar ao Neon).
+2. Env vars (dashboard; `sync: false` não versionado):
 
-   | Variável               | Valor / origem                                                                                                                                                           | Notas                                                                                                                                                                                                                                                                         |
-   | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `ENV`                  | `prod` (já no blueprint)                                                                                                                                                 | Ativa o validador que recusa Turnstile de teste                                                                                                                                                                                                                               |
-   | `PYTHON_VERSION`       | `3.11.9` (já no blueprint)                                                                                                                                               |                                                                                                                                                                                                                                                                               |
-   | `JWT_EXPIRES_IN`       | `43200` (já no blueprint)                                                                                                                                                | 12 h                                                                                                                                                                                                                                                                          |
-   | `DATABASE_URL`         | Neon → Dashboard → Connection string **pooled** (host com `-pooler`), **trocando o esquema** `postgresql://` por `postgresql+asyncpg://`, e acrescentando `?ssl=require` | O backend só usa o driver **asyncpg** (`create_async_engine` + `connect_args={"statement_cache_size": 0}`). Com `postgresql://` o SQLAlchemy tenta carregar o psycopg2 (não instalado) e o boot falha no `alembic upgrade head`. Nunca use a string "direct" para tráfego web |
-   | `ADMIN_PASSWORD_HASH`  | bcrypt hash gerado no pré-requisito                                                                                                                                      |                                                                                                                                                                                                                                                                               |
-   | `JWT_SECRET`           | `token_urlsafe(64)`                                                                                                                                                      |                                                                                                                                                                                                                                                                               |
-   | `CORS_ORIGINS`         | Origem exata da Vercel (ex.: `https://<seu-projeto>.vercel.app`)                                                                                                         | Sem barra final, sem `*`, sem espaços                                                                                                                                                                                                                                         |
-   | `TURNSTILE_SITE_KEY`   | Site key do widget de produção                                                                                                                                           | Pública, mas fica no backend                                                                                                                                                                                                                                                  |
-   | `TURNSTILE_SECRET_KEY` | Secret privada do widget de produção                                                                                                                                     | `ENV=prod` recusa chave de teste (D-12)                                                                                                                                                                                                                                       |
-   | `ALLOW_TEST_TURNSTILE` | ausente (padrão `false`)                                                                                                                                                 | **Desvio temporário.** `true` permite `ENV=prod` com chave de **teste** do Cloudflare — veja "Desvio temporário: Turnstile de teste em produção"                                                                                                                              |
-   | `GROQ_API_KEY`         | `https://console.groq.com/keys`                                                                                                                                          |                                                                                                                                                                                                                                                                               |
-   | `CRON_SECRET`          | 32+ caracteres aleatórios                                                                                                                                                | Mesmo valor no GitHub `secrets.CRON_SECRET`                                                                                                                                                                                                                                   |
-   | `SCHEDULER_ENABLED`    | `true` (padrão, já no blueprint)                                                                                                                                         | Desliga o APScheduler in-process; o cron de catch-up continua                                                                                                                                                                                                                 |
+   | Variável | Valor / origem (state-alvo) | Notas |
+   | --- | --- | --- |
+   | `ENV` | `prod` |  |
+   | `PYTHON_VERSION` | `3.11.9` |  |
+   | `JWT_EXPIRES_IN` | `43200` | 12 h |
+   | `DATABASE_URL` | Neon **pooled** `postgresql+asyncpg://...?...ssl=require` | asyncpg obrigatório |
+   | `ADMIN_PASSWORD_HASH` | bcrypt hash |  |
+   | `JWT_SECRET` | `token_urlsafe(64)` |  |
+   | `CORS_ORIGINS` | `https://empreganoix.vercel.app` | Exato, sem barra final, sem `*`, sem legados |
+   | `TURNSTILE_SITE_KEY` | Site key produção |  |
+   | `TURNSTILE_SECRET_KEY` | Secret produção |  |
+   | `ALLOW_TEST_TURNSTILE` | ausente/`false` | Desvio temporário apenas |
+   | `GROQ_API_KEY` | Groq |  |
+   | `CRON_SECRET` | 32+ chars | Mesmo no GitHub |
+   | `SCHEDULER_ENABLED` | `true` |  |
 
-3. Após o primeiro deploy, confira:
+3. Conferir health canônico:
    ```text
-   https://<backend>.onrender.com/api/v1/health
+   https://empreganoix.onrender.com/api/v1/health
    → {"status":"ok","env":"prod","turnstile":{"configured":true,"mode":"live","site_key_configured":true}}
    ```
-   `turnstile.mode` **precisa** ser `live`. Se vier `test` ou `disabled`, o deploy está errado (ou o validador derrubou o boot) — a única exceção é o desvio temporário documentado abaixo, que exige `ALLOW_TEST_TURNSTILE=true` no Render e reporta `"test_override":true` no health.
-   Se o boot falhar no `alembic upgrade head`, confira primeiro `DATABASE_URL`: ele **precisa** começar com `postgresql+asyncpg://` (não `postgresql://`) e usar o host `-pooler`.
-4. **Deploys são manuais** (`autoDeploy: false` no `render.yaml`): um push na branch de produção **não** sobe automaticamente — cada deploy é disparado no dashboard do Render após revisão. Isso é de propósito: o `startCommand` roda `alembic upgrade head` a cada boot e migrações são forward-only — um deploy automático aplicaria schema novo em produção sem aprovação e sem rollback. Dispare em **Deploy latest commit** depois de revisar (e, para mudanças de schema, após snapshot/backup do Neon).
-5. **Migrações rodam a cada boot** (`alembic upgrade head` no `startCommand`). O boot usa `uv run --no-sync` (o build já executou `uv sync --frozen --no-dev`) para não re-sincronizar dependências a cada boot/wake-up, alinhado ao `render.yaml`. São idempotentes e forward-only. Risco conhecido e aceito: uma migration quebrada derruba o boot em loop (inclusive a cada wake-up do plano free) e derruba o board público junto — não existe rollback de schema. Mitigações atuais: deploy manual/gated (a migration é revisada antes do deploy), regra de migrações forward-only, e snapshot do Neon antes de merges que tocam schema. Separar a migração num step de release próprio (pre-deploy do Render) é trabalho futuro — **não remova o `alembic upgrade head` do boot sem que esse step revisado exista e esteja documentado**.
-6. **Plano free dorme após ~15 min sem tráfego.** O primeiro request depois do spin-down paga o cold-start (ver seção **Cold-start**) — e também refaz o upgrade do Alembic no boot.
+4. **Deploys manuais** (`autoDeploy: false`); migrations forward-only a cada boot. Plano free dorme (~15 min).
 
 ---
 
 ## Desvio temporário: Turnstile de teste em produção
 
-> **Estado:** ativo desde 2026-11-12 (operador ainda sem domínio próprio). Remover assim que houver um widget live.
+> Histórico/operacional (2026-11-12). Remover com widget live no host canônico.
 
-Turnstile **não exige domínio próprio**: um widget de produção pode ter o hostname da Vercel (ex.: `empreganoix.vercel.app`). Esse continua sendo o caminho recomendado. Enquanto as chaves live (`0x4AAA…`) não forem configuradas, o backend pode subir em `ENV=prod` com as chaves públicas de teste da Cloudflare **apenas** se o operador ligar o escape hatch explícito:
-
-| Onde   | Variável                                      | Valor                                                  |
-| ------ | --------------------------------------------- | ------------------------------------------------------ |
-| Render | `ALLOW_TEST_TURNSTILE`                        | `true`                                                 |
-| Render | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | chaves de teste (`1x…AA`)                              |
-| Vercel | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`              | site key de teste + **redeploy** (é inlinada no build) |
-
-Comportamento quando o flag está ligado:
-
-- o boot **não** é recusado; sem o flag, `ENV=prod` + chave de teste continua derrubando o processo (D-12);
-- o boot emite um `WARNING` explícito e `GET /api/v1/health` reporta `turnstile.mode=test` **e** `turnstile.test_override=true`;
-- `TURNSTILE_SECRET_KEY` vazia continua derrubando o boot (D-11 não é relaxada);
-- o gate só aceita `mode=test` se for rodado com `-AllowTestTurnstile` **e** o health declarar `test_override=true`.
-
-**Riscos aceitos neste desvio:** as chaves `1x/2x/3x` são públicas e o Siteverify aceita qualquer token — a proteção anti-bot efetiva fica apenas nos rate limits (`REVEAL_RATE_LIMIT`, `LOGIN_RATE_LIMIT`). Este deploy serve para validar board e fluxos ponta a ponta, não como produção definitiva.
-
-**Para sair do desvio:**
-
-1. Cloudflare → Turnstile → widget de produção → **Hostnames** → adicionar o domínio (ex.: `empreganoix.vercel.app`). Não precisa de domínio próprio.
-2. Copiar a site key e a secret key de produção (`0x4AAA…`).
-3. Render → Environment: `TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY` live e **remover** (ou pôr `false` em) `ALLOW_TEST_TURNSTILE` → **Manual Deploy**.
-4. Vercel → Environment: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` live → **Redeploy**.
-5. Re-rodar o gate **sem** `-AllowTestTurnstile`: precisa terminar em `turnstile.mode=live` e `all checks passed`.
+Se necessário: `ALLOW_TEST_TURNSTILE=true` (Render) + site key de teste no frontend com **rebuild/redeploy**. Gate aceita `mode=test` apenas com `-AllowTestTurnstile` e `test_override=true`. Saída: Hostnames `empreganoix.vercel.app`, chaves live, remover flag, redeploy/rebuild e revalidar.
 
 ---
 
 ## Frontend na Vercel
 
-1. **Add New → Project** e importe este repositório.
-2. **Root Directory: `frontend`** (configuração de projeto no dashboard — não está no `vercel.json` de propósito). Framework: Next.js (detectado automaticamente; `frontend/vercel.json` só fixa `framework: "nextjs"` e o `$schema`).
-3. Configure as env vars (Production — e Preview se quiser testar previews):
+1. **Root Directory: `frontend`**.
+2. Env vars (Production):
 
-   | Variável                         | Valor                                                        | Escopo                                                       |
-   | -------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-   | `BACKEND_API_URL`                | URL pública do Render, ex.: `https://<backend>.onrender.com` | Server-side fetch (SSR)                                      |
-   | `NEXT_PUBLIC_API_URL`            | Mesma URL do Render                                          | Obrigatória — build de produção **falha** se ausente (WR-04) |
-   | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site key pública do widget de produção                       | Inlined no build                                             |
+   | Variável | Valor (state-alvo canônico) | Notas |
+   | --- | --- | --- |
+   | `BACKEND_API_URL` | `https://empreganoix.onrender.com` | SSR runtime |
+   | `NEXT_PUBLIC_API_URL` | `https://empreganoix.onrender.com` | Obrigatória em build; embutida (rebuild ao alterar) |
+   | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site key produção | Rebuild ao alterar |
 
-   Não existe `NEXT_PUBLIC_*` para segredos: `CRON_SECRET`, `JWT_SECRET`, `TURNSTILE_SECRET_KEY` etc. **nunca** vão para a Vercel.
-   Todas as variáveis de frontend estão documentadas em `frontend/.env.example` (no desenvolvimento, copie para `.env.local`).
-
-   **Desde WR-04, `next build` falha se `NEXT_PUBLIC_API_URL` estiver ausente em build de produção** — não existe mais fallback silencioso para `http://localhost:8000` (o fallback só vale em desenvolvimento). Se o build falhar com essa mensagem, configure a variável no escopo **Production** e refaça o deploy.
-
-4. Deploy. Anote o domínio de produção (ex.: `https://<seu-projeto>.vercel.app`).
-5. Volte ao Render e ajuste `CORS_ORIGINS` para **exatamente** esse domínio (sem barra final) e faça **redeploy** do backend — CORS é lido no boot.
-6. Abra o board no navegador e no celular (390 px) e confirme que carrega sem erro de CORS no console.
+3. Domínio canônico: `https://empreganoix.vercel.app`. Ajustar `CORS_ORIGINS` no Render para essa origem exata e redeploy.
 
 ---
 
 ## CORS
 
-- `CORS_ORIGINS` no Render é uma lista separada por vírgulas (`https://a.com,https://b.com`). Em produção use **exatamente uma**: o domínio de produção da Vercel.
-- **Sem** barra final, **sem** `*`, **sem** esquema diferente (`http://` não vale para produção).
-- Previews da Vercel (`https://<projeto>-<hash>-<time>.vercel.app`) **não** são cobertos por padrão:
-  - ou adicione a origem do preview explicitamente em `CORS_ORIGINS` e redeploy,
-  - ou teste previews contra o backend local,
-  - ou aceite que previews apontam para produção e valide neles apenas o que não depende de escrita.
-- O middleware usa `allow_credentials=False` e expõe apenas `Retry-After` (necessário para o countdown de 429 do reveal de contato).
-- Depois de **qualquer** mudança em `CORS_ORIGINS`: **redeploy do backend**. O valor é lido no boot do processo.
+- State-alvo: `CORS_ORIGINS=https://empreganoix.vercel.app` (exato, sem barra final, sem `*`, sem legados).
+- `allow_credentials=False`, expõe `Retry-After`. Redeploy do backend após mudança.
 
 ---
 
 ## Cron de catch-up
 
-**Por que existe:** o plano free do Render não oferece cron job, e o Vercel Hobby agenda no máximo 1×/dia sem retry. O scheduler in-process é o mecanismo primário; o GitHub Actions é a rede de segurança.
-
-Configuração (uma vez, no GitHub):
-
-1. **Settings → Secrets and variables → Actions → Variables** → crie `API_BASE_URL` = URL pública do Render **sem barra final** (ex.: `https://<backend>.onrender.com`).
-2. **… → Secrets** → crie `CRON_SECRET` = o mesmo valor definido no Render.
-3. O workflow `.github/workflows/expire-cron.yml` roda diariamente às **03:00 UTC** (mesma janela do scheduler interno) e também aceita execução manual: **Actions → expire-jobs → Run workflow**.
-4. O step falha com mensagem clara se `API_BASE_URL`/`CRON_SECRET` estiverem vazios, e usa `curl --fail-with-body --retry 3 --retry-delay 15 --retry-connrefused --max-time 120` (retry só para falhas de transporte/conexão — 4xx **não** é retentado). O secret nunca é ecoado no log.
-5. Resposta esperada: `{"deleted": N, "status": "ok"}` — `N` pode ser `0` (idempotente).
-
-**Atrasos:** o GitHub pode atrasar o cron (filas, em especial em repos públicos/de baixa atividade). Não é um problema de correção — é a janela do catch-up; o APScheduler in-process cobre o caso em que o processo está acordado. Se o Render ficar dormindo por longos períodos, considere `SCHEDULER_ENABLED=false` (o endpoint vira o único gatilho) ou um plano pago.
-
-**Sem segredo configurado:** `POST /api/v1/admin/expire` responde **503** ("Expiração manual não configurada") — **fail-closed**: significa que o gatilho manual está **desativado** (a expiração depende só do scheduler in-process), nunca que o endpoint está aberto. Com segredo errado/ausente: **401**. Em ambos os casos o endpoint destrutivo permanece fechado; um 2xx sem o segredo indicaria configuração incorreta grave. O gate `verify-deploy.ps1` aceita 401/403/503 como recusa válida e só falha (ou aponta erro) para respostas inesperadas — ele nunca trata 503 como "endpoint aberto".
-
-> **Credencial única:** `POST /api/v1/admin/expire` aceita **somente** `X-Cron-Secret`.
-> Um Bearer JWT de admin NÃO autoriza o endpoint (T-06-01) — o token do navegador não
-> pode disparar um hard-delete no board. Se um 2xx aparecer sem o header, trate como
-> vazamento de configuração e rotacione `CRON_SECRET`.
+- GitHub Actions `vars.API_BASE_URL=https://empreganoix.onrender.com`, `secrets.CRON_SECRET` = valor do Render.
+- Workflow `.github/workflows/expire-cron.yml` (03:00 UTC + manual) chama `POST https://empreganoix.onrender.com/api/v1/admin/expire` com `X-Cron-Secret`.
+- Resposta: `{"deleted": N, "status": "ok"}` (idempotente). **T-06-01:** somente `X-Cron-Secret` (Bearer JWT não autoriza). 503 sem segredo / 401 inválido = fail-closed.
 
 ---
 
 ## Cold-start
 
-O plano free do Render **dorme após ~15 min sem tráfego**. No primeiro request depois do sono, a plataforma paga o boot do processo (+ migrações Alembic no `startCommand` com `uv run --no-sync`, sem re-sync de dependências porque o build já fez `uv sync --frozen --no-dev`).
-
-**Como o frontend lida com isso:**
-
-- `frontend/lib/jobs.ts` faz fetch com `cache: "no-store"` e **timeout de 15 s** (`AbortSignal.timeout`).
-- Se estourar o timeout, o board não trava: `frontend/app/(public)/error.tsx` renderiza **"O servidor está acordando."** e um botão **"Tentar novamente"** (que re-renderiza a rota).
-- Erros não-timeout mostram "Não foi possível carregar as vagas." com o mesmo botão.
-
-**O que fazer na operação:**
-
-1. Meça e registre o tempo real do primeiro request após spin-down (ver **Registro de verificação** abaixo). O check 10 de `scripts/verify-deploy.ps1` mede exatamente esse primeiro request (health): rode o gate logo após o período ocioso, antes de abrir o board, para não medir um backend já aquecido.
-2. Se o cold-start for consistentemente maior que 15 s, as opções (sem provisionar nada automaticamente) são:
-   - **Plano pago do Render** (instância sempre ligada),
-   - **Ping externo opcional** (ex.: cron-job.org / UptimeRobot chamando `/api/v1/health` a cada 10 min) — mantém o processo acordado; é opcional e não é provisionado por este runbook,
-   - Aumentar o timeout do frontend (**não recomendado** sem medir; 15 s é o contrato documentado).
-3. O timeout do frontend é um contrato: `docs/` e o código (`TIMEOUT_MS = 15_000`) devem ser alterados juntos, com a decisão registrada aqui.
+Primeiro request após ~15 min paga boot. Frontend timeout 15 s (`frontend/lib/jobs.ts`). Check 10 do gate mede primeiro request (health).
 
 ---
 
 ## Gate de fumaça
 
-`scripts/verify-deploy.ps1` valida o deploy de produção de ponta a ponta (health + Turnstile `live`, CORS permitido/negado, board sem dados de contato, páginas legais `/privacidade` e `/termos-de-uso` sem placeholder, contrato da API, cron 401/403/503 (fail-closed) e idempotência, ausência de vazamento do secret e latência do primeiro request).
-
-### Critério 6 (human-gated) — evidência de produção obrigatória
-
-> **Critério 6 é human-gated.** Os artefatos do repositório (blueprint, gate, runbook) podem ser preparados e alinhados, mas o **Critério 6** só é considerado fechado após um deploy real executado por operador e um `scripts/verify-deploy.ps1` aprovado com evidência registrada.
-
-Evidência mínima exigida para um gate de produção aprovado:
-
-- **Health:** `GET /api/v1/health` retorna 200 com `env=prod` e `turnstile.mode=live` (ou evidência explicitamente aprovada de `test_override` com `-AllowTestTurnstile` e `turnstile.test_override=true`, conforme desvio documentado).
-- **CORS preflight (allow/deny):** preflight permitido da origem exata do frontend de produção ecoa `Access-Control-Allow-Origin` igual à origem canônica; preflight de origem estrangeira é negado (sem `Access-Control-Allow-Origin` permissivo para origem estranha).
-- **Cron:** requisição sem/errada é recusada (401/403/503 fail-closed conforme configuração) e requisição autorizada com `X-Cron-Secret` retorna 200 com contagem idempotente.
-- **Registro:** URLs reais, resultados observados, cold-start e saída final `verify-deploy: all checks passed` (ou aprovação explícita do caminho `test_override`) registrados em **Registro de verificação**.
-
 ```powershell
-$env:CRON_SECRET = "<CRON_SECRET>"   # não fica no histórico do PowerShell
+$env:CRON_SECRET = "<CRON_SECRET>"
 powershell -ExecutionPolicy Bypass -File scripts\verify-deploy.ps1 `
-  -FrontendUrl https://<seu-projeto>.vercel.app `
-  -BackendUrl  https://<backend>.onrender.com
+  -FrontendUrl https://empreganoix.vercel.app `
+  -BackendUrl  https://empreganoix.onrender.com
 ```
-
-- Passe o **domínio canônico de produção** do frontend (sem barra final): o script não segue redirects (`AllowAutoRedirect = $false`), então um alias que responde 308 falha no check 4 com status inesperado.
-- `-CronSecret` é obrigatório para o check de cron autenticado; o script lê `$env:CRON_SECRET` por padrão (evita deixar o segredo no histórico/linha de comando).
-- `-AllowTestTurnstile` é o **único** caminho para o check 1 aceitar `turnstile.mode=test`: ele exige que o backend também declare `turnstile.test_override=true` (ou seja, `ALLOW_TEST_TURNSTILE=true` no Render). Use só durante o desvio temporário documentado acima e imprima `WARN -` em vez de `PASS -`.
-- Cada check imprime `PASS - ...`; ao final: `verify-deploy: all checks passed`. Se qualquer check falhar, o script lança exceção com a mensagem do que falhou — **não** considere o deploy pronto enquanto houver falha.
-- O check 10 mede a latência do **primeiro** request ao backend (health). Para o número representar o cold-start, rode o gate como o **primeiro** tráfego após ~20 min de ociosidade do Render; rodar depois de abrir o board mede apenas o caminho aquecido.
-
-Compatível com PowerShell 5.1 (TLS 1.2 fixado no script), salvo em UTF-8 com BOM.
+Para reproduzir evidência legada, use hosts legados como parâmetros. Critério 6 é human-gated: só fechado após execução real e evidência registrada.
 
 ---
 
 ## Rollback
 
-| Onde                  | Como                                                                                                                                                                                 | Observações                                                                                         |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| **Render (backend)**  | Dashboard → serviço `nqu-backend` → **Events/Deploys** → deploy anterior → **Rollback**                                                                                              | O rollback restaura o código; migrações já aplicadas **não** são desfeitas (ver abaixo).            |
-| **Vercel (frontend)** | Dashboard → projeto → **Deployments** → deployment anterior → **⋯ → Instant Rollback**                                                                                               | Instantâneo; o domínio de produção passa a servir o build anterior.                                 |
-| **Migrações (Neon)**  | **Não existe rollback de schema.** Migrações são forward-only: corrija com uma **nova** migration (`alembic revision --autogenerate -m "..."`) e aplique com `alembic upgrade head`. | Nunca edite uma migration já aplicada nem rode `alembic downgrade` em produção sem plano explícito. |
-| **CORS errado**       | Corrija `CORS_ORIGINS` e redeploy do backend                                                                                                                                         | Não precisa de deploy do frontend.                                                                  |
-| **Cron quebrado**     | Desative/edite `.github/workflows/expire-cron.yml` ou remova `vars.API_BASE_URL`/`secrets.CRON_SECRET`                                                                               | O scheduler in-process continua como mecanismo primário; o catch-up é desativável sem downtime.     |
-
-**Ordem segura de rollback completo:** (1) frontend na Vercel → deployment anterior; (2) backend no Render → deploy anterior; (3) se a causa for schema, escrever migration corretiva e re-deploy. Em qualquer caso, registre o incidente na tabela **Registro de verificação**.
+| Onde | Como | Observações |
+| --- | --- | --- |
+| **Render (backend)** | Rollback para deploy anterior | Sem rollback de migrations |
+| **Vercel (frontend)** | Instant Rollback |  |
+| **Migrações (Neon)** | Nova migration forward-only |  |
+| **CORS/env/domínio** | **Rollback por reversão de env/config/domínio** e redeploy/rebuild (`NEXT_PUBLIC_*`) |  |
+| **Cron** | Ajustar workflow/vars/secrets |  |
 
 ---
 
 ## Checklist de go-live
 
-**Neon**
-
-- [ ] Projeto de produção criado e separado do dev/test
-- [ ] Connection string **pooled** copiada com `?ssl=require`
-- [ ] Região anotada (e `region` do `render.yaml` alinhada)
-
-**Render (backend)**
-
-- [ ] Blueprint aplicado a partir do `render.yaml` (deploys **manuais** — `autoDeploy: false`; cada deploy é disparado no dashboard após revisão)
-- [ ] Todos os env vars preenchidos (`DATABASE_URL`, `ADMIN_PASSWORD_HASH`, `JWT_SECRET`, `CORS_ORIGINS`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `GROQ_API_KEY`, `CRON_SECRET`)
-- [ ] Snapshot/backup do Neon tirado antes do deploy (migrações são forward-only — sem rollback de schema)
-- [ ] Boot rodou `alembic upgrade head` sem erro
-- [ ] `/api/v1/health` → `status=ok`, `env=prod`, `turnstile.mode=live`
-- [ ] `CORS_ORIGINS` = origem exata da Vercel, sem barra final; redeploy feito após ajuste
-
-**Vercel (frontend)**
-
-- [ ] Root Directory = `frontend`
-- [ ] `BACKEND_API_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` configurados (ver `frontend/.env.example`)
-- [ ] Widget Turnstile de produção com o domínio da Vercel cadastrado em **Hostnames**
-- [ ] Build de produção passou (sem `NEXT_PUBLIC_API_URL` ele **falha** de propósito — WR-04)
-- [ ] Deploy de produção concluído; domínio anotado
-- [ ] Board carrega sem erro de CORS no console do navegador
-
-**GitHub Actions (cron)**
-
-- [ ] `vars.API_BASE_URL` e `secrets.CRON_SECRET` cadastrados
-- [ ] `expire-jobs` rodado manualmente (Run workflow) com sucesso; log sem o secret
-- [ ] Resposta `{"deleted": N, "status": "ok"}` registrada
-
-**Verificação**
-
-- [ ] `scripts/verify-deploy.ps1` → todas as linhas `PASS` + `verify-deploy: all checks passed`
-- [ ] Cold-start medido e registrado (ver Registro de verificação); gate rodado como primeiro tráfego após ~20 min ocioso
-- [ ] Fluxo real: buscar vaga → abrir modal → revelar contato (Turnstile real) → reportar vaga → `/privacidade` → `/termos-de-uso`
-- [ ] HTML do board sem `contact_email`, `contact_phone`, `mailto:`
-- [ ] `/admin` (redireciona para `/admin/paste`, onde fica o login), `/admin/paste` e fila de review funcionando
-- [ ] `/privacidade` e `/termos-de-uso` sem placeholders e com o canal LGPD real
-- [ ] `git status --porcelain` limpo quanto a `.env`/`.env.local`; `render.yaml` sem valores; nenhum secret em logs
+**Neon:** prod separado, pooled asyncpg, região alinhada.
+**Render:** deploy manual, envs corretos (`CORS_ORIGINS=https://empreganoix.vercel.app`), health canônico `env=prod`/`turnstile.mode=live`.
+**Vercel:** Root `frontend`, `BACKEND_API_URL`/`NEXT_PUBLIC_API_URL`=`https://empreganoix.onrender.com`, Hostnames `empreganoix.vercel.app`, rebuild após `NEXT_PUBLIC_*`.
+**GitHub:** `vars.API_BASE_URL=https://empreganoix.onrender.com` + `secrets.CRON_SECRET`.
+**Verificação:** gate PASS (canônico ou evidência mapeada), cold-start medido, fluxos reais, sem vazamentos.
 
 ---
+
 
 ## Registro de verificação
 
