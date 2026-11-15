@@ -176,7 +176,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 3. BRND-04 operational caveat is resolved or explicitly closed with evidence; lifecycle/ops readiness flow is no longer at risk from host/env drift. *(Fechado contratualmente com evidência/mapeamento e handoff explícito quando aplicável.)*
 4. `.planning/REQUIREMENTS.md` and roadmap notes reflect BRND-04 closure status and any SECR-12/LIFE-13 production-alignment evidence tied to Phase 13.
 
-**Plans:**
+**Plans:**2/2 plans complete
 - [x] 13-01-PLAN.md — Canonical state-alvo, canonical↔legacy host mapping, D-10 alignment matrix, preserved Registro histórico, and canonical-first ops guidance/handoff in `docs/DEPLOY.md` (config/docs/scripts alignment only; no runtime behavior changes)
 - [x] 13-02-PLAN.md — REQUIREMENTS/ROADMAP traceability closure for BRND-04 and residual ops-evidence alignment of SECR-12/LIFE-13 with explicit handoff
 
@@ -197,7 +197,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 | 10. Rebranding & Launch Preparation (EmpregaNoix) | 4/4 | ✓ Complete | 2026-11-14 |
 | 11. Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps | 0/3 | Not started | - |
 | 12. Reconcile Phase 9 Lifecycle/Trust Verification & Contracts | 2/2 | Complete    | 2026-11-15 |
-| 13. Canonical Host, Deploy & Ops Alignment (BRND-04 closeout) | 2/2 | ✓ Complete | 2026-11-15 |
+| 13. Canonical Host, Deploy & Ops Alignment (BRND-04 closeout) | 2/2 | Complete    | 2026-11-15 |
 
 ## Commit History Note
 
