@@ -12,7 +12,7 @@
 - Integer phases (14, 15, 16...): Planned milestone work.
 - Prior phase history (1–13) remains in `.planning/phases/` and milestone archives.
 
-- [ ] **Phase 14: Fundação Social, Dados e Configuração** - Criar base de dados, segurança de tokens e contratos de publicação social (Facebook-first, extensível)
+- [x] **Phase 14: Fundação Social, Dados e Configuração** - Criar base de dados, segurança de tokens e contratos de publicação social (Facebook-first, extensível) (completed 2026-11-15)
 - [ ] **Phase 15: OAuth Meta e Integrações no Admin** - Conectar/desconectar página do Facebook com fluxo OAuth seguro e status operacional visível
 - [ ] **Phase 16: Geração, Revisão e Aprovação do Post Social** - Produzir rascunho de post com IA/template, permitir edição/agendamento na revisão e integrar aprovação sem bloquear o site
 - [ ] **Phase 17: Publicação Assíncrona, Retry, Idempotência e Status** - Publicar/agendar no Facebook via worker resiliente e expor status/erros/retry no admin
@@ -82,7 +82,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 14. Fundação Social, Dados e Configuração | 2/3 | In Progress|  |
+| 14. Fundação Social, Dados e Configuração | 3/3 | Complete   | 2026-11-15 |
 | 15. OAuth Meta e Integrações no Admin | 0/0 | Not started | - |
 | 16. Geração, Revisão e Aprovação do Post Social | 0/0 | Not started | - |
 | 17. Publicação Assíncrona, Retry, Idempotência e Status | 0/0 | Not started | - |
