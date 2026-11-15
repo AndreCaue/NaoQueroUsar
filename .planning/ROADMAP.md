@@ -28,6 +28,12 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 
 **Phase 10: Rebranding & Launch Preparation (EmpregaNoix)** — Renomear de NaoQueroUsar para EmpregaNoix, atualizar textos, hosts, CORS, meta tags
 
+**Phase 11: Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps** — Backfill missing 07/08 verification artifacts and traceability for SECR/ADMN/REVW (audit gap closure)
+
+**Phase 12: Reconcile Phase 9 Lifecycle/Trust Verification & Contracts** — Align 09 verification, ROADMAP contract, and LIFE/TRST/SECR evidence (audit gap closure)
+
+**Phase 13: Canonical Host, Deploy & Ops Alignment (BRND-04 closeout)** — Resolve branded-host/env/CORS/API drift and record aligned deploy evidence (audit gap closure)
+
 ## Phase Details
 
 ### Phase 7: Contact Reveal & Anti-Spam Completeness
@@ -113,9 +119,60 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 4. Hosts atualizados: backend `https://empreganoix.onrender.com`, frontend `https://empreganoix.vercel.app`; CORS configurado para origens `https://empreganoix.vercel.app`; `NEXT_PUBLIC_API_BASE_URL` apontando para o novo host Render; `ALLOWED_ORIGINS` atualizado no backend
 5. Deploy Vercel + Render executado com sucesso; smoke gate verde: health 200, env=prod, Turnstile mode=live, CORS preflight 200 com `Access-Control-Allow-Origin`; `CRON_SECRET` configurado em ambos os hosts; cold-start UX documentada
 
+### Phase 11: Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps
+
+**Goal:** Backfill missing phase-level verification and traceability so reveal, admin, and review requirements are auditable with concrete evidence.
+
+**Depends on:** Phases 7, 8 (completed implementation) and `.planning/v1.1-MILESTONE-AUDIT.md`
+
+**Requirements:** SECR-10, SECR-11, SECR-12, ADMN-10, ADMN-11, ADMN-12, REVW-10, REVW-11, REVW-12
+
+**Gap Closure:** Closes audit gaps for missing `07-VERIFICATION.md`/`08-VERIFICATION.md`, incomplete Phase 8 summary/context frontmatter, and unverified/misaligned requirement evidence for Phase 7–8 scope.
+
+**Success Criteria** (what must be TRUE):
+
+1. `07-VERIFICATION.md` exists and verifies SECR-10/11/12 evidence for Phase 7 (server-side reveal gating, Turnstile Siteverify fail-closed behavior including timeout-or-duplicate handling, per-IP rate limiting with pt-BR 429/`Retry-After`, login Turnstile protection) and documents the SECR-10 operational rebuild caveat.
+2. `08-VERIFICATION.md` exists and verifies ADMN-10/11/12 and REVW-10/11/12 (Turnstile-gated/rate-limited admin login, JWT-protected admin routes/queue, approve/edit/delete flows including hard delete/idempotent contract and required UI/acceptance behavior).
+3. Phase 8 artifact traceability is repaired where needed (e.g. `08-03-SUMMARY.md`, `CONTEXT-SUMMARY.md` frontmatter/cross-references for `ADMN-12`, `REVW-12`) so requirement completion claims are machine-checkable.
+4. `.planning/REQUIREMENTS.md` checkboxes/traceability for the above REQ-IDs reflect verified status and gap-closure ownership for Phase 11.
+
+### Phase 12: Reconcile Phase 9 Lifecycle/Trust Verification & Contracts
+
+**Goal:** Align Phase 9 verification artifacts and planning contracts with the implemented lifecycle, trust, and cron-secret-only security behavior.
+
+**Depends on:** Phase 9 (completed implementation, including 09-04 evidence) and `.planning/v1.1-MILESTONE-AUDIT.md`
+
+**Requirements:** LIFE-10, LIFE-11, LIFE-12, LIFE-13, TRST-11, SECR-12
+
+**Gap Closure:** Closes audit gaps for stale/gaps_found `09-VERIFICATION.md`, ROADMAP `/admin/expire` auth contract drift (T-06-01), and unverified/unchecked lifecycle-trust requirements.
+
+**Success Criteria** (what must be TRUE):
+
+1. ROADMAP Phase 9 criterion/contract text no longer states `/admin/expire` accepts Bearer JWT admin; it explicitly reflects **X-Cron-Secret-only** protection (fail-closed) consistent with implementation, tests, and docs.
+2. `09-VERIFICATION.md` is reconciled with current repository state and evidence (DB-owned `expires_at` 14-day UTC, status-agnostic idempotent expiry sweep, cron-secret-only endpoint, report endpoint log-only/capped/throttled behavior, legal pages/badge), with any remaining human-gated production checks explicitly documented.
+3. Lifecycle/ops readiness flow is no longer broken by contract/documentation mismatch; evidence references are current and traceable.
+4. `.planning/REQUIREMENTS.md` checkboxes/traceability for `LIFE-10..13`, `TRST-11`, and Phase 9 side of `SECR-12` reflect verified status and gap-closure ownership for Phase 12.
+
+### Phase 13: Canonical Host, Deploy & Ops Alignment (BRND-04 closeout)
+
+**Goal:** Eliminate canonical branded-host and deploy configuration drift so production operations, CORS, and evidence match the intended EmpregaNoix contract.
+
+**Depends on:** Phase 10 (rebrand/deploy artifacts) and `.planning/v1.1-MILESTONE-AUDIT.md`
+
+**Requirements:** BRND-04, SECR-12, LIFE-13
+
+**Gap Closure:** Closes audit gaps for canonical host mismatch (`empreganoix.vercel.app` / `empreganoix.onrender.com` vs recorded deployed hosts), env/CORS/API alignment risk, and lifecycle/ops deploy-readiness flow caveats.
+
+**Success Criteria** (what must be TRUE):
+
+1. Intended canonical production domains are confirmed and consistently applied across frontend API base config, backend allowed origins/CORS, deploy config, and operator docs (`docs/DEPLOY.md`, `render.yaml`, Vercel/Render env guidance as applicable).
+2. Deploy/smoke evidence is recorded for the aligned hosts (or explicitly documented with canonical mapping), covering health/env/Turnstile mode, CORS preflight, cron endpoint auth/idempotency, and key public/admin surfaces as relevant.
+3. BRND-04 operational caveat is resolved or explicitly closed with evidence; lifecycle/ops readiness flow is no longer at risk from host/env drift.
+4. `.planning/REQUIREMENTS.md` and roadmap notes reflect BRND-04 closure status and any SECR-12/LIFE-13 production-alignment evidence tied to Phase 13.
+
 ## Progress
 
-**Execution Order:** Phases execute in numeric order: 7 → 8 → 9 → 10
+**Execution Order:** Phases execute in numeric order: 7 → 8 → 9 → 10 → 11 → 12 → 13
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -123,6 +180,9 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 | 8. Admin Review Area Completeness | 3/3 | ✓ Complete | 2026-11-13 |
 | 9. Lifecycle, Trust, Legal & Launch Completeness | 4/4 | ✓ Complete | 2026-11-15 |
 | 10. Rebranding & Launch Preparation (EmpregaNoix) | 4/4 | ✓ Complete | 2026-11-14 |
+| 11. Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps | 0/TBD | Not started | - |
+| 12. Reconcile Phase 9 Lifecycle/Trust Verification & Contracts | 0/TBD | Not started | - |
+| 13. Canonical Host, Deploy & Ops Alignment (BRND-04 closeout) | 0/TBD | Not started | - |
 
 ## Commit History Note
 

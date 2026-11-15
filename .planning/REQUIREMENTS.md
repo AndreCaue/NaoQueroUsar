@@ -69,7 +69,7 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 - [x] **BRND-01**: Aplicativo renomeado de "NaoQueroUsar" para "EmpregaNoix" em todo o frontend (textos, labels, headings, meta tags)
 - [x] **BRND-02**: Slogan mantido "Procurar um emprego, não deve dar trabalho" — atualizado para refletir a nova marca
 - [x] **BRND-03**: Cores da marca mantidas (roxo #8b5cf6 / #a78bfa, amarelo #facc15 para doações) — consistência visual em todo o app
-- [x] **BRND-04**: Domínio e hosts atualizados — backend `https://empreganoix.onrender.com`, frontend `https://empreganoix.vercel.app`; CORS configurado para origens EmpregaNoix
+- [ ] **BRND-04**: Domínio e hosts atualizados — backend `https://empreganoix.onrender.com`, frontend `https://empreganoix.vercel.app`; CORS configurado para origens EmpregaNoix *(gap closure: Phase 13 — canonical host/env/CORS alignment & evidence)*
 
 ## v1.1 Summary
 
@@ -77,10 +77,17 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 - **Mapped to phases**: 28 (100%)
 - **Unmapped**: 0 ✓
 
-**Per Phase:**
+**Per Phase (original v1.1 mapping):**
 - Phase 3 — Contact Reveal & Anti-Spam: SECR-10, SECR-11, SECR-12, LIFE-10, LIFE-11, LIFE-12, PUBL-10..14, SRCH-10..12 (13 requirements)
 - Phase 5 — Admin Review Area: ADMN-10..12, REVW-10..12, PUBL-10..14 (9 requirements)
 - Phase 6 — Lifecycle, Trust, Legal & Launch: LIFE-10..13, TRST-10..12, BRND-01..04 (9 requirements)
+
+**Gap Closure (audit 2026-11-15, `.planning/v1.1-MILESTONE-AUDIT.md`):**
+- Phase 11 — Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps: SECR-10, SECR-11, SECR-12, ADMN-10, ADMN-11, ADMN-12, REVW-10, REVW-11, REVW-12 (status reset to Pending/unverified pending verification backfill)
+- Phase 12 — Reconcile Phase 9 Lifecycle/Trust Verification & Contracts: LIFE-10, LIFE-11, LIFE-12, LIFE-13, TRST-11, SECR-12 (contract/evidence reconciliation; status Pending pending verification sync)
+- Phase 13 — Canonical Host, Deploy & Ops Alignment (BRND-04 closeout): BRND-04, SECR-12, LIFE-13 (operational alignment/evidence; BRND-04 checkbox reset to Pending)
+
+*Note: Phase 7–10 in ROADMAP supersede earlier phase numbering references for v1.1 execution; gap closure phases 11–13 address remaining audit verification/contract/ops gaps.*
 
 ---
 
