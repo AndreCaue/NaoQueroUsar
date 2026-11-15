@@ -12,7 +12,15 @@ from app.db.base import Base
 
 # Import models so their tables are registered on Base.metadata before
 # Alembic reads target_metadata (autogenerate support).
-from app.models import Job, JobStatus  # noqa: F401
+from app.models import (  # noqa: F401
+    Job,
+    JobStatus,
+    SocialAccount,
+    SocialAccountStatus,
+    SocialPost,
+    SocialPostLog,
+    SocialPostStatus,
+)
 
 config = context.config
 
