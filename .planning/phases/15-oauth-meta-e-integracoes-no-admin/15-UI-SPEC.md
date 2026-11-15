@@ -13,6 +13,8 @@ created: 2026-11-15
 
 **Scope:** New dedicated admin page/section `Integrações` for connecting, selecting, verifying, reconnecting, and disconnecting a single Facebook Page (META-01..META-06, D-13..D-16). No publication/status-per-job UI (Phase 17) and no post draft/review UI (Phase 16).
 
+**Primary focal point:** the connection Status card and its state-appropriate primary CTA (e.g. `Conectar Facebook`, `Reconectar`, `Confirmar página`) — headers, banners, metadata, and secondary actions support this decision and action.
+
 ---
 
 ## Design System
@@ -105,7 +107,7 @@ Exceptions: `44px` minimum touch target height for all interactive controls (`.t
 | Callback banner — error | `Não foi possível conectar ao Facebook. Tente novamente.` |
 | Callback banner — selection required | `Escolha uma Página do Facebook para concluir a conexão.` |
 | Destructive confirmation | `Desconectar: Tem certeza de que deseja desconectar esta Página do Facebook? A publicação automática ficará indisponível até você conectar novamente.` |
-| Destructive confirm actions | Confirmar: `Desconectar página` · Cancelar: `Cancelar` |
+| Destructive confirm actions | Confirmar: `Desconectar página` · Cancelar: `Manter conexão` |
 | Loading states | `Carregando integrações...`, `Verificando conexão...`, `Conectando...`, `Desconectando...` (conforme ação) |
 | Page metadata labels | `Página`: `{page_name}` · `ID da página`: `{page_id}` (quando disponível) · `Conectado em`: `{data}` · `Última verificação`: `{data}` (somente dados seguros do payload, sem tokens) |
 
