@@ -87,7 +87,44 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmap) | | |
+| SOC-01 | Phase 14 | Pending |
+| SOC-02 | Phase 14 | Pending |
+| SOC-03 | Phase 14 | Pending |
+| SOC-04 | Phase 14 | Pending |
+| SOC-05 | Phase 14 | Pending |
+| SOC-06 | Phase 14 | Pending |
+| META-01 | Phase 15 | Pending |
+| META-02 | Phase 15 | Pending |
+| META-03 | Phase 15 | Pending |
+| META-04 | Phase 15 | Pending |
+| META-05 | Phase 15 | Pending |
+| META-06 | Phase 15 | Pending |
+| POST-01 | Phase 16 | Pending |
+| POST-02 | Phase 16 | Pending |
+| POST-03 | Phase 16 | Pending |
+| POST-04 | Phase 16 | Pending |
+| POST-05 | Phase 16 | Pending |
+| POST-06 | Phase 16 | Pending |
+| PUB-01 | Phase 17 | Pending |
+| PUB-02 | Phase 17 | Pending |
+| PUB-03 | Phase 17 | Pending |
+| PUB-04 | Phase 17 | Pending |
+| PUB-05 | Phase 17 | Pending |
+| PUB-06 | Phase 17 | Pending |
+| PUB-07 | Phase 17 | Pending |
+| PUB-08 | Phase 17 | Pending |
+| UI-01 | Phase 17 | Pending |
+| UI-02 | Phase 17 | Pending |
+| TEST-01 | Phase 18 | Pending |
+| TEST-02 | Phase 18 | Pending |
+| TEST-03 | Phase 18 | Pending |
+| TEST-04 | Phase 18 | Pending |
+| DOC-01 | Phase 18 | Pending |
+| AUD-01 | Phase 18 | Pending |
+| AUD-02 | Phase 18 | Pending |
+| AUD-03 | Phase 18 | Pending |
+| AUD-04 | Phase 18 | Pending |
+| AUD-05 | Phase 18 | Pending |
 
 ---
 *Requirements defined: 2026-11-15 for v1.2 Integração com Facebook Pages*

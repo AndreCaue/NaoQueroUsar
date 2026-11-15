@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Integração com Facebook Pages
-status: planning
-stopped_at: Milestone v1.2 initialized (defining scope)
+status: roadmap_created
+stopped_at: Roadmap for v1.2 created (Phases 14-18)
 last_updated: 2026-11-15T00:00:00.000Z
-last_activity: 2026-11-15 -- Started milestone v1.2 (Facebook Pages integration)
+last_activity: 2026-11-15 -- Created v1.2 roadmap and mapped 37 requirements
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 14 of 18 (Fundação Social, Dados e Configuração) — not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-11-15 — Milestone v1.2 started
+Status: Roadmap created; ready for phase planning
+Last activity: 2026-11-15 — v1.2 roadmap created (Phases 14-18, 37/37 requirements mapped)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -89,6 +89,6 @@ Carried forward from v1.1 close (2026-11-15, audit `gaps_found` accepted):
 ## Session Continuity
 
 Last session: 2026-11-15
-Stopped at: Milestone v1.2 initialized (scope gathered, PROJECT/STATE updated)
+Stopped at: Roadmap for v1.2 created (`.planning/ROADMAP.md`, requirements traceability updated)
 Resume file: None
 
