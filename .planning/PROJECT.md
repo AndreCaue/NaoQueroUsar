@@ -5,7 +5,7 @@
 **Latest shipped milestone:** v1.1 EmpregaNoix — **shipped 2026-11-15** (archived with **accepted audit gaps**).  
 **Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`
 
-**v1.2 progress:** Phase 14 complete — fundação social (dados, crypto de tokens, contratos de publicação e configuração SOC-01..SOC-06) implementada e verificada.
+**v1.2 progress:** Phase 15 complete — OAuth Meta e Integrações no admin (META-01..META-06: fluxo OAuth seguro/state, seleção/persistência de página única, validação `needs_reconnect`, endpoints seguros e UI admin de Integrações) implementado e verificado. Phase 14 (fundação social SOC-01..SOC-06) também concluída.
 
 ## Current Milestone: v1.2 Integração com Facebook Pages
 
@@ -122,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-15 after completing Phase 14 (Fundação Social, Dados e Configuração)*
+*Last updated: 2026-11-15 after completing Phase 15 (OAuth Meta e Integrações no Admin)*
