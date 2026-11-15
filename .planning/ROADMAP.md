@@ -187,7 +187,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 | 9. Lifecycle, Trust, Legal & Launch Completeness | 4/4 | ✓ Complete | 2026-11-15 |
 | 10. Rebranding & Launch Preparation (EmpregaNoix) | 4/4 | ✓ Complete | 2026-11-14 |
 | 11. Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps | 0/3 | Not started | - |
-| 12. Reconcile Phase 9 Lifecycle/Trust Verification & Contracts | 0/TBD | Not started | - |
+| 12. Reconcile Phase 9 Lifecycle/Trust Verification & Contracts | 2/2 | Complete    | 2026-11-15 |
 | 13. Canonical Host, Deploy & Ops Alignment (BRND-04 closeout) | 0/TBD | Not started | - |
 
 ## Commit History Note
