@@ -9,12 +9,12 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 
 ### Fundação Social, Dados & Configuração
 
-- [ ] **SOC-01**: Migração cria `social_accounts` com provider, page_id, page_name, token criptografado em repouso, status (`connected`/`needs_reconnect`/`disconnected`), `connected_at`, `token_checked_at`
-- [ ] **SOC-02**: Migração cria `social_posts` com FK `job_id`, provider, text, status (`draft`/`scheduled`/`publishing`/`published`/`failed`/`cancelled`), `scheduled_at`, attempts, `next_retry_at`, `last_error`, `external_post_id`, `published_at`, timestamps; índice único `(job_id, provider)` para idempotência
-- [ ] **SOC-03**: Migração opcional cria `social_post_logs` (histórico de tentativas com resposta resumida da API) se adotado pela implementação
-- [ ] **SOC-04**: `page_access_token` é criptografado em repouso (ex.: Fernet com chave em env `SOCIAL_TOKEN_ENCRYPTION_KEY`); segredos/tokens nunca em logs, respostas de API ou frontend
-- [ ] **SOC-05**: Interface `SocialPublisher` definida (contrato para publicação); `FacebookPublisher` implementa agora; arquitetura permite `InstagramPublisher` futuro sem reescrever fluxo
-- [ ] **SOC-06**: Config/envs documentadas em `.env.example`: `META_APP_ID`, `META_APP_SECRET`, `META_GRAPH_VERSION`, `META_OAUTH_REDIRECT_URI`, `SOCIAL_TOKEN_ENCRYPTION_KEY`, `SOCIAL_WORKER_SECRET`, `SOCIAL_MAX_ATTEMPTS`, `SOCIAL_RETRY_DELAYS`, `SITE_PUBLIC_URL` (e demais necessárias)
+- [x] **SOC-01**: Migração cria `social_accounts` com provider, page_id, page_name, token criptografado em repouso, status (`connected`/`needs_reconnect`/`disconnected`), `connected_at`, `token_checked_at`
+- [x] **SOC-02**: Migração cria `social_posts` com FK `job_id`, provider, text, status (`draft`/`scheduled`/`publishing`/`published`/`failed`/`cancelled`), `scheduled_at`, attempts, `next_retry_at`, `last_error`, `external_post_id`, `published_at`, timestamps; índice único `(job_id, provider)` para idempotência
+- [x] **SOC-03**: Migração opcional cria `social_post_logs` (histórico de tentativas com resposta resumida da API) se adotado pela implementação
+- [x] **SOC-04**: `page_access_token` é criptografado em repouso (ex.: Fernet com chave em env `SOCIAL_TOKEN_ENCRYPTION_KEY`); segredos/tokens nunca em logs, respostas de API ou frontend
+- [x] **SOC-05**: Interface `SocialPublisher` definida (contrato para publicação); `FacebookPublisher` implementa agora; arquitetura permite `InstagramPublisher` futuro sem reescrever fluxo
+- [x] **SOC-06**: Config/envs documentadas em `.env.example`: `META_APP_ID`, `META_APP_SECRET`, `META_GRAPH_VERSION`, `META_OAUTH_REDIRECT_URI`, `SOCIAL_TOKEN_ENCRYPTION_KEY`, `SOCIAL_WORKER_SECRET`, `SOCIAL_MAX_ATTEMPTS`, `SOCIAL_RETRY_DELAYS`, `SITE_PUBLIC_URL` (e demais necessárias)
 
 ### OAuth Meta & Integrações (Admin)
 
@@ -87,12 +87,12 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SOC-01 | Phase 14 | Pending |
-| SOC-02 | Phase 14 | Pending |
-| SOC-03 | Phase 14 | Pending |
-| SOC-04 | Phase 14 | Pending |
-| SOC-05 | Phase 14 | Pending |
-| SOC-06 | Phase 14 | Pending |
+| SOC-01 | Phase 14 | Complete |
+| SOC-02 | Phase 14 | Complete |
+| SOC-03 | Phase 14 | Complete |
+| SOC-04 | Phase 14 | Complete |
+| SOC-05 | Phase 14 | Complete |
+| SOC-06 | Phase 14 | Complete |
 | META-01 | Phase 15 | Pending |
 | META-02 | Phase 15 | Pending |
 | META-03 | Phase 15 | Pending |

@@ -82,7 +82,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 14. Fundação Social, Dados e Configuração | 3/3 | Complete   | 2026-11-15 |
+| 14. Fundação Social, Dados e Configuração | 3/3 | Complete    | 2026-11-15 |
 | 15. OAuth Meta e Integrações no Admin | 0/0 | Not started | - |
 | 16. Geração, Revisão e Aprovação do Post Social | 0/0 | Not started | - |
 | 17. Publicação Assíncrona, Retry, Idempotência e Status | 0/0 | Not started | - |
