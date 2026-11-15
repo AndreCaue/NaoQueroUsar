@@ -61,7 +61,7 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
 1. **New → Blueprint** e selecione este repositório. O Render lê `render.yaml` da raiz:
    - `rootDir: backend` (o backend não vive na raiz do repo)
    - `buildCommand: pip install uv && uv sync --frozen --no-dev` (usa `pyproject.toml` + `uv.lock`; **não** há `requirements.txt`)
-   - `startCommand: uv run alembic upgrade head && uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - `startCommand: uv run --no-sync alembic upgrade head && uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT`
    - `healthCheckPath: /api/v1/health`
    - `region: ohio` — **alinhe à região do seu projeto Neon** (Neon → Project → Settings → General → Region)
 2. Preencha os env vars abaixo no dashboard (Environment). Os marcados `sync: false` no `render.yaml` **não** têm valor no git:
@@ -90,7 +90,7 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
    `turnstile.mode` **precisa** ser `live`. Se vier `test` ou `disabled`, o deploy está errado (ou o validador derrubou o boot) — a única exceção é o desvio temporário documentado abaixo, que exige `ALLOW_TEST_TURNSTILE=true` no Render e reporta `"test_override":true` no health.
    Se o boot falhar no `alembic upgrade head`, confira primeiro `DATABASE_URL`: ele **precisa** começar com `postgresql+asyncpg://` (não `postgresql://`) e usar o host `-pooler`.
 4. **Deploys são manuais** (`autoDeploy: false` no `render.yaml`): um push na branch de produção **não** sobe automaticamente — cada deploy é disparado no dashboard do Render após revisão. Isso é de propósito: o `startCommand` roda `alembic upgrade head` a cada boot e migrações são forward-only — um deploy automático aplicaria schema novo em produção sem aprovação e sem rollback. Dispare em **Deploy latest commit** depois de revisar (e, para mudanças de schema, após snapshot/backup do Neon).
-5. **Migrações rodam a cada boot** (`alembic upgrade head` no `startCommand`). São idempotentes e forward-only. Risco conhecido e aceito: uma migration quebrada derruba o boot em loop (inclusive a cada wake-up do plano free) e derruba o board público junto — não existe rollback de schema. Mitigações atuais: deploy manual/gated (a migration é revisada antes do deploy), regra de migrações forward-only, e snapshot do Neon antes de merges que tocam schema. Separar a migração num step de release próprio (pre-deploy do Render) é trabalho futuro — **não remova o `alembic upgrade head` do boot sem que esse step revisado exista e esteja documentado**.
+5. **Migrações rodam a cada boot** (`alembic upgrade head` no `startCommand`). O boot usa `uv run --no-sync` (o build já executou `uv sync --frozen --no-dev`) para não re-sincronizar dependências a cada boot/wake-up, alinhado ao `render.yaml`. São idempotentes e forward-only. Risco conhecido e aceito: uma migration quebrada derruba o boot em loop (inclusive a cada wake-up do plano free) e derruba o board público junto — não existe rollback de schema. Mitigações atuais: deploy manual/gated (a migration é revisada antes do deploy), regra de migrações forward-only, e snapshot do Neon antes de merges que tocam schema. Separar a migração num step de release próprio (pre-deploy do Render) é trabalho futuro — **não remova o `alembic upgrade head` do boot sem que esse step revisado exista e esteja documentado**.
 6. **Plano free dorme após ~15 min sem tráfego.** O primeiro request depois do spin-down paga o cold-start (ver seção **Cold-start**) — e também refaz o upgrade do Alembic no boot.
 
 ---
@@ -184,7 +184,7 @@ Configuração (uma vez, no GitHub):
 
 ## Cold-start
 
-O plano free do Render **dorme após ~15 min sem tráfego**. No primeiro request depois do sono, a plataforma paga o boot do processo (+ migrações Alembic no `startCommand`).
+O plano free do Render **dorme após ~15 min sem tráfego**. No primeiro request depois do sono, a plataforma paga o boot do processo (+ migrações Alembic no `startCommand` com `uv run --no-sync`, sem re-sync de dependências porque o build já fez `uv sync --frozen --no-dev`).
 
 **Como o frontend lida com isso:**
 - `frontend/lib/jobs.ts` faz fetch com `cache: "no-store"` e **timeout de 15 s** (`AbortSignal.timeout`).
@@ -204,6 +204,17 @@ O plano free do Render **dorme após ~15 min sem tráfego**. No primeiro request
 ## Gate de fumaça
 
 `scripts/verify-deploy.ps1` valida o deploy de produção de ponta a ponta (health + Turnstile `live`, CORS permitido/negado, board sem dados de contato, páginas legais `/privacidade` e `/termos-de-uso` sem placeholder, contrato da API, cron 401/403/503 (fail-closed) e idempotência, ausência de vazamento do secret e latência do primeiro request).
+
+### Critério 6 (human-gated) — evidência de produção obrigatória
+
+> **Critério 6 é human-gated.** Os artefatos do repositório (blueprint, gate, runbook) podem ser preparados e alinhados, mas o **Critério 6** só é considerado fechado após um deploy real executado por operador e um `scripts/verify-deploy.ps1` aprovado com evidência registrada.
+
+Evidência mínima exigida para um gate de produção aprovado:
+
+- **Health:** `GET /api/v1/health` retorna 200 com `env=prod` e `turnstile.mode=live` (ou evidência explicitamente aprovada de `test_override` com `-AllowTestTurnstile` e `turnstile.test_override=true`, conforme desvio documentado).
+- **CORS preflight (allow/deny):** preflight permitido da origem exata do frontend de produção ecoa `Access-Control-Allow-Origin` igual à origem canônica; preflight de origem estrangeira é negado (sem `Access-Control-Allow-Origin` permissivo para origem estranha).
+- **Cron:** requisição sem/errada é recusada (401/403/503 fail-closed conforme configuração) e requisição autorizada com `X-Cron-Secret` retorna 200 com contagem idempotente.
+- **Registro:** URLs reais, resultados observados, cold-start e saída final `verify-deploy: all checks passed` (ou aprovação explícita do caminho `test_override`) registrados em **Registro de verificação**.
 
 ```powershell
 $env:CRON_SECRET = "<CRON_SECRET>"   # não fica no histórico do PowerShell
@@ -293,6 +304,7 @@ Compatível com PowerShell 5.1 (TLS 1.2 fixado no script), salvo em UTF-8 com BO
 | 2026-11-12 | Não vazamento | board/health/privacidade/termos | secret não aparece | — | OK |
 | 2026-11-12 | `verify-deploy.ps1` | `-FrontendUrl https://empreganoix.vercel.app -BackendUrl https://empreganoix.onrender.com` | **FALHOU no check 1** (`env=dev`) | não medido | Re-rodar como primeiro tráfego após corrigir `ENV`/`CORS`/Turnstile |
 | 2026-11-12 | GitHub Actions — `expire-jobs` manual | — | não executado | — | pendente |
+| 2026-11-13 | Preparação de deploy (Fase 9) | — | Artefatos preparados/alinhados (ROADMAP critério 2 T-06-01, gate com aviso exato de intermediário, runbook com `uv run --no-sync` e aviso Critério 6 human-gated); deploy/smoke gate permanece human-gated (não executado) | — | Critério 6 continua pendente de execução real e evidência registrada |
 | 2026-11-14 | Deploy produção (10-04 Task 2, checkpoint aprovado) | Frontend `https://empreganoix-six.vercel.app`, Backend `https://nqu-backend-x60n.onrender.com` | **Aprovado pelo usuário** (produção verificada; evidências fornecidas: URLs e cold-start) | 0.2s | Hosts reais diferem dos exemplos do plano (`empreganoix.vercel.app` / `empreganoix.onrender.com`); serviço Render permanece `nqu-backend` (conforme decisão documentada). Detalhes de smoke gate/fluxos não informados além da aprovação — ver 10-04-SUMMARY. |
 | _pendente_ | Cold-start após ~20 min ocioso | | | | tempo real + comportamento da UI |
 | _pendente_ | Fluxo público real (buscar/revelar/reportar) | | | | Turnstile real |
