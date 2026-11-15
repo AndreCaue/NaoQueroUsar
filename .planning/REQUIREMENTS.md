@@ -60,9 +60,9 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 
 ### Confiança & Legal (continuado e finalizado)
 
-- [ ] **TRST-10**: Páginas de privacidade, termos e aviso "somos apenas meio de divulgação" (LGPD) — existentes e acessíveis em `/privacidade` e `/termos-de-uso`
+- [x] **TRST-10**: Páginas de privacidade, termos e aviso "somos apenas meio de divulgação" (LGPD) — existentes e acessíveis em `/privacidade` e `/termos-de-uso`
 - [ ] **TRST-11**: Visitante pode denunciar uma vaga — endpoint `/jobs/{id}/report` aceita motivo opcional (máx 500 chars), emite logs estruturados sem persistir reports
-- [ ] **TRST-12**: Badge "Vaga revisada" aparece em vaga com status `published` e aprovada pelo master — deriva apenas de status=published no JobCard e JobDetailDialog
+- [x] **TRST-12**: Badge "Vaga revisada" aparece em vaga com status `published` e aprovada pelo master — deriva apenas de status=published no JobCard e JobDetailDialog
 
 ### Rebranding & Branding (novo para v1.1)
 
