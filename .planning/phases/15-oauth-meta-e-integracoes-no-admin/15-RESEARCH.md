@@ -429,22 +429,19 @@ page_access_token = encrypt_token(plain_page_token, settings.SOCIAL_TOKEN_ENCRYP
 | A4 | `start` autenticado pode ser consumido por navegação browser com Bearer via fetch que obtém URL de redirect (ou padrão equivalente) mantendo proteção de início | UI/Backend integration | Médio; detalhes de UX/técnica dependem do client atual, mas proteção e redirect same-tab são obrigatórios |
 | A5 | `META_GRAPH_VERSION` default `v21.0` permanece aceitável como configurável; valor exato estável a usar em produção deve ser confirmado no ambiente/app Meta no momento da execução | Standard Stack / State of the Art | Baixo para planejamento; ajustar env sem mudança estrutural |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Armazenamento da pendência de múltiplas páginas (D-08)**
-   - What we know: deve ser intermediada pelo backend, segura, sem expor tokens, com expiração/limpeza e confirmação autenticada.
-   - What's unclear: usar tabela DB transitória dedicada, reutilizar `social_accounts` em estado pendente, ou store efêmero em processo/memória.
-   - Recommendation: **tabela transitória DB (ex.: `social_oauth_pending`) com TTL/nonce opaco e dados sensíveis cifrados ou minimizados**, pois suporta múltiplos workers/restarts melhor que memória; se escopo de migration for indesejado, adotar alternativa assinada+cifrada apenas com referência server-side persistida — planner deve escolher explicitamente. [ASSUMED]
+1. **Armazenamento da pendência de múltiplas páginas (D-08)** — **RESOLVED**
+   - Decision: usar **tabela transitória DB dedicada `social_oauth_pending`** (migration/model) com `nonce` opaco, `pages_payload_encrypted`, `expires_at` e `consumed_at`, criada no callback e consumida atomicamente na confirmação/expiração.
+   - Rationale: atende D-08 (backend-mediated, sem tokens no frontend), suporta expiração/limpeza e múltiplos workers/restarts melhor que memória; payload sensível (incluindo page tokens candidatos) permanece cifrado server-side. Alinhado aos planos 15-01/15-02.
 
-2. **Forma de acionar `oauth/start` a partir da UI mantendo Bearer**
-   - What we know: start exige admin autenticado (D-04) e fluxo é redirect na mesma aba (D-02).
-   - What's unclear: endpoint retorna `302` direto (difícil anexar Bearer em navegação top-level) vs endpoint JSON `{"redirect_url": ...}` chamado via fetch autenticado e seguido por `window.location`.
-   - Recommendation: **`POST/GET` autenticado retorna JSON com URL de autorização** (ou usa forma equivalente que preserve Bearer) e o client redireciona na mesma aba; mantém contrato de auth atual. [ASSUMED]
+2. **Forma de acionar `oauth/start` a partir da UI mantendo Bearer** — **RESOLVED**
+   - Decision: endpoint `start` autenticado (`require_admin`) retorna **JSON com `redirect_url`** (URL do Meta Dialog montada no backend); o client chama via `fetch` com Bearer e executa navegação na mesma aba com `window.location.assign(redirect_url)`.
+   - Rationale: preserva proteção de início autenticado (D-04) e UX de redirect na mesma aba (D-02) sem depender de Bearer em navegação top-level direta. Alinhado aos planos 15-02/15-03.
 
-3. **Comportamento exato quando faltam envs Meta obrigatórios para iniciar OAuth**
-   - What we know: `META_*` são validados por formato quando preenchidos; segredos não devem vazar.
-   - What's unclear: se start deve falhar com erro operacional seguro (ex.: "Integração Meta não configurada") quando `META_APP_ID/SECRET/REDIRECT_URI` ausentes.
-   - Recommendation: checagem explícita no `start/status/verify` com mensagens seguras e sem expor valores; documentar pré-requisitos operacionais. [ASSUMED]
+3. **Comportamento exato quando faltam envs Meta obrigatórios para iniciar OAuth** — **RESOLVED**
+   - Decision: `start` (e operações que dependem de config Meta, quando aplicável) realiza checagem explícita de envs obrigatórios (`META_APP_ID`, `META_APP_SECRET`, `META_OAUTH_REDIRECT_URI`, `META_GRAPH_VERSION`) e falha de forma segura com erro operacional genérico pt-BR (ex.: `"Integração com Facebook não configurada"`), sem expor valores/segredos.
+   - Rationale: evita vazamento de configuração/segredos (META-05/D-03) e fornece sinalização operacional clara; callback/status continuam retornando apenas códigos/mensagens seguras. Alinhado aos planos 15-01/15-02.
 
 ## Environment Availability
 
