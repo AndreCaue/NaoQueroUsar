@@ -86,7 +86,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 **Success Criteria** (what must be TRUE):
 
 1. Cada vaga nasce com `expires_at` = `created_at` + 14 dias; server_default verificado no modelo e migration; `expires_at` é `timestamptz` computed em UTC via `NOW()` do banco; vaga futura NÃO é deletada por cron
-2. Vagas `published` expiradas são hard-deleted por endpoint `/admin/expire` protegido por `X-Cron-Secret` header (ou Bearer JWT admin) — declaração idempotente em UTC; chamada duplicada não causa erro; nenhuma vaga futura é apagada
+2. Vagas `published` expiradas são hard-deleted por endpoint `/admin/expire` protegido exclusivamente por header `X-Cron-Secret` (um Bearer JWT de admin NÃO é aceito — T-06-01) — declaração idempotente em UTC; chamada duplicada não causa erro; nenhuma vaga futura é apagada
 3. Vagas `pending` não revisadas também expiram após 14 dias — mesma regra de 14 dias aplicada; tabela não cresce indefinidamente
 4. Páginas de privacidade (`/privacidade`), termos (`/termos-de-uso`) e aviso LGPD `"somos apenas meio de divulgação"` existem e são acessíveis; política pt-BR com 13 sections (Privacidade) e 10 sections (Termos de Uso/foro Americana/SP)
 5. Visitante pode denunciar uma vaga via endpoint `/jobs/{id}/report` — motivo opcional (máx 500 chars), logs estruturados sem persistir reports; badge "Vaga revisada" aparece em vaga com status `published` e aprovada pelo master

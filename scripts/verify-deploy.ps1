@@ -183,10 +183,10 @@ Assert ($board.Body -notmatch 'mailto:') "Board vaza mailto: no HTML"
 Write-Pass "board 200 sem contact_email/contact_phone/mailto:"
 
 # ---------------------------------------------------------------------------
-# 5. Legal: /privacidade (LGPD + canal) e /termos-de-uso (aviso de intermediário)
-#    O aviso "somos apenas meio de divulgação" vive nos Termos desde que a
-#    Política passou a ser o texto final do operador — não procurar por
-#    "intermedi" em /privacidade (falso negativo).
+# 5. Legal: /privacidade (LGPD + canal) e /termos-de-uso (aviso exato de intermediário)
+#    O aviso exato "somos apenas meio de divulgação" deve estar presente nos Termos;
+#    a asserção usa o fragmento acento-robusto "somos apenas meio de divulga"
+#    (compatível com UTF-8/BOM e Windows PowerShell 5.1).
 # ---------------------------------------------------------------------------
 $legal = Invoke-Http -Method GET -Url "$FrontendUrl/privacidade"
 Assert ($legal.Status -eq 200) "/privacidade retornou $($legal.Status) (esperado 200)"
@@ -196,9 +196,9 @@ Assert ($legal.Body -notmatch 'Lorem ipsum|provisóri|\[Seu Nome|\[seu e-mail') 
 
 $terms = Invoke-Http -Method GET -Url "$FrontendUrl/termos-de-uso"
 Assert ($terms.Status -eq 200) "/termos-de-uso retornou $($terms.Status) (esperado 200)"
-Assert ($terms.Body -imatch 'intermedi') "/termos-de-uso não contém o aviso de intermediário ('intermedi')"
+Assert ($terms.Body -imatch 'somos apenas meio de divulga') "/termos-de-uso não contém o aviso exato de intermediário ('somos apenas meio de divulgação')"
 Assert ($terms.Body -notmatch 'Lorem ipsum|provisóri|\[sua cidade|\[Seu Nome') "/termos-de-uso ainda contém texto provisório/placeholder"
-Write-Pass "/privacidade 200 (LGPD + canal) e /termos-de-uso 200 (aviso de intermediário)"
+Write-Pass "/privacidade 200 (LGPD + canal) e /termos-de-uso 200 (aviso exato de intermediário)"
 
 
 # ---------------------------------------------------------------------------
