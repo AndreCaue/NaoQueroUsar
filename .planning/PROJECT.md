@@ -3,10 +3,28 @@
 ## Current State
 
 **Latest shipped milestone:** v1.1 EmpregaNoix — **shipped 2026-11-15** (archived with **accepted audit gaps**).  
-**Audit:** `.planning/v1.1-MILESTONE-AUDIT.md` (`gaps_found`) — user elected to complete milestone and record gaps/tech debt.  
-**Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`
+**Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`
 
-**Current milestone:** None. Define the next milestone with `/gsd-new-milestone` (fresh requirements/roadmap).
+## Current Milestone: v1.2 Integração com Facebook Pages
+
+**Goal:** Ao aprovar uma vaga na revisão, publicar no site e criar/agendar automaticamente uma publicação na Página do Facebook com texto gerado por IA (editável pelo revisor), sem nunca bloquear a publicação no site.
+
+**Target features:**
+- Fundação social: migrações/modelos (`social_accounts`, `social_posts`, opcional `social_post_logs`), interface `SocialPublisher` (Facebook agora; Instagram futuro), criptografia de tokens em repouso e config/envs Meta/social
+- OAuth Meta (Graph API): conectar/desconectar/status no painel admin, fluxo com `state` anti-CSRF, troca por long-lived/page token, seleção de página única, validação/expiração (`needs_reconnect`) e alertas
+- Geração de texto do post: reutilizar integração LLM existente (pt-BR, emojis/hashtags, link da vaga, ~700 chars), fallback por template, rascunho editável na revisão (regenerar/editar/preview, imediato ou agendado, fuso `America/Sao_Paulo`)
+- Publicação assíncrona e resiliente: `FacebookPublisher` (`/{page_id}/feed`), worker/polling acionado por cron (Render) com `FOR UPDATE SKIP LOCKED`, retries com backoff configurável, classificação transitório vs permanente, idempotência (sem duplicatas)
+- UI/admin de status e operações: Integrações (conectar/status/desconectar/reconectar), badge/status social por vaga, erro resumido, link do post publicado, "tentar novamente"
+- Qualidade e docs: testes (unit/integração/mock Graph API, concorrência/idempotência), roteiro manual com app em dev, documentação `.env.example`, setup Meta App/cron Render/App Review
+
+**Key decisions/constraints (milestone):**
+- Apenas Facebook neste milestone; arquitetura preparada para `InstagramPublisher` futuro
+- Uma única Página, único admin; OAuth completo no painel
+- Falha no Facebook nunca bloqueia/derruba vaga no site; post fire-and-forget (editar/fechar/expirar vaga não altera/remove post)
+- Retry automático com backoff (default 5 tentativas: 5min/15min/1h/3h/6h), configurável por env; botão manual de retry
+- Texto aprovado imutável após envio e salvo; por padrão sem contato direto no post (apenas link do site, configurável)
+- Segredos/tokens apenas no backend, criptografados em repouso, nunca em logs/frontend
+- **Antes de planejar:** inspecionar repo (framework Python, ORM/migrations, padrões, LLM/cron/revisão existentes) e seguir convenções; evitar novas dependências sem justificativa
 
 ## What This Is
 
@@ -29,14 +47,19 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Active
 
-<!-- Next milestone scope (to be defined). -->
+<!-- Current milestone scope (v1.2) — to be formalized in REQUIREMENTS.md/ROADMAP. -->
 
-- [ ] Definir e executar próximos incrementos via `/gsd-new-milestone` (fechar gaps de EXTR/PUBL/SRCH/UIUX, evidências DB/browser/canônicas pendentes, e demais itens do audit conforme prioridade)
+- [ ] Integração Facebook Pages: publicação automática de vagas aprovadas (OAuth Meta, geração/edição de texto com LLM, agendamento/imediato, publicação assíncrona resiliente, status/retry no admin)
+- [ ] Infra/dados social: `social_accounts`/`social_posts` (+ logs), tokens criptografados, idempotência, worker/cron com retry/backoff configurável
+- [ ] UI admin: tela de Integrações, revisão com editor/preview/agendamento do post, badges/erros/link/retry por vaga
+- [ ] Testes e documentação operacional (Meta app, envs, cron Render, checklist App Review/modo Live)
+- [ ] (Carry-over prioritário, conforme planejamento) Fechar gaps aceitos do v1.1: EXTR/PUBL/SRCH/UIUX, evidências DB/browser/canônicas e verificação pendente
 
 ### Out of Scope
 
 <!-- Explicit boundaries. Includes reasoning to prevent re-adding. -->
 
+- Instagram, geração de imagem, sincronização de edição/remoção do post, múltiplas Páginas, métricas/insights de engajamento — fora do milestone v1.2 (arquitetura deve prever extensão)
 - Login/cadastro de usuário comum — secundário e opcional, não entra no MVP (o diferencial é justamente não exigir conta)
 - Renovação de vagas expiradas — fora de escopo; expiração é definitiva (ciclo completo)
 - Controle de duplicidade de vagas — não previsto; curadoria manual cobre
@@ -96,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-15 after v1.1 milestone completion (EmpregaNoix, audit gaps accepted)*
+*Last updated: 2026-11-15 after starting v1.2 milestone (Integração com Facebook Pages)*

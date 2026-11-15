@@ -1,17 +1,17 @@
 ﻿---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: EmpregaNoix
-status: milestone_archived
-stopped_at: Milestone v1.1 archived (2026-11-15, audit gaps accepted)
+milestone: v1.2
+milestone_name: Integração com Facebook Pages
+status: planning
+stopped_at: Milestone v1.2 initialized (defining scope)
 last_updated: 2026-11-15T00:00:00.000Z
-last_activity: 2026-11-15 -- Archived v1.1 milestone (gaps accepted)
+last_activity: 2026-11-15 -- Started milestone v1.2 (Facebook Pages integration)
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 21
-  completed_plans: 21
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-15)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** v1.1 archived; define next milestone via `/gsd-new-milestone` (fresh requirements)
+**Current focus:** Milestone v1.2 — Integração com Facebook Pages (defining requirements/roadmap)
 
 ## Current Position
 
-Phase: 13
-Plan: 2 of 2
-Status: Milestone complete
-Last activity: 2026-11-15
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-11-15 — Milestone v1.2 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 21
+- Total plans completed (v1.2): 0
 - Average duration: — min
 - Total execution time: 0.0 hours
 
@@ -44,20 +44,14 @@ Progress: [██████████] 100%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 07 | 3 | 3 | - |
-| 08 | 3 | 3 | - |
-| 09 | 4 | 4 | - |
-| 10 | 4 | 4 | - |
-| 11 | 3 | 3 | - |
-| 12 | 2 | 2 | - |
-| 13 | 2 | 2 | - |
+| — | — | — | — |
 
 **Recent Trend:**
 
 - Last 5 plans: —
-- Trend: Stable
+- Trend: —
 
-*Updated after each plan completion*
+*Reset for new milestone; v1.1 metrics archived in project history.*
 
 ## Accumulated Context
 
@@ -66,9 +60,7 @@ Progress: [██████████] 100%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Decisões do v1.0 arquivadas em .planning/milestones/v1.0-STATE-DECISIONS.md.
-- Decisões do v1.1 (fases 7 a 13) entram abaixo.
-
+- v1.2: Integração apenas com Facebook (interface `SocialPublisher` prevendo Instagram futuro), 1 página/1 admin, OAuth no painel, falha no Facebook não bloqueia o site, retry/backoff configurável + retry manual, post fire-and-forget, texto gerado por LLM (editável na revisão, imutável após envio), segredos/tokens só no backend (criptografados).
 
 ### Pending Todos
 
@@ -76,7 +68,8 @@ None yet.
 
 ### Blockers/Concerns
 
-- Carried from v1.1 audit (accepted at close): canonical-host live smoke/provisioning execution pending (handoff), DB-backed test reproducibility gaps (`jobs` relation missing in audited runs), human/browser verification caveats (Turnstile widget/UX), missing `11-VERIFICATION.md`, and unsatisfied milestone reqs EXTR-10/11/12, PUBL-10/11/12/13/14, SRCH-10/11/12, UIUX-10/11/12. See `.planning/v1.1-MILESTONE-AUDIT.md` and archives.
+- **Carried from v1.1 (audit accepted):** canonical-host live smoke/provisioning pending (handoff), DB-backed test reproducibility gaps, human/browser verification caveats, missing `11-VERIFICATION.md`, unsatisfied EXTR/PUBL/SRCH/UIUX reqs and other partial items — see `.planning/milestones/v1.1-MILESTONE-AUDIT.md`.
+- **v1.2 prerequisite:** inspecionar repo antes de planejar (framework Python, ORM/migrations, padrões, LLM/cron/revisão existentes) para alinhar convenções e evitar dependências desnecessárias.
 
 ### Quick Tasks Completed
 
@@ -84,7 +77,7 @@ None yet.
 
 ## Deferred Items
 
-Items acknowledged and deferred at milestone close on 2026-11-15 (v1.1, audit `gaps_found` accepted):
+Carried forward from v1.1 close (2026-11-15, audit `gaps_found` accepted):
 
 | Category | Item | Status |
 |----------|------|--------|
@@ -95,7 +88,7 @@ Items acknowledged and deferred at milestone close on 2026-11-15 (v1.1, audit `g
 
 ## Session Continuity
 
-Last session: 2026-11-15T14:19:59.295Z
-Stopped at: Milestone complete (Phase 13 was final phase)
+Last session: 2026-11-15
+Stopped at: Milestone v1.2 initialized (scope gathered, PROJECT/STATE updated)
 Resume file: None
 
