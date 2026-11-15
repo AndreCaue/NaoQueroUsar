@@ -23,7 +23,7 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 - [ ] **META-03**: Fluxo suporta seleção da Página quando houver mais de uma; salva apenas uma única Página/conexão (único admin)
 - [ ] **META-04**: Page token derivado de long-lived user token é validado (ex.: `/debug_token`); token inválido/expirado marca conta `needs_reconnect` e gera alerta no painel
 - [ ] **META-05**: App Secret e tokens permanecem somente no backend; nenhuma credencial exposta ao frontend
-- [ ] **META-06**: Tela/seção admin "Integrações" permite conectar/desconectar Facebook, exibe status da conexão, nome da página e alerta de reconexão necessária
+- [x] **META-06**: Tela/seção admin "Integrações" permite conectar/desconectar Facebook, exibe status da conexão, nome da página e alerta de reconexão necessária
 
 ### Geração e Edição do Texto do Post (Revisão)
 
@@ -93,12 +93,12 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 | SOC-04 | Phase 14 | Complete |
 | SOC-05 | Phase 14 | Complete |
 | SOC-06 | Phase 14 | Complete |
-| META-01 | Phase 15 | Pending |
-| META-02 | Phase 15 | Pending |
-| META-03 | Phase 15 | Pending |
-| META-04 | Phase 15 | Pending |
-| META-05 | Phase 15 | Pending |
-| META-06 | Phase 15 | Pending |
+| META-01 | Phase 15 | Complete |
+| META-02 | Phase 15 | Complete |
+| META-03 | Phase 15 | Complete |
+| META-04 | Phase 15 | Complete |
+| META-05 | Phase 15 | Complete |
+| META-06 | Phase 15 | Complete |
 | POST-01 | Phase 16 | Pending |
 | POST-02 | Phase 16 | Pending |
 | POST-03 | Phase 16 | Pending |

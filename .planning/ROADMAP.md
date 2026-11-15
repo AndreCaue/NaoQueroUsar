@@ -13,7 +13,7 @@
 - Prior phase history (1–13) remains in `.planning/phases/` and milestone archives.
 
 - [x] **Phase 14: Fundação Social, Dados e Configuração** - Criar base de dados, segurança de tokens e contratos de publicação social (Facebook-first, extensível) (completed 2026-11-15)
-- [ ] **Phase 15: OAuth Meta e Integrações no Admin** - Conectar/desconectar página do Facebook com fluxo OAuth seguro e status operacional visível
+- [x] **Phase 15: OAuth Meta e Integrações no Admin** - Conectar/desconectar página do Facebook com fluxo OAuth seguro e status operacional visível (completed 2026-11-15)
 - [ ] **Phase 16: Geração, Revisão e Aprovação do Post Social** - Produzir rascunho de post com IA/template, permitir edição/agendamento na revisão e integrar aprovação sem bloquear o site
 - [ ] **Phase 17: Publicação Assíncrona, Retry, Idempotência e Status** - Publicar/agendar no Facebook via worker resiliente e expor status/erros/retry no admin
 - [ ] **Phase 18: Testes, Documentação e Fechamento de Gaps v1.1** - Cobrir fluxos críticos com testes/docs operacionais e fechar/registrar evidências dos gaps aceitos do audit v1.1
@@ -40,7 +40,13 @@
   2. O fluxo solicita permissões mínimas e usa `META_GRAPH_VERSION` configurável; quando há múltiplas páginas, apenas uma é selecionada/salva.
   3. Token/página são validados (ex.: `/debug_token`); token inválido/expirado marca a conta como `needs_reconnect` e o backend não expõe segredos ao frontend.
   4. A área admin de Integrações exibe status, nome da página e ações de conectar/desconectar/reconectar com alerta quando reconexão é necessária.
-**Plans**: TBD
+**Plans:** 3/3 plans complete
+
+Plans:
+- [x] 15-01-PLAN.md — OAuth/Meta backend foundation (state, pending selection, schemas, services)
+- [x] 15-02-PLAN.md — Meta integrations API routes and callback flow
+- [x] 15-03-PLAN.md — Admin Integrações UI and human verification (approved)
+
 **UI hint**: yes
 
 ### Phase 16: Geração, Revisão e Aprovação do Post Social
@@ -83,7 +89,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 14. Fundação Social, Dados e Configuração | 3/3 | Complete    | 2026-11-15 |
-| 15. OAuth Meta e Integrações no Admin | 2/3 | In Progress|  |
+| 15. OAuth Meta e Integrações no Admin | 3/3 | Complete    | 2026-11-15 |
 | 16. Geração, Revisão e Aprovação do Post Social | 0/0 | Not started | - |
 | 17. Publicação Assíncrona, Retry, Idempotência e Status | 0/0 | Not started | - |
 | 18. Testes, Documentação e Fechamento de Gaps v1.1 | 0/0 | Not started | - |
