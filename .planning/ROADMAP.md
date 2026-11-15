@@ -171,10 +171,19 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 
 **Success Criteria** (what must be TRUE):
 
-1. Intended canonical production domains are confirmed and consistently applied across frontend API base config, backend allowed origins/CORS, deploy config, and operator docs (`docs/DEPLOY.md`, `render.yaml`, Vercel/Render env guidance as applicable).
-2. Deploy/smoke evidence is recorded for the aligned hosts (or explicitly documented with canonical mapping), covering health/env/Turnstile mode, CORS preflight, cron endpoint auth/idempotency, and key public/admin surfaces as relevant.
-3. BRND-04 operational caveat is resolved or explicitly closed with evidence; lifecycle/ops readiness flow is no longer at risk from host/env drift.
+1. Intended canonical production domains are confirmed and consistently applied across frontend API base config, backend allowed origins/CORS, deploy config, and operator docs (`docs/DEPLOY.md`, `render.yaml`, Vercel/Render env guidance as applicable). *(Satisfied by contractual alignment/mapped evidence/traceability in `docs/DEPLOY.md` and Phase 13 artifacts.)*
+2. Deploy/smoke evidence is recorded for the aligned hosts (or explicitly documented with canonical mapping), covering health/env/Turnstile mode, CORS preflight, cron endpoint auth/idempotency, and key public/admin surfaces as relevant. *(Satisfied by recorded/mapped evidence in `docs/DEPLOY.md` D-10 matrix and preserved Registro histórico; execução real em hosts canônicos `https://empreganoix.vercel.app` / `https://empreganoix.onrender.com` permanece como handoff operacional/pending execution, explicitamente documentado.)*
+3. BRND-04 operational caveat is resolved or explicitly closed with evidence; lifecycle/ops readiness flow is no longer at risk from host/env drift. *(Fechado contratualmente com evidência/mapeamento e handoff explícito quando aplicável.)*
 4. `.planning/REQUIREMENTS.md` and roadmap notes reflect BRND-04 closure status and any SECR-12/LIFE-13 production-alignment evidence tied to Phase 13.
+
+**Plans:**
+- [x] 13-01-PLAN.md — Canonical state-alvo, canonical↔legacy host mapping, D-10 alignment matrix, preserved Registro histórico, and canonical-first ops guidance/handoff in `docs/DEPLOY.md` (config/docs/scripts alignment only; no runtime behavior changes)
+- [x] 13-02-PLAN.md — REQUIREMENTS/ROADMAP traceability closure for BRND-04 and residual ops-evidence alignment of SECR-12/LIFE-13 with explicit handoff
+
+**Notes/Evidence:**
+- Entregues alinhamento contratual e evidência mapeada em `docs/DEPLOY.md`: state-alvo canônico `https://empreganoix.vercel.app` / `https://empreganoix.onrender.com`, mapeamento canônico↔legado/histórico, matriz D-10 (health/env/Turnstile, preflight CORS, `/admin/expire` fail-closed/idempotência `X-Cron-Secret`, superfícies públicas/admin chave), preservação do Registro histórico e sequência de handoff/riscos/rollback.
+- Nenhuma mudança de runtime/comportamento de aplicação foi feita (alinhamento de config/docs/scripts/planning). Contrato **T-06-01** preservado (`/admin/expire` aceita somente `X-Cron-Secret`, fail-closed/idempotente).
+- Execução real em hosts canônicos não registrada nesta fase: tratada como **handoff operacional / pending execution** em `docs/DEPLOY.md` e `.planning/REQUIREMENTS.md` (sem alegar deploy/smoke concluído nos hosts canônicos). Ownership split preservada: BRND-04 e resíduo ops de SECR-12/LIFE-13 fechados por evidência contratual/mapeada.
 
 ## Progress
 
@@ -188,7 +197,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 | 10. Rebranding & Launch Preparation (EmpregaNoix) | 4/4 | ✓ Complete | 2026-11-14 |
 | 11. Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps | 0/3 | Not started | - |
 | 12. Reconcile Phase 9 Lifecycle/Trust Verification & Contracts | 2/2 | Complete    | 2026-11-15 |
-| 13. Canonical Host, Deploy & Ops Alignment (BRND-04 closeout) | 0/TBD | Not started | - |
+| 13. Canonical Host, Deploy & Ops Alignment (BRND-04 closeout) | 2/2 | ✓ Complete | 2026-11-15 |
 
 ## Commit History Note
 
