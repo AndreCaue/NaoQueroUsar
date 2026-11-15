@@ -23,12 +23,14 @@
 
   Compatível com Windows PowerShell 5.1. Salve/edite como UTF-8 **com BOM** —
   o parser de 5.1 precisa do BOM para decodificar corretamente os acentos.
+  A parametrização também permite hosts legados/históricos para reproduzir
+  evidência registrada (ex.: https://empreganoix-six.vercel.app / https://nqu-backend-x60n.onrender.com).
 
 .EXAMPLE
+  $env:CRON_SECRET = "<CRON_SECRET>"
   powershell -ExecutionPolicy Bypass -File scripts\verify-deploy.ps1 `
-    -FrontendUrl https://<seu-projeto>.vercel.app `
-    -BackendUrl  https://<backend>.onrender.com `
-    -CronSecret  <CRON_SECRET>
+    -FrontendUrl https://empreganoix.vercel.app `
+    -BackendUrl  https://empreganoix.onrender.com
 #>
 param(
     [Parameter(Mandatory = $true)]

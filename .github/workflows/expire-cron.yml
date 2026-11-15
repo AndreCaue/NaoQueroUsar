@@ -30,7 +30,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${API_BASE_URL:-}" ]; then
-            echo "::error::vars.API_BASE_URL não está configurada. Configure em Settings → Secrets and variables → Actions → Variables (ex.: https://<backend>.onrender.com, sem barra final)."
+            echo "::error::vars.API_BASE_URL não está configurada. Configure em Settings → Secrets and variables → Actions → Variables (state-alvo canônico: https://empreganoix.onrender.com, sem barra final)."
             exit 1
           fi
           if [ -z "${CRON_SECRET:-}" ]; then
