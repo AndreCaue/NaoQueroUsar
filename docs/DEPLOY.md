@@ -293,6 +293,7 @@ Compatível com PowerShell 5.1 (TLS 1.2 fixado no script), salvo em UTF-8 com BO
 | 2026-11-12 | Não vazamento | board/health/privacidade/termos | secret não aparece | — | OK |
 | 2026-11-12 | `verify-deploy.ps1` | `-FrontendUrl https://empreganoix.vercel.app -BackendUrl https://empreganoix.onrender.com` | **FALHOU no check 1** (`env=dev`) | não medido | Re-rodar como primeiro tráfego após corrigir `ENV`/`CORS`/Turnstile |
 | 2026-11-12 | GitHub Actions — `expire-jobs` manual | — | não executado | — | pendente |
+| 2026-11-14 | Deploy produção (10-04 Task 2, checkpoint aprovado) | Frontend `https://empreganoix-six.vercel.app`, Backend `https://nqu-backend-x60n.onrender.com` | **Aprovado pelo usuário** (produção verificada; evidências fornecidas: URLs e cold-start) | 0.2s | Hosts reais diferem dos exemplos do plano (`empreganoix.vercel.app` / `empreganoix.onrender.com`); serviço Render permanece `nqu-backend` (conforme decisão documentada). Detalhes de smoke gate/fluxos não informados além da aprovação — ver 10-04-SUMMARY. |
 | _pendente_ | Cold-start após ~20 min ocioso | | | | tempo real + comportamento da UI |
 | _pendente_ | Fluxo público real (buscar/revelar/reportar) | | | | Turnstile real |
 | _pendente_ | Admin (`/admin` → `/admin/paste`, review) | | | | |
