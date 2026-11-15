@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: EmpregaNoix
 status: executing
 stopped_at: Phase 13 context gathered
-last_updated: "2026-11-15T14:38:09.025Z"
-last_activity: 2026-11-15 -- Phase 13 planning complete
+last_updated: "2026-11-15T15:00:40.964Z"
+last_activity: 2026-11-15 -- Phase 13 execution started
 progress:
   total_phases: 8
   completed_phases: 6
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-12)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 13 — canonical host deploy ops alignment
+**Current focus:** Phase 13 — canonical-host-deploy-ops-alignment
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-11-15 -- Phase 13 planning complete
+Phase: 13 (canonical-host-deploy-ops-alignment) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 13
+Last activity: 2026-11-15 -- Phase 13 execution started
 
 Progress: [████████░░] 80%
 
