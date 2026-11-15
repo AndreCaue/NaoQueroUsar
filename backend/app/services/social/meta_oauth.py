@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import logging
@@ -633,3 +633,4 @@ async def verify_current_connection(session: AsyncSession, settings: Any) -> Met
     account.token_checked_at = account.token_checked_at or now
     await session.flush()
     return MetaActionResponse(status=account.status.value, message=_SAFE_TRANSIENT_VERIFY)
+

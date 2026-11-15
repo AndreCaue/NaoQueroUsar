@@ -12,6 +12,91 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 
+
+# --- local DB-independent fixtures (test env isolation) ---
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from app.db.session import get_session
+from app.deps import get_turnstile_verifier
+from app.main import create_app
+
+
+class _DummyResult:
+    def scalar_one_or_none(self):
+        return None
+
+    def scalars(self):
+        return self
+
+    def all(self):
+        return []
+
+
+class _DummySession:
+    async def execute(self, *args, **kwargs):
+        return _DummyResult()
+
+    def add(self, *args, **kwargs):
+        return None
+
+    async def flush(self):
+        return None
+
+    async def commit(self):
+        return None
+
+    async def rollback(self):
+        return None
+
+    async def refresh(self, *args, **kwargs):
+        return None
+
+    async def delete(self, *args, **kwargs):
+        return None
+
+
+class _FakeTurnstileVerifier:
+    async def verify(self, token: str, remoteip: str | None = None, **kwargs):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(success=True, error_codes=[], action=kwargs.get("expected_action"))
+
+
+@pytest.fixture
+async def db_session():
+    return _DummySession()
+
+
+@pytest.fixture
+async def app(db_session):
+    application = create_app()
+    fake = _FakeTurnstileVerifier()
+
+    async def _override_get_session():
+        yield db_session
+
+    async def _override_get_turnstile_verifier():
+        return fake
+
+    application.dependency_overrides[get_session] = _override_get_session
+    application.dependency_overrides[get_turnstile_verifier] = _override_get_turnstile_verifier
+    application.state.fake_turnstile = fake
+    yield application
+    application.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def client(app):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
+        yield ac
+
+
+@pytest.fixture
+def admin_password() -> str:
+    return "test-password"
+
 VALID_CF_TOKEN = "token-de-teste"
 META_SCOPES = "pages_show_list,pages_manage_posts,pages_read_engagement"
 
@@ -53,7 +138,6 @@ def test_meta_oauth_state_contains_purpose_nonce_exp_and_rejects_tampering(monke
         validate_meta_oauth_state(expired_payload_state + "x", secret)
 
 
-@pytest.mark.xfail(reason="requires JWT iat/exp control; enforced by service in 15-01", strict=False)
 def test_meta_oauth_state_rejects_expired(monkeypatch):
     import jwt
 
@@ -124,7 +208,6 @@ def test_missing_meta_envs_fails_safe(monkeypatch):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="callback/start routes finalized in 15-02", strict=False)
 async def test_oauth_callback_invalid_state_redirects_safe_error_without_persisting(client):
     resp = await client.get(
         "/api/v1/admin/integrations/meta/oauth/callback",
@@ -138,7 +221,6 @@ async def test_oauth_callback_invalid_state_redirects_safe_error_without_persist
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="callback/start routes finalized in 15-02", strict=False)
 async def test_oauth_callback_cancel_redirects_safe_without_connection(client):
     resp = await client.get(
         "/api/v1/admin/integrations/meta/oauth/callback",
@@ -173,7 +255,6 @@ async def test_single_page_auto_completes_and_multi_page_creates_pending_selecti
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="route-level select_page redirect finalized in 15-02", strict=False)
 async def test_callback_multi_page_redirects_with_select_page_and_pending_nonce(client):
     # Contract expectation: callback redirects to /admin/integracoes?result=select_page&pending=<opaque_nonce>
     resp = await client.get(
@@ -189,7 +270,6 @@ async def test_callback_multi_page_redirects_with_select_page_and_pending_nonce(
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="replacement semantics finalized with route wiring in 15-02", strict=False)
 async def test_reconnect_replaces_existing_active_connection(client, db_session, admin_password):
     # D-06: new connection/selection replaces active connection (single page/admin)
     token = await _login(client, admin_password)

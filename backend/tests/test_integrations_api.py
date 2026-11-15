@@ -8,6 +8,91 @@ from __future__ import annotations
 
 import pytest
 
+
+# --- local DB-independent fixtures (test env isolation) ---
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from app.db.session import get_session
+from app.deps import get_turnstile_verifier
+from app.main import create_app
+
+
+class _DummyResult:
+    def scalar_one_or_none(self):
+        return None
+
+    def scalars(self):
+        return self
+
+    def all(self):
+        return []
+
+
+class _DummySession:
+    async def execute(self, *args, **kwargs):
+        return _DummyResult()
+
+    def add(self, *args, **kwargs):
+        return None
+
+    async def flush(self):
+        return None
+
+    async def commit(self):
+        return None
+
+    async def rollback(self):
+        return None
+
+    async def refresh(self, *args, **kwargs):
+        return None
+
+    async def delete(self, *args, **kwargs):
+        return None
+
+
+class _FakeTurnstileVerifier:
+    async def verify(self, token: str, remoteip: str | None = None, **kwargs):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(success=True, error_codes=[], action=kwargs.get("expected_action"))
+
+
+@pytest.fixture
+async def db_session():
+    return _DummySession()
+
+
+@pytest.fixture
+async def app(db_session):
+    application = create_app()
+    fake = _FakeTurnstileVerifier()
+
+    async def _override_get_session():
+        yield db_session
+
+    async def _override_get_turnstile_verifier():
+        return fake
+
+    application.dependency_overrides[get_session] = _override_get_session
+    application.dependency_overrides[get_turnstile_verifier] = _override_get_turnstile_verifier
+    application.state.fake_turnstile = fake
+    yield application
+    application.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def client(app):
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
+        yield ac
+
+
+@pytest.fixture
+def admin_password() -> str:
+    return "test-password"
+
 VALID_CF_TOKEN = "token-de-teste"
 
 
@@ -50,7 +135,6 @@ async def test_oauth_callback_is_not_bearer_protected_but_validated_by_state(cli
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="status schema/route finalized in 15-02", strict=False)
 async def test_status_payload_contract_safe_fields_only(client, admin_password):
     token = await _login(client, admin_password)
     resp = await client.get(
@@ -73,8 +157,14 @@ async def test_status_payload_contract_safe_fields_only(client, admin_password):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="start response contract finalized in 15-02", strict=False)
-async def test_start_returns_json_redirect_url_when_authenticated(client, admin_password):
+async def test_start_returns_json_redirect_url_when_authenticated(client, admin_password, monkeypatch):
+    from app.core.config import get_settings
+
+    monkeypatch.setenv("META_APP_ID", "app123")
+    monkeypatch.setenv("META_APP_SECRET", "secret123")
+    monkeypatch.setenv("META_OAUTH_REDIRECT_URI", "https://api.example.com/api/v1/admin/integrations/meta/oauth/callback")
+    monkeypatch.setenv("META_GRAPH_VERSION", "v21.0")
+    get_settings.cache_clear()
     token = await _login(client, admin_password)
     resp = await client.request(
         "GET",
@@ -85,7 +175,10 @@ async def test_start_returns_json_redirect_url_when_authenticated(client, admin_
     body = resp.json()
     assert "redirect_url" in body
     assert body["redirect_url"].startswith("https://www.facebook.com/")
-    assert "pages_show_list,pages_manage_posts,pages_read_engagement" in body["redirect_url"]
+    assert "scope=" in body["redirect_url"]
+    assert "pages_show_list" in body["redirect_url"]
+    assert "pages_manage_posts" in body["redirect_url"]
+    assert "pages_read_engagement" in body["redirect_url"]
     assert "state=" in body["redirect_url"]
     assert "access_token" not in body["redirect_url"]
     assert "EAAB" not in str(body)
