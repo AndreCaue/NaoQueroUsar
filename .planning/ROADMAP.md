@@ -1,4 +1,4 @@
-# Roadmap: EmpregaNoix v1.1
+﻿# Roadmap: EmpregaNoix v1.1
 
 ## Overview
 
@@ -131,9 +131,9 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 
 **Plans:** 3 plans
 
-- [ ] 11-01-PLAN.md — Backfill 07-VERIFICATION.md (SECR-10/11 and SECR-12 Phase 7-side evidence + caveats)
-- [ ] 11-02-PLAN.md — Repair Phase 8 traceability and backfill 08-VERIFICATION.md (ADMN-10/11/12, REVW-10/11/12)
-- [ ] 11-03-PLAN.md — Update REQUIREMENTS/ROADMAP traceability with Phase 11 ownership and SECR-12 split
+- [x] 11-01-PLAN.md — Backfill 07-VERIFICATION.md (SECR-10/11 and SECR-12 Phase 7-side evidence + caveats)
+- [x] 11-02-PLAN.md — Repair Phase 8 traceability and backfill 08-VERIFICATION.md (ADMN-10/11/12, REVW-10/11/12)
+- [x] 11-03-PLAN.md — Update REQUIREMENTS/ROADMAP traceability with Phase 11 ownership and SECR-12 split
 
 **Success Criteria** (what must be TRUE):
 
@@ -195,7 +195,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 | 8. Admin Review Area Completeness | 3/3 | ✓ Complete | 2026-11-13 |
 | 9. Lifecycle, Trust, Legal & Launch Completeness | 4/4 | ✓ Complete | 2026-11-15 |
 | 10. Rebranding & Launch Preparation (EmpregaNoix) | 4/4 | ✓ Complete | 2026-11-14 |
-| 11. Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps | 0/3 | Not started | - |
+| 11. Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps | 3/3 | ✓ Complete | 2026-11-15 |
 | 12. Reconcile Phase 9 Lifecycle/Trust Verification & Contracts | 2/2 | Complete    | 2026-11-15 |
 | 13. Canonical Host, Deploy & Ops Alignment (BRND-04 closeout) | 2/2 | Complete    | 2026-11-15 |
 

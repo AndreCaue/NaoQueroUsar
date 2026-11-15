@@ -1,4 +1,4 @@
----
+﻿---
 title: Phase 7 Plan Index
 ---
 
@@ -8,25 +8,25 @@ title: Phase 7 Plan Index
 
 | Plan ID | Title | Size | Status |
 |---------|-------|------|--------|
-| `07-01-PLAN.md` | Phase Prompt with Research & Verification | 16,414 bytes | ✅ Complete |
-| `07-02-PLAN.md` | Endpoint Implementation + Tests | 12,196 bytes | ✅ Complete |
-| `07-03-PLAN.md` | Application Wiring + Rate Limit Handler | 5,071 bytes | ✅ Complete |
+| `07-01-PLAN.md` | Phase Prompt with Research & Verification | 16,414 bytes | Γ£à Complete |
+| `07-02-PLAN.md` | Endpoint Implementation + Tests | 12,196 bytes | Γ£à Complete |
+| `07-03-PLAN.md` | Application Wiring + Rate Limit Handler | 5,071 bytes | Γ£à Complete |
 
 ## Files Summary
 
 ```
 .planning/phases/07-contact-reveal-anti-spam-completeness/
-├─ 07-01-PLAN.md    - Phase prompt (config, tasks, threat model, gates)
-├─ 07-02-PLAN.md    - Endpoint implementation (Turnstile verify, dev/prod modes)
-├─ 07-03-PLAN.md    - App wiring (limiter, router, 429 handler)
-└─ 07-00-INDEX.md   - This index
+Γö£ΓöÇ 07-01-PLAN.md    - Phase prompt (config, tasks, threat model, gates)
+Γö£ΓöÇ 07-02-PLAN.md    - Endpoint implementation (Turnstile verify, dev/prod modes)
+Γö£ΓöÇ 07-03-PLAN.md    - App wiring (limiter, router, 429 handler)
+ΓööΓöÇ 07-00-INDEX.md   - This index
 ```
 
 ## State Updates
 
 ### `.planning/STATE.md`
-- `total_phases: 6 → 7`
-- Added Phase 7 progress row: `| 07 | 0 | 0 | — | Phase 7: Contact Reveal & Anti-Spam Completeness`
+- `total_phases: 6 ΓåÆ 7`
+- Added Phase 7 progress row: `| 07 | 0 | 0 | ΓÇö | Phase 7: Contact Reveal & Anti-Spam Completeness`
 
 ### `.planning/config.json`
 - No changes needed (workflow uses SDK queries for init context)
@@ -53,7 +53,7 @@ title: Phase 7 Plan Index
 **Objective:** Wire the public router into FastAPI main app
 - **Limiter:** Slowapi global limiter (10/min by IP or URL key)
 - **Router:** `app.include_router(api_router, prefix="/api/v1")` 
-- **Handler:** RateLimitExceeded → 429 with `{error, retry_after}` + `Retry-After` header
+- **Handler:** RateLimitExceeded ΓåÆ 429 with `{error, retry_after}` + `Retry-After` header
 - **Verification:** `create_app()` boots without errors, endpoint available
 
 ## Execution Workflow
