@@ -37,6 +37,12 @@ export default function AdminLayout({
             </div>
 
             <div className="flex items-center gap-2">
+              <Link
+                href="/admin/integracoes"
+                className="text-sm text-fg-muted transition-colors hover:text-fg focus-visible:text-fg"
+              >
+                Integrações
+              </Link>
               <LogoutButton />
             </div>
           </div>

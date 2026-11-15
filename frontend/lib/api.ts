@@ -448,3 +448,132 @@ export async function deleteJob(token: string, id: string): Promise<void> {
     throw new ApiError(await readError(res), res.status);
   }
 }
+
+/** --- Meta/Facebook integrations (admin) --- */
+
+export interface MetaIntegrationAlert {
+  code: string;
+  message: string;
+}
+
+export interface MetaIntegrationStatus {
+  provider: "facebook";
+  status: "connected" | "needs_reconnect" | "disconnected";
+  page_id: string | null;
+  page_name: string | null;
+  connected_at: string | null;
+  token_checked_at: string | null;
+  pending_selection: boolean;
+  alert: MetaIntegrationAlert | null;
+}
+
+export interface MetaPendingPage {
+  page_id: string;
+  page_name: string | null;
+}
+
+export interface MetaPendingSelectionResponse {
+  pending: boolean;
+  pages: MetaPendingPage[];
+}
+
+export interface MetaSelectPageRequest {
+  pending_nonce: string;
+  page_id: string;
+}
+
+export interface MetaOAuthStartResponse {
+  redirect_url: string;
+}
+
+export interface MetaActionResponse {
+  status: "connected" | "needs_reconnect" | "disconnected";
+  message?: string | null;
+  pending_selection?: boolean | null;
+}
+
+export async function getMetaIntegrationStatus(
+  token: string,
+): Promise<MetaIntegrationStatus> {
+  const res = await fetch(`${API}/api/v1/admin/integrations/meta/status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as MetaIntegrationStatus;
+}
+
+export async function startMetaOAuth(
+  token: string,
+): Promise<MetaOAuthStartResponse> {
+  const res = await fetch(`${API}/api/v1/admin/integrations/meta/oauth/start`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as MetaOAuthStartResponse;
+}
+
+export async function verifyMetaIntegration(
+  token: string,
+): Promise<MetaIntegrationStatus | MetaActionResponse> {
+  const res = await fetch(`${API}/api/v1/admin/integrations/meta/verify`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as MetaIntegrationStatus | MetaActionResponse;
+}
+
+export async function getMetaPendingSelection(
+  token: string,
+  pendingNonce: string,
+): Promise<MetaPendingSelectionResponse> {
+  const url = new URL(
+    `${API}/api/v1/admin/integrations/meta/pending-selection`,
+  );
+  url.searchParams.set("pending", pendingNonce);
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as MetaPendingSelectionResponse;
+}
+
+export async function confirmMetaPageSelection(
+  token: string,
+  payload: MetaSelectPageRequest,
+): Promise<MetaIntegrationStatus> {
+  const res = await fetch(`${API}/api/v1/admin/integrations/meta/select-page`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as MetaIntegrationStatus;
+}
+
+export async function disconnectMetaIntegration(
+  token: string,
+): Promise<MetaIntegrationStatus | MetaActionResponse> {
+  const res = await fetch(`${API}/api/v1/admin/integrations/meta/disconnect`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as MetaIntegrationStatus | MetaActionResponse;
+}

@@ -39,6 +39,16 @@ export default function AdminPage() {
             Abrir fila de revisão
           </span>
         </Link>
+
+        <Link href="/admin/integracoes" className={cardClass}>
+          <h2 className="mb-2 text-xl font-semibold">Integrações</h2>
+          <p className="mb-4 text-fg-muted">
+            Conecte sua Página do Facebook para publicar vagas automaticamente.
+          </p>
+          <span className="inline-flex items-center gap-2 text-sm text-accent-soft group-hover:text-accent">
+            Gerenciar integrações
+          </span>
+        </Link>
       </div>
     </div>
   );
