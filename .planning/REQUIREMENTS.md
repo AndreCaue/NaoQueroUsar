@@ -43,14 +43,14 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 
 - [x] **SECR-10**: Turnstile site key inline no bundle — mudança de chave no painel Cloudflare requer rebuild do frontend — flag de threat operacional *(Phase 11 gap closure: verificado com caveat operacional em `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`; `NEXT_PUBLIC_TURNSTILE_SITE_KEY` é embutida no bundle em build time e exige rebuild/redeploy ao trocar a chave)*
 - [x] **SECR-11**: Rate limiting por IP no endpoint de reveal e login — slowapi knobs REVEAL_RATE_LIMIT=10/min e LOGIN_RATE_LIMIT=5/min — configurados via env *(Phase 11 gap closure: evidência em `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`)*
-- [ ] **SECR-12**: Endpoint `/admin/expire` autenticado por header `X-Cron-Secret` — fail-closed: 503 quando header ausente/incorreto *(Phase 11 gap closure — split ownership: lado Phase 7 (controles anti-spam/Turnstile) verificado em `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`; reconciliação/evidência do contrato `/admin/expire` (lado Phase 9, X-Cron-Secret-only, T-06-01) é owned by **Phase 12**. No full SECR-12 closure claimed in Phase 11.)*
+- [x] **SECR-12**: Endpoint `/admin/expire` autenticado por header `X-Cron-Secret` — fail-closed: 503 quando header ausente/incorreto *(Phase 12 reconciliation — split ownership: lado Phase 7 verificado em `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`; lado Phase 9 (`/admin/expire` X-Cron-Secret-only, fail-closed 503 quando não configurado/ausente/incorreto, T-06-01) verificado em `.planning/phases/09-lifecycle-trust-legal-launch-completeness/09-VERIFICATION.md`; evidência residual de host canônico/deploy é owned by **Phase 13** (BRND-04). No full closure beyond reconciled code/contract evidence claimed here.)*
 
 ### Ciclo de Vida (continuado e finalizado)
 
-- [ ] **LIFE-10**: Vagas recebem `expires_at` = `created_at` + 14 dias — server_default no modelo e migration verificado
-- [ ] **LIFE-11**: Job agendado faz hard delete de vagas `published` expiradas, de forma idempotente e em UTC — APScheduler em processo FastAPI
-- [ ] **LIFE-12**: Vagas `pending` não revisadas também expiram após 14 dias — mesma regra de 14 dias aplicada
-- [ ] **LIFE-13**: Expiração disparada por endpoint protegido por `CRON_SECRET`, com passe de recuperação (catch-up) — endpoint `/admin/expire` aceita somente `X-Cron-Secret` (Bearer JWT admin NÃO é aceito - T-06-01)
+- [x] **LIFE-10**: Vagas recebem `expires_at` = `created_at` + 14 dias — server_default no modelo e migration verificado *(Phase 12 reconciliation: DB-owned `expires_at = created_at + 14 days` (`timestamptz`, `server_default`, index) verificado em `.planning/phases/09-lifecycle-trust-legal-launch-completeness/09-VERIFICATION.md`)*
+- [x] **LIFE-11**: Job agendado faz hard delete de vagas `published` expiradas, de forma idempotente e em UTC — APScheduler em processo FastAPI *(Phase 12 reconciliation: sweep hard-delete status-agnostic/idempotente orientado pelo relógio do banco verificado em `.planning/phases/09-lifecycle-trust-legal-launch-completeness/09-VERIFICATION.md`)*
+- [x] **LIFE-12**: Vagas `pending` não revisadas também expiram após 14 dias — mesma regra de 14 dias aplicada *(Phase 12 reconciliation: expiração de `pending` e demais status pela mesma regra de 14 dias verificada em `.planning/phases/09-lifecycle-trust-legal-launch-completeness/09-VERIFICATION.md`)*
+- [x] **LIFE-13**: Expiração disparada por endpoint protegido por `CRON_SECRET`, com passe de recuperação (catch-up) — endpoint `/admin/expire` aceita somente `X-Cron-Secret` (Bearer JWT admin NÃO é aceito - T-06-01) *(Phase 12 reconciliation — split ownership: lado code/contract (`/admin/expire` aceita somente `X-Cron-Secret`, Bearer JWT admin não aceito, T-06-01, fail-closed/idempotente) verificado em `.planning/phases/09-lifecycle-trust-legal-launch-completeness/09-VERIFICATION.md`; evidência residual de host canônico/deploy é owned by **Phase 13** (BRND-04), que mantém LIFE-13 em sua lista de requisitos.)*
 
 ### Tema & UI (continuado e finalizado)
 
@@ -61,7 +61,7 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 ### Confiança & Legal (continuado e finalizado)
 
 - [x] **TRST-10**: Páginas de privacidade, termos e aviso "somos apenas meio de divulgação" (LGPD) — existentes e acessíveis em `/privacidade` e `/termos-de-uso`
-- [ ] **TRST-11**: Visitante pode denunciar uma vaga — endpoint `/jobs/{id}/report` aceita motivo opcional (máx 500 chars), emite logs estruturados sem persistir reports
+- [x] **TRST-11**: Visitante pode denunciar uma vaga — endpoint `/jobs/{id}/report` aceita motivo opcional (máx 500 chars), emite logs estruturados sem persistir reports *(Phase 12 reconciliation: report endpoint com motivo opcional (máx 500 chars), logs estruturados, sem persistência e com throttling/comportamento verificado em `.planning/phases/09-lifecycle-trust-legal-launch-completeness/09-VERIFICATION.md`)*
 - [x] **TRST-12**: Badge "Vaga revisada" aparece em vaga com status `published` e aprovada pelo master — deriva apenas de status=published no JobCard e JobDetailDialog
 
 ### Rebranding & Branding (novo para v1.1)
@@ -84,7 +84,7 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 
 **Gap Closure (audit 2026-11-15, `.planning/v1.1-MILESTONE-AUDIT.md`):**
 - Phase 11 — Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps: SECR-10, SECR-11, SECR-12, ADMN-10, ADMN-11, ADMN-12, REVW-10, REVW-11, REVW-12 (status reset to Pending/unverified pending verification backfill)
-- Phase 12 — Reconcile Phase 9 Lifecycle/Trust Verification & Contracts: LIFE-10, LIFE-11, LIFE-12, LIFE-13, TRST-11, SECR-12 (contract/evidence reconciliation; status Pending pending verification sync)
+- Phase 12 — Reconcile Phase 9 Lifecycle/Trust Verification & Contracts: LIFE-10, LIFE-11, LIFE-12, LIFE-13, TRST-11, SECR-12 (reconciled in `09-VERIFICATION.md`/traceability; residual canonical-host/deploy evidence for LIFE-13/SECR-12 retained in Phase 13)
 - Phase 13 — Canonical Host, Deploy & Ops Alignment (BRND-04 closeout): BRND-04, SECR-12, LIFE-13 (operational alignment/evidence; BRND-04 checkbox reset to Pending)
 
 *Note: Phase 7–10 in ROADMAP supersede earlier phase numbering references for v1.1 execution; gap closure phases 11–13 address remaining audit verification/contract/ops gaps.*
@@ -92,4 +92,4 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 ---
 
 *Requirements defined: 2026-11-12*
-*Last updated: 2026-11-15 after Phase 11 gap-closure traceability sync (SECR-10/11, ADMN-10/11/12, REVW-10/11/12 marked with Phase 11 ownership pointers; SECR-12 kept split with Phase 12 ownership for `/admin/expire` reconciliation)*
+*Last updated: 2026-11-15 after Phase 12 reconciliation (LIFE-10/11/12/13, TRST-11, SECR-12 checked with evidence in `09-VERIFICATION.md`; split ownership retained — residual canonical-host/deploy evidence for LIFE-13/SECR-12 and BRND-04 owned by Phase 13)*

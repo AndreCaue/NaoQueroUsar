@@ -34,6 +34,7 @@ requirements-completed:
   - TRST-10
   - TRST-11
   - TRST-12
+  - LIFE-13
 duration: 20min
 completed: 2026-11-15
 ---
