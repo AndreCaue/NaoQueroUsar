@@ -1,11 +1,11 @@
-﻿---
+---
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Integração com Facebook Pages
-status: roadmap_created
-stopped_at: Roadmap for v1.2 created (Phases 14-18)
-last_updated: 2026-11-15T00:00:00.000Z
-last_activity: 2026-11-15 -- Created v1.2 roadmap and mapped 37 requirements
+status: planning
+stopped_at: Phase 14 context gathered
+last_updated: "2026-11-15T20:02:34.677Z"
+last_activity: 2026-11-15 — v1.2 roadmap created (Phases 14-18, 37/37 requirements mapped)
 progress:
   total_phases: 5
   completed_phases: 0
@@ -88,7 +88,6 @@ Carried forward from v1.1 close (2026-11-15, audit `gaps_found` accepted):
 
 ## Session Continuity
 
-Last session: 2026-11-15
-Stopped at: Roadmap for v1.2 created (`.planning/ROADMAP.md`, requirements traceability updated)
-Resume file: None
-
+Last session: 2026-11-15T20:02:34.632Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-fundacao-social-dados-e-configuracao/14-CONTEXT.md
