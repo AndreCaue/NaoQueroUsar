@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: EmpregaNoix
-status: milestone_complete
-stopped_at: Milestone complete (Phase 13 was final phase)
-last_updated: 2026-11-15T15:22:48.450Z
-last_activity: 2026-11-15 -- Phase 13 complete
+status: milestone_archived
+stopped_at: Milestone v1.1 archived (2026-11-15, audit gaps accepted)
+last_updated: 2026-11-15T00:00:00.000Z
+last_activity: 2026-11-15 -- Archived v1.1 milestone (gaps accepted)
 progress:
   total_phases: 7
   completed_phases: 7
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-12)
+See: .planning/PROJECT.md (updated 2026-11-15)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Milestone complete
+**Current focus:** v1.1 archived; define next milestone via `/gsd-new-milestone` (fresh requirements)
 
 ## Current Position
 
@@ -76,8 +76,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- Verificação ao vivo nos hosts canônicos (empreganoix.vercel.app / empreganoix.onrender.com) ainda pendente (handoff da Phase 13). O smoke gate de 2026-11-12 nos hosts legados falhou (ENV=dev, Turnstile em modo test, CORS 400); ver docs/DEPLOY.md.
-- Pendências não bloqueantes do review do deploy: REV-08, REV-09 e REV-10.
+- Carried from v1.1 audit (accepted at close): canonical-host live smoke/provisioning execution pending (handoff), DB-backed test reproducibility gaps (`jobs` relation missing in audited runs), human/browser verification caveats (Turnstile widget/UX), missing `11-VERIFICATION.md`, and unsatisfied milestone reqs EXTR-10/11/12, PUBL-10/11/12/13/14, SRCH-10/11/12, UIUX-10/11/12. See `.planning/v1.1-MILESTONE-AUDIT.md` and archives.
 
 ### Quick Tasks Completed
 
@@ -85,7 +84,14 @@ None yet.
 
 ## Deferred Items
 
-Nenhum item pendente.
+Items acknowledged and deferred at milestone close on 2026-11-15 (v1.1, audit `gaps_found` accepted):
+
+| Category | Item | Status |
+|----------|------|--------|
+| audit | v1.1-MILESTONE-AUDIT gaps (14 unsatisfied, 8 partial reqs; missing 11-VERIFICATION; 07/08 gaps_found; canonical runtime handoff) | deferred/accepted |
+| ops | Live canonical-host smoke/provisioning on `empreganoix.vercel.app` / `empreganoix.onrender.com` (D-10 execution) | pending handoff |
+| testing | Reproducible migrated test DB for DB-backed suites (`jobs` relation) | deferred |
+| requirements | EXTR-10/11/12, PUBL-10/11/12/13/14, SRCH-10/11/12, UIUX-10/11/12 closure | unsatisfied/deferred |
 
 ## Session Continuity
 

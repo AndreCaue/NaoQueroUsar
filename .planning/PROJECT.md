@@ -1,13 +1,12 @@
 # EmpregaNoix
 
-## Current Milestone: v1.1 EmpregaNoix
+## Current State
 
-**Goal:** Complete remaining development work and prepare for production deployment — contact reveal finalization, admin review enhancements, and deployment infrastructure under the EmpregaNoix brand.
+**Latest shipped milestone:** v1.1 EmpregaNoix — **shipped 2026-11-15** (archived with **accepted audit gaps**).  
+**Audit:** `.planning/v1.1-MILESTONE-AUDIT.md` (`gaps_found`) — user elected to complete milestone and record gaps/tech debt.  
+**Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`
 
-**Target features:**
-- [ ] Phase 3 P05: Siteverify smoke test e regressão contra Cloudflare real
-- [ ] Phase 5: Plans remanescentes — fila de review admin aprimorada
-- [ ] Phase 6 P04: Deploy Vercel + Render com CORS travado, segredos por env, cron de catch-up
+**Current milestone:** None. Define the next milestone with `/gsd-new-milestone` (fresh requirements/roadmap).
 
 ## What This Is
 
@@ -23,30 +22,16 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Validated
 
-<!-- Shipped and confirmed valuable. -->
+<!-- Shipped and confirmed valuable (high-confidence). -->
 
 - [x] Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1: Backend Foundation, Data & Admin Auth (ADMN-01/02/03)
+- [~] v1.1 scope (Phases 7–13): implementação/reconciliação avançada em reveal/anti-spam, revisão admin, lifecycle/trust/legal, rebranding e alinhamento canônico de deploy/ops — **com lacunas aceitas** (ver audit/archives). Não tratar como totalmente validado.
 
 ### Active
 
-<!-- Current scope. Building toward these. -->
+<!-- Next milestone scope (to be defined). -->
 
-- [ ] Admin cola um texto grande com várias vagas de grupos (WhatsApp/Telegram)
-- [ ] LLM (Groq) extrai automaticamente os campos de cada vaga e cria cards com status `pending`
-- [ ] Admin revisa: aprovar, editar por ID, excluir
-- [ ] Vaga aprovada passa para status `published` e aparece na home pública
-- [ ] Campos da vaga: title (obrigatório), company, activities, requirements, salary, benefits, city, contact_email e/ou contact_phone (ao menos um obrigatório), created_at, expires_at (14 dias), status
-- [ ] Home pública com grade responsiva de mini-cards (mobile-first)
-- [ ] Card mostra title, início das activities (expansível), salary (se houver) e botão "Ver a vaga"
-- [ ] Modal de detalhes completo, mobile-friendly
-- [ ] Contato oculto por padrão — botão "Mostrar contato" revela no clique (client-side)
-- [ ] Barra de busca + filtro por cidade + ordenação por data (crescente/decrescente)
-- [ ] Cidades iniciais: São Paulo, Rio de Janeiro, Belo Horizonte, Remoto
-- [ ] Vagas expiram automaticamente após 14 dias e são apagadas do banco (hard delete)
-- [ ] Tema dark mode roxo minimalista
-- [ ] Botão "Doações" no canto superior direito (amarelo #facc15, discreto, hover apenas)
-- [ ] Espaços reservados para ADS futuros (banner topo + sidebar + entre cards)
-- [ ] Anti-spam: Cloudflare Turnstile
+- [ ] Definir e executar próximos incrementos via `/gsd-new-milestone` (fechar gaps de EXTR/PUBL/SRCH/UIUX, evidências DB/browser/canônicas pendentes, e demais itens do audit conforme prioridade)
 
 ### Out of Scope
 
@@ -65,8 +50,8 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - **Volume esperado:** 100–500 vagas publicadas por mês — curadoria manual é viável, mas o fluxo de colar → extrair → revisar → publicar precisa ser rápido.
 - **Custo:** operar próximo de zero usando tiers gratuitos (Neon Postgres, Groq, Vercel, Cloudflare Turnstile).
 - **Público:** candidatos brasileiros (foco inicial em SP, RJ, BH e Remoto), majoritariamente mobile.
-- **Motivação central:** a principal frustração com sites de emprego atuais é a burocracia de cadastro/login para sequer ver uma vaga. A NQU elimina isso.
-- **Riscos conhecidos:** vagas de golpe vindas de grupos → a revisão manual do master é o gate de qualidade; exposição de contato → mitigada por ocultação padrão + revelação no clique + Turnstile.
+- **Motivação central:** a principal frustração com sites de emprego atuais é a burocracia de cadastro/login para sequer ver uma vaga.
+- **Riscos conhecidos / estado atual:** revisão manual do master como gate de qualidade; mitigação de scraping via ocultação + Turnstile; **pendências operacionais/evidências** registradas no audit v1.1 (smoke canônico/execução real, DB de testes, verificações humanas/browser, requisitos EXTR/PUBL/SRCH/UIUX não fechados no escopo auditado).
 
 ## Constraints
 
@@ -84,14 +69,14 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Sem cadastro/login para ver vagas e contato | Elimina a maior frustração com sites atuais (burocracia) | — Pending |
-| Hard delete após 14 dias | Mantém o board limpo e o custo de armazenamento baixo | — Pending |
-| Extração via LLM (Groq) + revisão manual obrigatória | Automação do trabalho pesado sem abrir mão do controle de qualidade | — Pending |
-| Repo git dedicado no diretório do projeto | O diretório está dentro do repo da home; isolamento evita poluir histórico | — Pending |
-| Contato revelado no clique (client-side) | Reduz scraping com fricção mínima ao usuário | — Pending |
-| Servir contato via endpoint dedicado (não no payload público) | Ocultação client-side sozinha não protege contra scraping; exigido Turnstile server-side no reveal | — Pending |
-| Substituir Llama aposentados por Groq `gpt-oss` | `llama-3.1-8b-instant`/`llama-3.3-70b` desativados em 2026-08-16; `openai/gpt-oss-*` suporta structured outputs estritos | — Pending |
-| Usar `bcrypt` direto (sem passlib) para hash de senha | `passlib` 1.7.4 é incompatível com o `bcrypt` 5.0.0 travado; a decisão de auth permite bcrypt diretamente | — Implemented Phase 1 |
+| Sem cadastro/login para ver vagas e contato | Elimina a maior frustração com sites atuais (burocracia) | ✓ Good (core value mantido) |
+| Hard delete após 14 dias | Mantém o board limpo e o custo de armazenamento baixo | ⚠️ Revisit (contrato/semântica reconciliados em v1.1; validar operação em produção canônica) |
+| Extração via LLM (Groq) + revisão manual obrigatória | Automação do trabalho pesado sem abrir mão do controle de qualidade | ⚠️ Revisit (aceitação EXTR-10/11/12 não fechada no audit v1.1) |
+| Repo git dedicado no diretório do projeto | O diretório está dentro do repo da home; isolamento evita poluir histórico | ✓ Good |
+| Contato revelado no clique (client-side) | Reduz scraping com fricção mínima ao usuário | ⚠️ Revisit (v1.1 endureceu reveal server-side/Turnstile; evidências runtime/browser ainda caveatadas) |
+| Servir contato via endpoint dedicado (não no payload público) | Ocultação client-side sozinha não protege contra scraping; exigido Turnstile server-side no reveal | ✓ Good (direção implementada/reconciliada; validar em runtime canônico) |
+| Substituir Llama aposentados por Groq `gpt-oss` | `llama-3.1-8b-instant`/`llama-3.3-70b` desativados em 2026-08-16; `openai/gpt-oss-*` suporta structured outputs estritos | ✓ Good (configuração atualizada; fallback/aceitação detalhada pendente no audit) |
+| Usar `bcrypt` direto (sem passlib) para hash de senha | `passlib` 1.7.4 é incompatível com o `bcrypt` 5.0.0 travado; a decisão de auth permite bcrypt diretamente | ✓ Good |
 
 ## Evolution
 
@@ -111,4 +96,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-19 after Phase 1 completion (Backend Foundation, Data & Admin Auth)*
+*Last updated: 2026-11-15 after v1.1 milestone completion (EmpregaNoix, audit gaps accepted)*
