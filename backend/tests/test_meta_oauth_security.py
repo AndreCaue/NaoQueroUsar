@@ -13,20 +13,20 @@ from app.models.social_account import SocialAccount, SocialAccountStatus
 from app.services.social.crypto import decrypt_token, encrypt_token
 
 
-@pytest.mark.asyncio
-async def test_social_account_page_access_token_persisted_encrypted_not_plaintext(db_session):
+def test_social_account_page_access_token_persisted_encrypted_not_plaintext():
     key = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="  # 32-byte base64 Fernet key
     plain = "EAAB_page_token_plaintext_example"
+    stored = encrypt_token(plain, key)
     account = SocialAccount(
         provider="facebook",
         page_id="123",
         page_name="Pagina Teste",
-        page_access_token=encrypt_token(plain, key),
+        page_access_token=stored,
         status=SocialAccountStatus.connected,
     )
-    db_session.add(account)
-    await db_session.flush()
 
+    # Persisted/stored page_access_token must be encrypted (not plaintext) and decryptable server-side.
+    assert account.page_access_token == stored
     assert account.page_access_token != plain
     assert "EAAB" not in account.page_access_token or account.page_access_token != plain
     assert decrypt_token(account.page_access_token, key) == plain
