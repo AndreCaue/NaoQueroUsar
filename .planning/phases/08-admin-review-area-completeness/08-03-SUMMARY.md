@@ -99,3 +99,9 @@ Phase 8 execution complete. Wave 4 (Phase 9: Lifecycle, Trust, Legal & Launch) c
 - E2E flow: paste → extract → pending queue → review → approve/edit → delete verified
 - Security: all admin routes protected by JWT Bearer token via require_admin
 - Tracking: SUMMARY.md files created for all 3 plans, STATE.md and ROADMAP.md updated
+
+## Phase 11 Traceability Repair (in-place)
+
+- Cross-reference (verification): `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md`
+- Machine-checkable requirement IDs (preserved): **ADMN-12**, **REVW-12**
+- Implemented delete contract evidence context (REVW-12/ADMN-12): `DELETE /api/v1/admin/jobs/{job_id}` performs hard delete; repeat call returns **404** (idempotent-in-effect) per `backend/app/api/v1/admin.py` and `backend/app/crud/jobs.py`/tests evidence summarized in `08-VERIFICATION.md`.

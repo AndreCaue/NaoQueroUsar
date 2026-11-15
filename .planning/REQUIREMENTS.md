@@ -9,9 +9,9 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 
 ### Admin & Autenticação (continuado)
 
-- [ ] **ADMN-10**: Admin vê indicador de Turnstile no login (widget interaction-only) — validação visual no clique
-- [ ] **ADMN-11**: Login admin persiste sessão com token Bearer JWT em header Authorization — teste em rotas protegidas
-- [ ] **ADMN-12**: Rota `/auth/login` protege contra credential stuffing com rate limit Turnstile server-side — SECR-03 estendida
+- [x] **ADMN-10**: Admin vê indicador de Turnstile no login (widget interaction-only) — validação visual no clique *(Phase 11 gap closure: verificado em `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md` — evidência de código/widget + nota de verificação humana/browser; caveats/ambiente documentados)*
+- [x] **ADMN-11**: Login admin persiste sessão com token Bearer JWT em header Authorization — teste em rotas protegidas *(Phase 11 gap closure: verificado em `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md`; ver também traceabilidade reparada em `08-03-SUMMARY.md` / `CONTEXT-SUMMARY.md`)*
+- [x] **ADMN-12**: Rota `/auth/login` protege contra credential stuffing com rate limit Turnstile server-side — SECR-03 estendida *(Phase 11 gap closure: evidência/traceabilidade em `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md`, `08-03-SUMMARY.md`, `CONTEXT-SUMMARY.md`)*
 
 ### Ingestão & Extração (continuado)
 
@@ -21,9 +21,9 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 
 ### Revisão Admin (continuado)
 
-- [ ] **REVW-10**: Admin aprova vaga → status muda de `pending` para `published` — vaga aparece imediatamente na home pública
-- [ ] **REVW-11**: Admin edita campos de uma vaga pelo ID — campos modificados persistidos com validação de contato
-- [ ] **REVW-12**: Admin exclui vaga — remoção hard do banco; operação idempotente (exclusão duplicada é no-op)
+- [x] **REVW-10**: Admin aprova vaga → status muda de `pending` para `published` — vaga aparece imediatamente na home pública *(Phase 11 gap closure: verificado em `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md` — evidência de código/fluxo + nota de verificação humana/browser para UX imediata)*
+- [x] **REVW-11**: Admin edita campos de uma vaga pelo ID — campos modificados persistidos com validação de contato *(Phase 11 gap closure: verificado em `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md`)*
+- [x] **REVW-12**: Admin exclui vaga — remoção hard do banco; operação idempotente (exclusão duplicada é no-op) *(Phase 11 gap closure: evidência em `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md` com mapeamento explícito `repeat delete returns 404 (idempotent-in-effect) -> exclusão duplicada é no-op`; traceabilidade em `08-03-SUMMARY.md` / `CONTEXT-SUMMARY.md`)*
 
 ### Board Público (continuado e finalizado)
 
@@ -41,9 +41,9 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 
 ### Anti-spam & Segurança (continuado)
 
-- [ ] **SECR-10**: Turnstile site key inline no bundle — mudança de chave no painel Cloudflare requer rebuild do frontend — flag de threat operacional
-- [ ] **SECR-11**: Rate limiting por IP no endpoint de reveal e login — slowapi knobs REVEAL_RATE_LIMIT=10/min e LOGIN_RATE_LIMIT=5/min — configurados via env
-- [ ] **SECR-12**: Endpoint `/admin/expire` autenticado por header `X-Cron-Secret` — fail-closed: 503 quando header ausente/incorreto
+- [x] **SECR-10**: Turnstile site key inline no bundle — mudança de chave no painel Cloudflare requer rebuild do frontend — flag de threat operacional *(Phase 11 gap closure: verificado com caveat operacional em `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`; `NEXT_PUBLIC_TURNSTILE_SITE_KEY` é embutida no bundle em build time e exige rebuild/redeploy ao trocar a chave)*
+- [x] **SECR-11**: Rate limiting por IP no endpoint de reveal e login — slowapi knobs REVEAL_RATE_LIMIT=10/min e LOGIN_RATE_LIMIT=5/min — configurados via env *(Phase 11 gap closure: evidência em `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`)*
+- [ ] **SECR-12**: Endpoint `/admin/expire` autenticado por header `X-Cron-Secret` — fail-closed: 503 quando header ausente/incorreto *(Phase 11 gap closure — split ownership: lado Phase 7 (controles anti-spam/Turnstile) verificado em `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`; reconciliação/evidência do contrato `/admin/expire` (lado Phase 9, X-Cron-Secret-only, T-06-01) é owned by **Phase 12**. No full SECR-12 closure claimed in Phase 11.)*
 
 ### Ciclo de Vida (continuado e finalizado)
 
@@ -92,4 +92,4 @@ Requirements for this milestone continuation. Each maps to roadmap phases. Conti
 ---
 
 *Requirements defined: 2026-11-12*
-*Last updated: 2026-11-12 after milestone v1.1 EmpregaNoix definition*
+*Last updated: 2026-11-15 after Phase 11 gap-closure traceability sync (SECR-10/11, ADMN-10/11/12, REVW-10/11/12 marked with Phase 11 ownership pointers; SECR-12 kept split with Phase 12 ownership for `/admin/expire` reconciliation)*

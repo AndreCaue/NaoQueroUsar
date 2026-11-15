@@ -129,6 +129,12 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 
 **Gap Closure:** Closes audit gaps for missing `07-VERIFICATION.md`/`08-VERIFICATION.md`, incomplete Phase 8 summary/context frontmatter, and unverified/misaligned requirement evidence for Phase 7–8 scope.
 
+**Plans:** 3 plans
+
+- [ ] 11-01-PLAN.md — Backfill 07-VERIFICATION.md (SECR-10/11 and SECR-12 Phase 7-side evidence + caveats)
+- [ ] 11-02-PLAN.md — Repair Phase 8 traceability and backfill 08-VERIFICATION.md (ADMN-10/11/12, REVW-10/11/12)
+- [ ] 11-03-PLAN.md — Update REQUIREMENTS/ROADMAP traceability with Phase 11 ownership and SECR-12 split
+
 **Success Criteria** (what must be TRUE):
 
 1. `07-VERIFICATION.md` exists and verifies SECR-10/11/12 evidence for Phase 7 (server-side reveal gating, Turnstile Siteverify fail-closed behavior including timeout-or-duplicate handling, per-IP rate limiting with pt-BR 429/`Retry-After`, login Turnstile protection) and documents the SECR-10 operational rebuild caveat.
@@ -180,7 +186,7 @@ Continuation of v1.0 (NQU — NaoQueroUsar) under the new EmpregaNoix brand. Mil
 | 8. Admin Review Area Completeness | 3/3 | ✓ Complete | 2026-11-13 |
 | 9. Lifecycle, Trust, Legal & Launch Completeness | 4/4 | ✓ Complete | 2026-11-15 |
 | 10. Rebranding & Launch Preparation (EmpregaNoix) | 4/4 | ✓ Complete | 2026-11-14 |
-| 11. Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps | 0/TBD | Not started | - |
+| 11. Verify Phases 7–8 & Close Reveal/Admin/Review Evidence Gaps | 0/3 | Not started | - |
 | 12. Reconcile Phase 9 Lifecycle/Trust Verification & Contracts | 0/TBD | Not started | - |
 | 13. Canonical Host, Deploy & Ops Alignment (BRND-04 closeout) | 0/TBD | Not started | - |
 
