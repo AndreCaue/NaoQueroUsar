@@ -97,6 +97,36 @@ class Settings(BaseSettings):
                 )
         return self
 
+    @model_validator(mode="after")
+    def _validate_cors_origins(self) -> "Settings":
+        """Fail closed on an unsafe production CORS origin (T-09-13).
+
+        A trailing slash, a wildcard or an empty entry produces a valid
+        string but never matches the browser Origin header, so the failure
+        would only surface as a 400 preflight in production. Outside dev the
+        process refuses to boot instead.
+        """
+        if self.ENV == "dev":
+            return self
+
+        origins = self.cors_origins_list
+        if not origins or any(not origin for origin in origins):
+            raise ValueError("CORS_ORIGINS é obrigatória fora de dev (T-09-13)")
+        for origin in origins:
+            if origin == "*":
+                raise ValueError(
+                    "CORS_ORIGINS não aceita '*' fora de dev (T-09-13)"
+                )
+            if origin.endswith("/"):
+                raise ValueError(
+                    f"CORS_ORIGINS não pode ter barra final: {origin!r} (T-09-13)"
+                )
+            if not origin.startswith(("http://", "https://")):
+                raise ValueError(
+                    f"CORS_ORIGINS inválida (sem http/https): {origin!r} (T-09-13)"
+                )
+        return self
+
     @property
     def effective_turnstile_secret(self) -> str:
         """The secret to use at runtime.

@@ -168,6 +168,37 @@ async def test_expire_is_idempotent(client, db_session, cron_secret):
     assert second.json() == {"deleted": 0, "status": "ok"}
 
 
+@pytest.mark.parametrize(
+    "status",
+    [
+        JobStatus.pending,
+        JobStatus.published,
+        JobStatus.needs_review,
+        JobStatus.invalid,
+    ],
+)
+@pytest.mark.asyncio
+async def test_expire_deletes_expired_row_for_every_status(
+    client, db_session, cron_secret, status
+):
+    """LIFE-12: the 14-day rule is the same for every status (D-04).
+
+    A pending/needs_review/invalid row must not survive just because nobody
+    reviewed it. The future sibling proves the sweep still honours the
+    clock instead of wiping the table.
+    """
+    db_session.add(_expired(title=f"Expirada {status.value}", status=status))
+    db_session.add(_live(title=f"Viva {status.value}", status=status))
+    await db_session.flush()
+
+    resp = await client.post(ENDPOINT, headers={"X-Cron-Secret": cron_secret})
+
+    assert resp.status_code == 200
+    assert resp.json() == {"deleted": 1, "status": "ok"}
+    remaining = list((await db_session.scalars(select(Job.title))).all())
+    assert remaining == [f"Viva {status.value}"]
+
+
 @pytest.mark.asyncio
 async def test_expire_with_empty_table_returns_zero(client, db_session, cron_secret):
     resp = await client.post(ENDPOINT, headers={"X-Cron-Secret": cron_secret})
