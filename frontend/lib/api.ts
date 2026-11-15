@@ -534,10 +534,7 @@ export async function getMetaPendingSelection(
   token: string,
   pendingNonce: string,
 ): Promise<MetaPendingSelectionResponse> {
-  const url = new URL(
-    `${API}/api/v1/admin/integrations/meta/pending-selection`,
-  );
-  url.searchParams.set("pending", pendingNonce);
+  const url = `${API}/api/v1/admin/integrations/meta/pending-selection?pending=${encodeURIComponent(pendingNonce)}`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
