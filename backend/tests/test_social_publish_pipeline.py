@@ -149,3 +149,154 @@ async def test_process_social_post_safe_targets_post_id(monkeypatch):
     assert result == {"claimed": 1}
     assert str(called["post_id"]) == str(target)
     assert called["limit"] == 1
+
+
+class _Tx:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+class _SessionCtx:
+    def __init__(self, session):
+        self._session = session
+
+    async def __aenter__(self):
+        return self._session
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+    def begin(self):
+        return _Tx()
+
+
+@pytest.mark.asyncio
+async def test_run_social_publish_cycle_recovers_post_claim_exception_without_leaving_publishing(monkeypatch):
+    from app.crud.social_posts import compute_social_retry_state
+    from app.services.social import publish_pipeline as pipeline
+    from app.services.social.publish_pipeline import MSG_AMBIGUOUS
+
+    post_id = uuid.uuid4()
+    post = SimpleNamespace(
+        id=post_id,
+        job_id=uuid.uuid4(),
+        provider="facebook",
+        text="Texto",
+        status=SocialPostStatus.publishing,
+        attempts=0,
+        next_retry_at=None,
+        last_error=None,
+        external_post_id=None,
+        published_at=None,
+    )
+
+    class FakeClaimSession:
+        def begin(self):
+            return _Tx()
+
+        async def flush(self):
+            return None
+
+    class FakeProcessingSession:
+        def begin(self):
+            return _Tx()
+
+        async def get(self, model, ident):
+            return None
+
+        async def flush(self):
+            return None
+
+    class FakeRecoverySession:
+        def begin(self):
+            return _Tx()
+
+        async def get(self, model, ident):
+            return None
+
+        async def flush(self):
+            return None
+
+    claim_session = FakeClaimSession()
+    processing_session = FakeProcessingSession()
+    recovery_session = FakeRecoverySession()
+    sessions = [claim_session, processing_session, recovery_session]
+
+    class FakeSessionFactory:
+        def __call__(self):
+            if not sessions:
+                raise AssertionError("unexpected extra session")
+            return _SessionCtx(sessions.pop(0))
+
+    mark_calls = []
+    log_calls = []
+
+    async def fake_list_due_for_claim(session, **kwargs):
+        return [post]
+
+    async def fake_claim_for_publishing(session, claimed_post, *, now=None):
+        claimed_post.status = SocialPostStatus.publishing
+        return "claimed"
+
+    async def fake_process_claimed_post(session, claimed_post, *, settings=None, publisher=None, now=None):
+        raise RuntimeError("boom after claim")
+
+    async def fake_get_social_post_by_id(session, pid):
+        assert pid == post_id
+        return post
+
+    async def fake_mark_failed(session, failed_post, *, attempts, last_error, next_retry_at, final):
+        failed_post.status = SocialPostStatus.failed
+        failed_post.attempts = attempts
+        failed_post.last_error = last_error
+        failed_post.next_retry_at = next_retry_at
+        mark_calls.append(
+            {
+                "attempts": attempts,
+                "last_error": last_error,
+                "next_retry_at": next_retry_at,
+                "final": final,
+            }
+        )
+        return failed_post
+
+    async def fake_append_log(session, logged_post, *, attempt_number, result, **kwargs):
+        log_calls.append({"attempt_number": attempt_number, "result": result, **kwargs})
+        return None
+
+    monkeypatch.setattr(pipeline, "async_session_factory", FakeSessionFactory())
+    monkeypatch.setattr(pipeline, "list_due_for_claim", fake_list_due_for_claim)
+    monkeypatch.setattr(pipeline, "claim_for_publishing", fake_claim_for_publishing)
+    monkeypatch.setattr(pipeline, "process_claimed_post", fake_process_claimed_post)
+    monkeypatch.setattr(pipeline, "get_social_post_by_id", fake_get_social_post_by_id)
+    monkeypatch.setattr(pipeline, "mark_failed", fake_mark_failed)
+    monkeypatch.setattr(pipeline, "_append_log", fake_append_log)
+
+    result = await pipeline.run_social_publish_cycle(post_id=post_id, limit=1)
+
+    assert result["processed"] == 1
+    assert result["failed_final"] == 1
+    assert post.status == SocialPostStatus.failed
+    assert post.attempts == 1
+    assert post.last_error == MSG_AMBIGUOUS
+    assert post.next_retry_at is None
+    assert mark_calls == [
+        {
+            "attempts": 1,
+            "last_error": MSG_AMBIGUOUS,
+            "next_retry_at": None,
+            "final": True,
+        }
+    ]
+    assert any(
+        call["result"] == "ambiguous"
+        and call["response_summary"] == "post_claim_processing_exception"
+        for call in log_calls
+    )
+
+    can_retry, reason = compute_social_retry_state(post, SocialAccountStatus.connected)
+    assert can_retry is False
+    assert reason == "Verifique a publicação no Facebook antes de tentar novamente para evitar duplicidade."
