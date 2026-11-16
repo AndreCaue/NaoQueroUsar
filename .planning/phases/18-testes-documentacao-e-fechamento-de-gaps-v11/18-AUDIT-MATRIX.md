@@ -48,3 +48,12 @@
 - Sem login/cadastro público para ver vagas/contato.
 - T-06-01/`/admin/expire` e `scripts/verify-deploy.ps1`/`docs/DEPLOY.md` não alterados por esta auditoria.
 - Segredos e tokens permanecem backend-only; nenhuma credencial registrada.
+
+
+## TEST-03 (18-02) — worker/claim/idempotência social (evidência parcial+handoff)
+
+| Escopo | Evidência executada (2026-11-16) | Bloqueio | Status | Comando objetivo / critério de aceite |
+|---|---|---|---|---|
+| `backend/tests/test_social_idempotency.py`, `backend/tests/test_social_publish_pipeline.py` (offline/DB-independent) | `cd backend; .\.venv\Scripts\python.exe -m pytest -q tests/test_social_idempotency.py tests/test_social_publish_pipeline.py -x` → **7 passed**. Cobertura reforçada: reexecução/duplo acionamento não publica novamente quando `published`/`external_post_id` presente; falha/recuperação ambígua pós-claim sem auto-retry (`next_retry_at is None`, bloqueio/estado seguro); claim direcionado por `post_id`/repetição pelo pipeline. | — | evidência automatizada offline (parcial do TEST-03) | Reexecutar comando acima (exit 0). |
+| `backend/tests/test_social_worker_claim.py` (endpoint protegido por `X-Cron-Secret`, 401/503/200 + ciclo idempotente) | `cd backend; .\.venv\Scripts\python.exe -m pytest -q tests/test_social_worker_claim.py -x` → **1 passed, 1 error** (setup). | Ambiente com `DATABASE_URL/TEST_DATABASE_URL` configurado porém schema não migrado (`relation "jobs" does not exist` durante fixture/cleanup da suíte DB-backed do harness). | evidência parcial+handoff | Aplicar migrações no DB de testes e executar: `cd backend; .\.venv\Scripts\python.exe -m pytest -q tests/test_social_worker_claim.py tests/test_social_idempotency.py tests/test_social_publish_pipeline.py -x` (exit 0). |
+| `backend/tests/test_admin_social_publish.py`, `backend/tests/test_admin_social_retry_api.py`, `backend/tests/test_admin_social_status_api.py`, `backend/tests/test_admin_social_posts.py` (DB-backed admin/social) | Não executadas nesta sessão (dependem de DB migrado/fixtures com schema `jobs` e tabelas sociais). | Schema/migrações de teste indisponíveis no ambiente. | evidência parcial+handoff | `cd backend; .\.venv\Scripts\python.exe -m pytest -q tests/test_admin_social_publish.py tests/test_admin_social_retry_api.py` (e, quando viável, `tests/test_admin_social_status_api.py tests/test_admin_social_posts.py`) com `TEST_DATABASE_URL` migrado (`alembic upgrade head`) → exit 0, contratos de dispatch/status/retry/idempotência preservados. |
