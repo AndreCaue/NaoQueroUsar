@@ -36,14 +36,25 @@ async def test_social_worker_processes_cycle_idempotent_with_secret(client, cron
 
     async def fake_cycle(*, post_id=None, limit=20):
         calls["n"] += 1
+        # Simula 1ª execução publicando elegíveis e 2ª sem duplicar (idempotente no pipeline)
+        if calls["n"] == 1:
+            return {
+                "claimed": 1,
+                "processed": 1,
+                "published": 1,
+                "retried": 0,
+                "failed_final": 0,
+                "skipped": 0,
+                "idempotent": 0,
+            }
         return {
-            "claimed": 1,
-            "processed": 1,
-            "published": 1,
+            "claimed": 0,
+            "processed": 0,
+            "published": 0,
             "retried": 0,
             "failed_final": 0,
             "skipped": 0,
-            "idempotent": 0,
+            "idempotent": 1,
         }
 
     monkeypatch.setattr("app.api.v1.admin.run_social_publish_cycle", fake_cycle)
@@ -57,7 +68,12 @@ async def test_social_worker_processes_cycle_idempotent_with_secret(client, cron
     assert body["published"] == 1
     assert calls["n"] == 1
 
-    # segunda chamada segue idempotente (endpoint não duplica por si; pipeline decide)
+    # segunda chamada/duplo acionamento: worker protegido dispara ciclo idempotente sem duplicação
     resp = await client.post("/api/v1/admin/social/worker", headers=cron_secret_header)
     assert resp.status_code == 200
+    body = resp.json()
+    assert body["status"] == "ok"
+    assert body["claimed"] == 0
+    assert body["published"] == 0
+    assert body["idempotent"] == 1
     assert calls["n"] == 2

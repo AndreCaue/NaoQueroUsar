@@ -63,6 +63,37 @@ async def test_idempotency_noop_when_already_published_or_external_id():
 
 
 @pytest.mark.asyncio
+async def test_idempotency_noop_on_repeated_processing_after_published():
+    session = FakeSession()
+    settings = SimpleNamespace(
+        SITE_PUBLIC_URL="https://site.exemplo/",
+        SOCIAL_MAX_ATTEMPTS=5,
+        social_retry_delays_list=[300, 900, 3600, 10800, 21600],
+        SOCIAL_TOKEN_ENCRYPTION_KEY="",
+    )
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    post = SimpleNamespace(
+        id=uuid.uuid4(),
+        job_id=uuid.uuid4(),
+        provider="facebook",
+        text="t",
+        status=SocialPostStatus.published,
+        attempts=1,
+        next_retry_at=None,
+        last_error=None,
+        external_post_id="123_456",
+        published_at=now,
+    )
+
+    # Duplo acionamento/reexecução não deve criar novo publish nem alterar estado.
+    assert await process_claimed_post(session, post, settings=settings, now=now) == "idempotent"
+    assert await process_claimed_post(session, post, settings=settings, now=now) == "idempotent"
+    assert post.status == SocialPostStatus.published
+    assert post.external_post_id == "123_456"
+    assert post.attempts == 1
+
+
+@pytest.mark.asyncio
 async def test_ambiguous_failure_does_not_schedule_auto_retry(monkeypatch):
     from app.services.social import publish_pipeline as pipeline
 

@@ -32,3 +32,12 @@ def test_compute_next_retry_returns_none_when_exhausted():
 
     assert compute_next_retry(5, settings, now=now) is None
     assert compute_next_retry(6, settings, now=now) is None
+
+
+def test_compute_next_retry_respects_configured_max_attempts_and_delays():
+    now = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+    settings = _settings(3, "60,120,240")
+
+    assert compute_next_retry(1, settings, now=now) == datetime(2026, 1, 1, 12, 1, tzinfo=timezone.utc)
+    assert compute_next_retry(2, settings, now=now) == datetime(2026, 1, 1, 12, 2, tzinfo=timezone.utc)
+    assert compute_next_retry(3, settings, now=now) is None

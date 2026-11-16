@@ -150,6 +150,12 @@ async def test_process_social_post_safe_targets_post_id(monkeypatch):
     assert str(called["post_id"]) == str(target)
     assert called["limit"] == 1
 
+    # Reexecução/direcionamento repetido para o mesmo post deve seguir pelo mesmo caminho idempotente do pipeline
+    result = await pipeline.process_social_post_safe(target)
+    assert result == {"claimed": 1}
+    assert str(called["post_id"]) == str(target)
+    assert called["limit"] == 1
+
 
 class _Tx:
     async def __aenter__(self):
