@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import type { JobAdmin } from "@/lib/api";
+import type { JobAdmin, SocialPostStatusItem } from "@/lib/api";
 import { cityLabel } from "@/lib/cities";
 import { formatDateBR } from "@/lib/format";
 
@@ -19,6 +19,7 @@ import { Check, Pencil, Spinner, Trash } from "./icons";
  */
 export interface ReviewRowProps {
   job: JobAdmin;
+  socialStatus?: SocialPostStatusItem | null;
   onApprove: () => Promise<void> | void;
   onEdit: () => void;
   onDelete: () => void;
@@ -39,6 +40,7 @@ const secondaryButton =
 
 export function ReviewRow({
   job,
+  socialStatus = null,
   onApprove,
   onEdit,
   onDelete,
@@ -63,6 +65,16 @@ export function ReviewRow({
   };
 
   const statusLabel = STATUS_LABELS[job.status];
+  const socialLabel =
+    socialStatus && ["scheduled", "publishing", "published", "failed"].includes(socialStatus.status)
+      ? socialStatus.status_label
+      : null;
+  const socialClass =
+    socialStatus?.status === "failed"
+      ? "border-danger bg-[rgba(248,113,113,0.12)] text-danger-soft"
+      : socialStatus?.status === "published"
+        ? "border-accent bg-[rgba(139,92,246,0.12)] text-fg"
+        : "border-accent/40 bg-[rgba(139,92,246,0.08)] text-fg";
 
   return (
     <article
@@ -75,9 +87,16 @@ export function ReviewRow({
         <h2 className="min-w-0 text-[20px] font-semibold leading-tight [overflow-wrap:anywhere] [text-wrap:balance]">
           {job.title}
         </h2>
-        <span className="shrink-0 rounded-full bg-[rgba(139,92,246,0.12)] px-3 py-1 text-[14px] text-accent-soft">
-          {statusLabel}
-        </span>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {socialLabel ? (
+            <span className={`rounded-full border px-3 py-1 text-[14px] ${socialClass}`}>
+              {socialLabel}
+            </span>
+          ) : null}
+          <span className="rounded-full bg-[rgba(139,92,246,0.12)] px-3 py-1 text-[14px] text-accent-soft">
+            {statusLabel}
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-fg-muted">

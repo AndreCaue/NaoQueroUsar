@@ -10,8 +10,10 @@ import {
   ApiError,
   approveJob,
   deleteJob,
+  getSocialStatus,
   listAdminJobs,
   type JobAdmin,
+  type SocialPostStatusItem,
 } from "@/lib/api";
 import { TOKEN_KEY } from "@/lib/auth";
 import type { CitySlug } from "@/lib/cities";
@@ -64,6 +66,10 @@ export function ReviewQueue() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [socialStatuses, setSocialStatuses] = useState<
+    Record<string, SocialPostStatusItem | null>
+  >({});
+  const socialFetchSeq = useRef(0);
 
   const [counts, setCounts] = useState<Record<Tab, number | null>>({
     pending: null,
@@ -117,6 +123,42 @@ export function ReviewQueue() {
       cancelled = true;
     };
   }, [token, tab, city, page, refreshKey]);
+
+  useEffect(() => {
+    if (!token || items.length === 0) {
+      if (items.length === 0) setSocialStatuses({});
+      return;
+    }
+    const seq = ++socialFetchSeq.current;
+    let cancelled = false;
+    const ids = items.map((j) => j.id);
+    Promise.all(
+      ids.map(async (id) => {
+        try {
+          const status = await getSocialStatus(token, id);
+          return [id, status] as const;
+        } catch (err) {
+          if (handleAuthError(err)) throw err;
+          return [id, null] as const;
+        }
+      }),
+    )
+      .then((entries) => {
+        if (cancelled || seq !== socialFetchSeq.current) return;
+        setSocialStatuses((prev) => {
+          const next: Record<string, SocialPostStatusItem | null> = {};
+          for (const [id, status] of entries) next[id] = status;
+          // keep only current ids to avoid stale growth
+          return next;
+        });
+      })
+      .catch(() => {
+        // auth redirect handled; ignore other aggregate failures
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, items]);
 
   // Keep the inactive tab's badge in sync without blocking the main fetch.
   // The badge respects the active city filter so the numbers match what the
@@ -392,6 +434,7 @@ export function ReviewQueue() {
               <li key={job.id}>
                 <ReviewRow
                   job={job}
+                  socialStatus={socialStatuses[job.id] ?? null}
                   onApprove={() => handleApprove(job)}
                   onEdit={() => {
                     setSelectedJob(job);

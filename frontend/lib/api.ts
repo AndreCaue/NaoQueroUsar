@@ -672,3 +672,89 @@ export async function disconnectMetaIntegration(
   }
   return (await res.json()) as MetaIntegrationStatus | MetaActionResponse;
 }
+
+/** --- Admin social publication status/retry (Phase 17) --- */
+
+export type SocialStatusValue =
+  | "none"
+  | "draft"
+  | "scheduled"
+  | "publishing"
+  | "published"
+  | "failed"
+  | "cancelled";
+
+export interface SocialPostStatusItem {
+  job_id: string;
+  job_title?: string | null;
+  provider: "facebook";
+  status: SocialStatusValue;
+  status_label: string;
+  last_error: string | null;
+  published_url: string | null;
+  external_post_id: string | null;
+  attempts: number;
+  next_retry_at: string | null;
+  scheduled_at: string | null;
+  published_at: string | null;
+  can_retry: boolean;
+  retry_block_reason: string | null;
+}
+
+export interface SocialPostStatusListResponse {
+  items: SocialPostStatusItem[];
+  total?: number;
+}
+
+export interface SocialRetryResponse {
+  outcome?: "retried" | "noop" | "not_eligible" | "not_found";
+  item?: SocialPostStatusItem | null;
+  message?: string | null;
+  status?: string;
+}
+
+export async function getSocialStatus(
+  token: string,
+  jobId: string,
+): Promise<SocialPostStatusItem | null> {
+  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/social-status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostStatusItem;
+}
+
+export async function getAdminSocialPosts(
+  token: string,
+  params?: { page?: number; limit?: number },
+): Promise<SocialPostStatusListResponse> {
+  const url = new URL(`${API}/api/v1/admin/social-posts`);
+  if (params?.page !== undefined) url.searchParams.set("page", String(params.page));
+  if (params?.limit !== undefined) url.searchParams.set("limit", String(params.limit));
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostStatusListResponse;
+}
+
+export async function retrySocialPost(
+  token: string,
+  jobId: string,
+): Promise<SocialRetryResponse> {
+  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/social-post/retry`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialRetryResponse;
+}

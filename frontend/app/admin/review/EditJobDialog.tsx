@@ -15,13 +15,17 @@ import {
   ApiError,
   generateSocialDraft,
   getSocialDraft,
+  getSocialStatus,
+  retrySocialPost,
   saveSocialDraft,
   updateJob,
   type JobAdmin,
   type JobUpdate,
   type SocialPostDraft,
+  type SocialPostStatusItem,
   type SocialPublishMode,
 } from "@/lib/api";
+import { TOKEN_KEY } from "@/lib/auth";
 import { CITY_OPTIONS, type CitySlug } from "@/lib/cities";
 
 interface FormState {
@@ -44,6 +48,22 @@ type SocialAction = "load" | "generate" | "save" | null;
 
 const SITE_PUBLIC_URL_ERROR =
   "Link público indisponível: configure SITE_PUBLIC_URL no servidor para gerar o rascunho com link da vaga.";
+
+function formatBrtDateTime(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(d);
+  return parts;
+}
 
 function slugFromCanonical(canonical: string | null | undefined): CitySlug | "" {
   if (!canonical) return "";
@@ -248,6 +268,13 @@ export function EditJobDialog({
     time: "",
   });
 
+  // Social publication status (Phase 17)
+  const [socialStatus, setSocialStatus] = useState<SocialPostStatusItem | null>(null);
+  const [socialStatusLoading, setSocialStatusLoading] = useState(false);
+  const [socialStatusError, setSocialStatusError] = useState<string | null>(null);
+  const [retryingSocial, setRetryingSocial] = useState(false);
+  const retryInFlightRef = useRef(false);
+
   const resetSocialState = () => {
     setSocialDraft(null);
     setSocialText("");
@@ -262,6 +289,11 @@ export function EditJobDialog({
     setShowRegenConfirm(false);
     setScheduleError(null);
     setLastSavedSnapshot({ text: "", publishMode: "publish_now", date: "", time: "" });
+    setSocialStatus(null);
+    setSocialStatusLoading(false);
+    setSocialStatusError(null);
+    setRetryingSocial(false);
+    retryInFlightRef.current = false;
   };
 
   const applyDraft = (draft: SocialPostDraft | null) => {
@@ -297,30 +329,117 @@ export function EditJobDialog({
     resetSocialState();
   }, [job, open]);
 
-  // Load social draft when dialog opens for a job.
+  const handleAuthExpired = () => {
+    try {
+      sessionStorage.removeItem(TOKEN_KEY);
+    } catch {
+      // ignore
+    }
+    window.location.replace("/admin/paste");
+  };
+
+  const loadSocialStatus = async (jobId: string, authToken: string) => {
+    setSocialStatusLoading(true);
+    setSocialStatusError(null);
+    try {
+      const status = await getSocialStatus(authToken, jobId);
+      setSocialStatus(status);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        handleAuthExpired();
+        return;
+      }
+      setSocialStatusError(
+        "Não foi possível carregar o status das publicações. Tente novamente em alguns instantes.",
+      );
+    } finally {
+      setSocialStatusLoading(false);
+    }
+  };
+
+  // Load social draft and status when dialog opens for a job.
   useEffect(() => {
     if (!open || !job || !token) return;
     let cancelled = false;
     setSocialAction("load");
     setSocialLoadError(null);
-    getSocialDraft(token, job.id)
-      .then((draft) => {
-        if (cancelled) return;
-        applyDraft(draft);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        const message = err instanceof ApiError ? err.message : "Não foi possível carregar o rascunho social.";
-        setSocialLoadError(message);
-      })
-      .finally(() => {
-        if (!cancelled) setSocialAction(null);
-      });
+    setSocialStatusLoading(true);
+    setSocialStatusError(null);
+
+    Promise.all([
+      getSocialDraft(token, job.id)
+        .then((draft) => {
+          if (!cancelled) applyDraft(draft);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (err instanceof ApiError && err.status === 401) {
+            handleAuthExpired();
+            return;
+          }
+          const message =
+            err instanceof ApiError
+              ? err.message
+              : "Não foi possível carregar o rascunho social.";
+          setSocialLoadError(message);
+        }),
+      getSocialStatus(token, job.id)
+        .then((status) => {
+          if (!cancelled) setSocialStatus(status);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (err instanceof ApiError && err.status === 401) {
+            handleAuthExpired();
+            return;
+          }
+          setSocialStatusError(
+            "Não foi possível carregar o status das publicações. Tente novamente em alguns instantes.",
+          );
+        }),
+    ]).finally(() => {
+      if (!cancelled) {
+        setSocialAction(null);
+        setSocialStatusLoading(false);
+      }
+    });
+
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, job?.id, token]);
+
+  const handleRetrySocial = async () => {
+    if (!token || !job || !socialStatus?.can_retry) return;
+    if (retryInFlightRef.current) return;
+    retryInFlightRef.current = true;
+    setRetryingSocial(true);
+    try {
+      const res = await retrySocialPost(token, job.id);
+      const item = res.item ?? (await getSocialStatus(token, job.id));
+      if (item) setSocialStatus(item);
+      const outcome = res.outcome;
+      if (outcome === "noop" || outcome === "not_eligible") {
+        toast("Nenhuma nova tentativa foi necessária. Status atualizado.", "success");
+      } else {
+        toast("Nova tentativa iniciada.", "success");
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        handleAuthExpired();
+        return;
+      }
+      toast(
+        "Não foi possível iniciar a nova tentativa. Tente novamente em alguns instantes.",
+        "error",
+      );
+      await loadSocialStatus(job.id, token);
+    } finally {
+      setRetryingSocial(false);
+      retryInFlightRef.current = false;
+    }
+  };
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -730,6 +849,130 @@ export function EditJobDialog({
                 <h3 className="text-[20px] font-semibold leading-tight text-fg">
                   Post para Facebook
                 </h3>
+
+                <div className="mt-4 rounded-lg border border-line bg-canvas p-4">
+                  <h4 className="text-[16px] font-semibold text-fg">
+                    Status da publicação no Facebook
+                  </h4>
+
+                  {socialStatusLoading ? (
+                    <p className="mt-2 text-[14px] text-fg-muted">Carregando...</p>
+                  ) : socialStatusError ? (
+                    <p role="alert" className="mt-2 text-[14px] text-danger-soft">
+                      {socialStatusError}
+                    </p>
+                  ) : !socialStatus ? (
+                    <div className="mt-2 space-y-2">
+                      <span className="inline-flex items-center rounded-full border border-line bg-canvas px-3 py-1 text-[14px] text-fg-muted">
+                        Sem rascunho
+                      </span>
+                      <p className="text-[14px] text-fg-muted">
+                        Nenhum post social registrado para esta vaga.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="mt-2 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[14px] ${
+                            socialStatus.status === "failed"
+                              ? "border border-danger bg-[rgba(248,113,113,0.12)] text-danger-soft"
+                              : socialStatus.status === "published"
+                                ? "border border-accent bg-[rgba(139,92,246,0.12)] text-fg"
+                                : socialStatus.status === "publishing"
+                                  ? "border border-accent/40 bg-[rgba(139,92,246,0.08)] text-fg"
+                                  : socialStatus.status === "scheduled"
+                                    ? "border border-accent/40 bg-[rgba(139,92,246,0.08)] text-fg"
+                                    : "border border-line bg-canvas text-fg-muted"
+                          }`}
+                        >
+                          {socialStatus.status === "publishing" ? (
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-accent-soft border-t-transparent" aria-hidden="true" />
+                          ) : null}
+                          {socialStatus.status_label}
+                        </span>
+                      </div>
+
+                      {socialStatus.status === "scheduled" ? (
+                        <p className="text-[14px] text-fg-muted">
+                          {socialStatus.scheduled_at
+                            ? `Publicação agendada para ${formatBrtDateTime(socialStatus.scheduled_at)} (America/Sao_Paulo).`
+                            : "Publicação agendada."}
+                        </p>
+                      ) : null}
+
+                      {socialStatus.status === "publishing" ? (
+                        <p className="text-[14px] text-fg-muted">
+                          Publicação em andamento. Atualize em instantes para ver o resultado.
+                        </p>
+                      ) : null}
+
+                      {socialStatus.status === "published" ? (
+                        <div className="space-y-1">
+                          <p className="text-[14px] text-fg">Publicado no Facebook.</p>
+                          {socialStatus.published_url ? (
+                            <a
+                              href={socialStatus.published_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex min-h-11 items-center text-[14px] font-medium text-accent-soft underline-offset-4 hover:text-accent hover:underline"
+                            >
+                              Ver post no Facebook
+                            </a>
+                          ) : (
+                            <p className="text-[14px] text-fg-muted">
+                              Publicado no Facebook. Link indisponível.
+                            </p>
+                          )}
+                        </div>
+                      ) : null}
+
+                      {socialStatus.status === "failed" ? (
+                        <p className="text-[14px] text-danger-soft">
+                          {socialStatus.last_error ||
+                            "Não foi possível publicar este post. Tente novamente quando estiver disponível."}
+                        </p>
+                      ) : null}
+
+                      {socialStatus.status !== "failed" &&
+                      socialStatus.status !== "published" &&
+                      socialStatus.status !== "publishing" &&
+                      socialStatus.status !== "scheduled" &&
+                      socialStatus.status === "draft" ? (
+                        <p className="text-[14px] text-fg-muted">
+                          Rascunho salvo. Aprove a vaga para agendar ou publicar.
+                        </p>
+                      ) : null}
+
+                      {socialStatus.retry_block_reason ? (
+                        <p className="text-[14px] text-fg-muted">
+                          {socialStatus.retry_block_reason}
+                        </p>
+                      ) : null}
+
+                      {socialStatus.retry_block_reason &&
+                      /reconect/i.test(socialStatus.retry_block_reason) ? (
+                        <a
+                          href="/admin/integracoes"
+                          className="inline-flex min-h-11 items-center rounded-lg border border-line-strong px-4 text-sm font-semibold text-fg transition-colors hover:border-accent hover:text-accent-soft"
+                        >
+                          Abrir Integrações
+                        </a>
+                      ) : null}
+
+                      {socialStatus.can_retry ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleRetrySocial()}
+                          disabled={retryingSocial}
+                          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-strong-hover disabled:opacity-50"
+                        >
+                          {retryingSocial ? "Tentando novamente..." : "Tentar novamente"}
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
 
                 {socialAction === "load" ? (
                   <p className="mt-3 text-[14px] text-fg-muted">Carregando rascunho...</p>
