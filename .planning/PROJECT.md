@@ -5,7 +5,7 @@
 **Latest shipped milestone:** v1.1 EmpregaNoix — **shipped 2026-11-15** (archived with **accepted audit gaps**).  
 **Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`
 
-**v1.2 progress:** Phase 15 complete — OAuth Meta e Integrações no admin (META-01..META-06: fluxo OAuth seguro/state, seleção/persistência de página única, validação `needs_reconnect`, endpoints seguros e UI admin de Integrações) implementado e verificado. Phase 14 (fundação social SOC-01..SOC-06) também concluída.
+**v1.2 progress:** Phase 16 complete — Geração, revisão e aprovação do post social (POST-01..POST-06: draft LLM/fallback, revisão/edição/agendamento BRT, approve site-first com registro social best-effort/imutável, política sem contato/empresa por padrão e link público `/?vaga=<job_id>`) implementado e verificado automaticamente (UAT humana pendente). Phase 15 (OAuth Meta/Integrações, META-01..META-06) e Phase 14 (fundação social, SOC-01..SOC-06) também concluídas.
 
 ## Current Milestone: v1.2 Integração com Facebook Pages
 
@@ -46,6 +46,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 - [x] Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1: Backend Foundation, Data & Admin Auth (ADMN-01/02/03)
 - [x] Fundação social de integração Facebook (modelos/migração `social_*`, crypto Fernet de tokens, contrato `SocialPublisher`/stub Facebook, config/env `.env.example`) — Validated in Phase 14: Fundacao Social, Dados e Configuracao (SOC-01, SOC-02, SOC-03, SOC-04, SOC-05, SOC-06)
+- [x] Geração, revisão e aprovação do post social (draft LLM/fallback, edição/regeneração/preview, agendamento BRT, approve site-first com registro social best-effort/imutável, política sem contato/empresa por padrão e link público) — Validated in Phase 16: Geracao Revisao e Aprovacao do Post Social (POST-01, POST-02, POST-03, POST-04, POST-05, POST-06; automated verification passed, human UAT pending)
 - [~] v1.1 scope (Phases 7–13): implementação/reconciliação avançada em reveal/anti-spam, revisão admin, lifecycle/trust/legal, rebranding e alinhamento canônico de deploy/ops — **com lacunas aceitas** (ver audit/archives). Não tratar como totalmente validado.
 
 ### Active
@@ -122,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-15 after completing Phase 15 (OAuth Meta e Integrações no Admin)*
+*Last updated: 2026-11-16 after completing Phase 16 (Geração, Revisão e Aprovação do Post Social; human verification accepted for closeout, UAT pending)*
