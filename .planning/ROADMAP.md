@@ -95,7 +95,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Fundação Social, Dados e Configuração | 3/3 | Complete    | 2026-11-15 |
 | 15. OAuth Meta e Integrações no Admin | 3/3 | Complete    | 2026-11-15 |
-| 16. Geração, Revisão e Aprovação do Post Social | 3/3 | Complete   | 2026-11-16 |
+| 16. Geração, Revisão e Aprovação do Post Social | 3/3 | Complete    | 2026-11-16 |
 | 17. Publicação Assíncrona, Retry, Idempotência e Status | 0/0 | Not started | - |
 | 18. Testes, Documentação e Fechamento de Gaps v1.1 | 0/0 | Not started | - |
 

@@ -27,12 +27,12 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 
 ### Geração e Edição do Texto do Post (Revisão)
 
-- [ ] **POST-01**: Reutiliza integração LLM existente para gerar texto do post a partir dos dados estruturados da vaga (tom profissional e acolhedor, pt-BR, emojis moderados, até ~700 caracteres, destaque cargo/cidade/salário se informado/benefícios, CTA com link, 3–5 hashtags) terminando com link da vaga
-- [ ] **POST-02**: Fallback por template estático se LLM falhar (revisão nunca bloqueada); texto gerado ao entrar em revisão e salvo como `draft`
-- [ ] **POST-03**: Revisor pode editar o texto antes de aprovar (campo editável, contador de caracteres, botão "regenerar com IA", preview simples)
-- [ ] **POST-04**: Revisor escolhe "publicar agora / agendar" com data e hora (fuso `America/Sao_Paulo`); padrão imediata; agendamento respeita horário escolhido
-- [ ] **POST-05**: Texto aprovado é imutável após envio e fica salvo em `social_posts`
-- [ ] **POST-06**: Por padrão o post não inclui contato direto da vaga, apenas link para o site (`SITE_PUBLIC_URL` + URL pública da vaga); comportamento configurável conforme implementação documentada
+- [x] **POST-01**: Reutiliza integração LLM existente para gerar texto do post a partir dos dados estruturados da vaga (tom profissional e acolhedor, pt-BR, emojis moderados, até ~700 caracteres, destaque cargo/cidade/salário se informado/benefícios, CTA com link, 3–5 hashtags) terminando com link da vaga
+- [x] **POST-02**: Fallback por template estático se LLM falhar (revisão nunca bloqueada); texto gerado ao entrar em revisão e salvo como `draft`
+- [x] **POST-03**: Revisor pode editar o texto antes de aprovar (campo editável, contador de caracteres, botão "regenerar com IA", preview simples)
+- [x] **POST-04**: Revisor escolhe "publicar agora / agendar" com data e hora (fuso `America/Sao_Paulo`); padrão imediata; agendamento respeita horário escolhido
+- [x] **POST-05**: Texto aprovado é imutável após envio e fica salvo em `social_posts`
+- [x] **POST-06**: Por padrão o post não inclui contato direto da vaga, apenas link para o site (`SITE_PUBLIC_URL` + URL pública da vaga); comportamento configurável conforme implementação documentada
 
 ### Publicação, Worker, Retry & Idempotência
 
@@ -99,12 +99,12 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 | META-04 | Phase 15 | Complete |
 | META-05 | Phase 15 | Complete |
 | META-06 | Phase 15 | Complete |
-| POST-01 | Phase 16 | Pending |
-| POST-02 | Phase 16 | Pending |
-| POST-03 | Phase 16 | Pending |
-| POST-04 | Phase 16 | Pending |
-| POST-05 | Phase 16 | Pending |
-| POST-06 | Phase 16 | Pending |
+| POST-01 | Phase 16 | Complete |
+| POST-02 | Phase 16 | Complete |
+| POST-03 | Phase 16 | Complete |
+| POST-04 | Phase 16 | Complete |
+| POST-05 | Phase 16 | Complete |
+| POST-06 | Phase 16 | Complete |
 | PUB-01 | Phase 17 | Pending |
 | PUB-02 | Phase 17 | Pending |
 | PUB-03 | Phase 17 | Pending |
