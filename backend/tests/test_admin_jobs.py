@@ -275,7 +275,8 @@ async def test_approve(client, db_session, admin_password):
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["status"] == "published"
+    assert body["job"]["status"] == "published"
+    assert body["social"]["status"] in ("skipped", "registered", "warning")
     # Verify via GET
     get_resp = await client.get(
         f"/api/v1/admin/jobs/{job.id}",
@@ -339,7 +340,7 @@ async def test_approve_refreshes_expires_at(client, db_session, admin_password):
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
-    expires_at = datetime.fromisoformat(resp.json()["expires_at"])
+    expires_at = datetime.fromisoformat(resp.json()["job"]["expires_at"])
     assert expires_at > before
 
 
