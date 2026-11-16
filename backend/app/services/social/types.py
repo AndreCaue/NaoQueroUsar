@@ -8,6 +8,7 @@ class PublishFailureCategory(str, Enum):
     transient = "transient"
     permanent = "permanent"
     unknown = "unknown"
+    ambiguous = "ambiguous"
 
 
 @dataclass(frozen=True)
@@ -24,3 +25,5 @@ class SocialPostPayload:
     provider: str
     message: str
     link: str | None = None
+    page_id: str | None = None
+    page_access_token: str | None = None
