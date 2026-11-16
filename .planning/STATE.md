@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Integração com Facebook Pages
-status: completed
+status: executing
 stopped_at: Phase 16 UI-SPEC approved
-last_updated: "2026-11-16T01:05:12.425Z"
-last_activity: 2026-11-15
+last_updated: "2026-11-16T01:44:50.449Z"
+last_activity: 2026-11-16 -- Phase 16 execution started
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
+  total_plans: 9
   completed_plans: 6
   percent: 40
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-15)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 15 — oauth meta e integrações no admin
+**Current focus:** Phase 16 — geracao-revisao-e-aprovacao-do-post-social
 
 ## Current Position
 
-Phase: 16 of 18 (geracao revisao e aprovacao do post social)
-Plan: Not started
-Status: Phase complete
-Last activity: 2026-11-15
+Phase: 16 (geracao-revisao-e-aprovacao-do-post-social) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 16
+Last activity: 2026-11-16 -- Phase 16 execution started
 
 Progress: [████░░░░░░] 40%
 
