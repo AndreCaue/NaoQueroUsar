@@ -474,27 +474,23 @@ def map_publish_error(*, kind: str, reconnect_required: bool = False):
 | A6 | A small batch limit per worker cycle (e.g. 10–50) is sufficient for 100–500 jobs/month and avoids long cron requests/timeouts. | Architecture / Discretion | Under-sizing could delay backlog; over-sizing could hit runtime/request limits. |
 | A7 | Existing `social_post_logs` schema is sufficient for attempt/result/error/response summaries without migration; optional only if new fields are strictly needed. | Observability | Extra migration work if current columns cannot represent required audit info. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **How to represent "ambiguous, needs verification" distinctly from retryable/permanent failed in current status enum?**
+1. **How to represent "ambiguous, needs verification" distinctly from retryable/permanent failed in current status enum?** — RESOLVED
    - What we know: Enum has `failed`; D-11 requires no auto-republish and safe/manual handling. `last_error` can carry guidance. [VERIFIED: model + CONTEXT]
-   - What's unclear: Whether UI/backend needs a separate marker/category for manual-only ambiguous failures vs exhausted retries.
-   - Recommendation: Keep DB enum unchanged; encode via `failed` + `next_retry_at NULL` + categorized safe `last_error`/log reason (and/or eligibility flag in API). Only add schema state if necessary.
+   - Decision: Keep the DB enum unchanged. Represent ambiguous/manual-review-required and final/manual-only outcomes as `status='failed'` with `next_retry_at=NULL` plus a categorized safe pt-BR `last_error`/log reason and API eligibility fields (e.g. `can_retry`/reason) as needed. Do not auto-republish ambiguous cases and do not add a new schema state in Phase 17.
 
-2. **Published post link derivation**
+2. **Published post link derivation** — RESOLVED
    - What we know: UI must show link when available (UI-01/D-14). Graph returns IDs; page context is known (`page_id`). [VERIFIED: requirements/context/models]
-   - What's unclear: Most reliable permalink format across post types from feed publish response alone.
-   - Recommendation: Persist `external_post_id`; if permalink derivable reliably, expose computed URL; otherwise expose ID and/or best-effort link builder marked safe, and keep UI resilient when link unavailable.
+   - Decision: Persist `external_post_id` as the source of truth. Expose a published URL/permalink to the admin UI only when it can be derived/provided reliably and safely; otherwise expose the external ID and keep UI resilient when link unavailable (never fabricate or guess an unsafe link).
 
-3. **Manual retry behavior when account is not connected**
+3. **Manual retry behavior when account is not connected** — RESOLVED
    - What we know: D-15 says disable/ocultar with orientação when reconnection needed/not eligible. D-06 requires blocked non-auto-retry with reconnection guidance. [VERIFIED: CONTEXT]
-   - What's unclear: Whether retry endpoint should reject with actionable 409/422 or accept and record blocked outcome.
-   - Recommendation: Prefer deterministic reject/no-op with safe pt-BR reason when ineligible, and let UI disable based on `can_retry`/reason from status payload.
+   - Decision: Enforce eligibility server-side and return a deterministic idempotent reject/no-op with safe pt-BR reason when retry is ineligible (e.g. disconnected/`needs_reconnect`, published, processing, not eligible). UI must disable/hide retry based on `can_retry`/reason and show orientação para reconectar when applicable.
 
-4. **Immediate dispatch granularity (single post vs due-batch cycle)**
+4. **Immediate dispatch granularity (single post vs due-batch cycle)** — RESOLVED
    - What we know: D-01 targets "publish now" approval first attempt; D-03 requires same pipeline. [VERIFIED: CONTEXT]
-   - What's unclear: Whether background task should process only the specific post ID or run a general due cycle.
-   - Recommendation: Support targeted processing by `social_post_id` (fast path, minimal contention) implemented atop the same claim/process functions, plus cron full due-batch cycle.
+   - Decision: Implement targeted processing by `social_post_id` for the immediate post-approval fast path, built atop the same shared claim/process functions, and implement the cron worker as a due-batch cycle over eligible posts using the same pipeline. Both paths must remain non-blocking where required and idempotent.
 
 ## Environment Availability
 
