@@ -3,6 +3,9 @@ phase: 07-contact-reveal-anti-spam-completeness
 verified: 2026-11-15T03:10:00Z
 status: gaps_found
 score: 2/3 requirements fully evidenced (SECR-12 split/deferred by design)
+reconciliation:
+  - date: 2026-11-16
+    note: "Phase 18 Plan 03 (AUD-05/D-03/D-04) consolidou evidências/caveats em `.planning/phases/11-verify-phases-7-8-reveal-admin-review-evidence/11-VERIFICATION.md`. Estado atual permanece com caveats históricos preservados (DB-backed env-blocked: `relation \"jobs\" does not exist`; checks humanos/browser pendentes; SECR-12 split com Phase 12 owner de `/admin/expire` T-06-01 e handoff canônico/ops mapeado em Phase 13) — evidência parcial+handoff onde não executado."
 gaps:
   - truth: "DB-backed reveal endpoint evidence (test_reveal_api.py) can be re-run and recorded as green in this environment"
     status: failed

@@ -49,6 +49,14 @@
 - T-06-01/`/admin/expire` e `scripts/verify-deploy.ps1`/`docs/DEPLOY.md` não alterados por esta auditoria.
 - Segredos e tokens permanecem backend-only; nenhuma credencial registrada.
 
+## AUD-05 (18-03) — Reconciliação de verificação/caveats v1.1 (evidência parcial+handoff)
+
+| Escopo | Evidência/artefato | Estado | Handoff / critério objetivo |
+|---|---|---|---|
+| Backfill Phase 11 (D-03) | `.planning/phases/11-verify-phases-7-8-reveal-admin-review-evidence/11-VERIFICATION.md` consolida 07/08/11 (11-01..03 summaries) e correlatos 12/13 com ownership preservado (T-06-01/SECR-12 sob Phase 12; ops canônico mapeado em Phase 13) | evidência parcial+handoff | Não fabricado como fechado: depende de execução DB/browser/canônica. |
+| Caveats 07/08 reconciliados | `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`, `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md` com cross-ref para `11-VERIFICATION.md` e caveats históricos preservados | evidência parcial+handoff | DB-backed suites bloqueadas por `relation "jobs" does not exist`; checks humanos/browser (reveal, ADMN-10, REVW-10) pendentes. |
+| Rastreabilidade/audit v1.1 | `.planning/REQUIREMENTS.md`, `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md` atualizados com status honesto e referências a artefatos | evidência parcial+handoff | Fechar somente com prova reexecutada/operacional registrada; manter canônico vs legado distinto. |
+
 
 ## TEST-03 (18-02) — worker/claim/idempotência social (evidência parcial+handoff)
 

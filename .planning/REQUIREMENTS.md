@@ -64,7 +64,7 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 - [ ] **AUD-02**: Fechar/validar requisitos públicos **PUBL-10/11/12/13/14** (board/cards/modal/reveal/candidatura) no escopo auditado com evidência
 - [ ] **AUD-03**: Fechar/validar requisitos de busca/filtro/ordenação **SRCH-10/11/12** com evidência
 - [ ] **AUD-04**: Fechar/validar requisitos de UI/tema/ads **UIUX-10/11/12** com evidência
-- [ ] **AUD-05**: Resolver lacunas de verificação/evidência v1.1 aceitas: criar `11-VERIFICATION.md` (ou equivalente rastreável), tratar caveats de 07/08, e reduzir dependências de handoff (DB de testes reprodutível, verificações humanas/browser/canônicas onde aplicável) — conforme priorização do milestone
+- [~] **AUD-05**: Backfill rastreável criado em `.planning/phases/11-verify-phases-7-8-reveal-admin-review-evidence/11-VERIFICATION.md` (D-03) e caveats de 07/08 reconciliados com cross-ref/estado atual; rastreabilidade ancorada em `18-AUDIT-MATRIX.md` e audit v1.1. **Evidência parcial+handoff:** DB-backed suites ainda bloqueadas (`relation "jobs" does not exist`), verificações humanas/browser e smoke/runtime canônico permanecem pendentes (não fechado sem prova).
 
 ## v2 Requirements (Future)
 
@@ -124,8 +124,8 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 | AUD-02 | Phase 18 | Pending |
 | AUD-03 | Phase 18 | Pending |
 | AUD-04 | Phase 18 | Pending |
-| AUD-05 | Phase 18 | Pending |
+| AUD-05 | Phase 18 | Evidência parcial+handoff (18-03: `11-VERIFICATION.md`, caveats 07/08 reconciliados, `18-AUDIT-MATRIX.md`) |
 
 ---
 *Requirements defined: 2026-11-15 for v1.2 Integração com Facebook Pages*
-*Last updated: 2026-11-15 — initial draft*
+*Last updated: 2026-11-16 — Phase 18 Plan 03: AUD-05 reconciliado como evidência parcial+handoff com backfill `11-VERIFICATION.md` e referências em `18-AUDIT-MATRIX.md` (sem fechar lacunas dependentes de runtime/DB/browser no escuro)*

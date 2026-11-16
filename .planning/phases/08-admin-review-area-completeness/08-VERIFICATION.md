@@ -3,6 +3,9 @@ phase: 08-admin-review-area-completeness
 verified: 2026-11-15T03:25:00Z
 status: gaps_found
 score: 4/6 requirements fully evidenced (2 DB-backed suites environment-blocked; UI claims require human/browser confirmation)
+reconciliation:
+  - date: 2026-11-16
+    note: "Phase 18 Plan 03 (AUD-05/D-03/D-04) consolidou evidências/caveats em `.planning/phases/11-verify-phases-7-8-reveal-admin-review-evidence/11-VERIFICATION.md`. Estado atual preserva achados/caveats históricos (DB-backed env-blocked: `relation \"jobs\" does not exist`; verificação humana/browser pendente para ADMN-10/REVW-10; mapeamento REVW-12 idempotente-em-efeito mantido) — evidência parcial+handoff onde não executado."
 gaps:
   - truth: "DB-backed admin/review and extract targeted suites can be re-run and recorded as green in this environment"
     status: failed

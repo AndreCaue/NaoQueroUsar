@@ -121,7 +121,15 @@ Plans:
   3. Requisitos EXTR-10/11/12, PUBL-10/11/12/13/14, SRCH-10/11/12 e UIUX-10/11/12 são fechados/validados ou possuem evidência verificável e estado atualizado conforme resultado.
   4. Lacunas de verificação/evidência do audit v1.1 (ex.: `11-VERIFICATION.md` ou equivalente rastreável, caveats 07/08 e handoffs priorizados como DB de testes/verificações humanas-browser-canônicas) são tratadas com artefatos e rastreabilidade explícitos.
 
-**Plans**: TBD
+**Plans:** 4 plans (evidência em progresso; contagem/status final sob coordenação do orquestrador)
+
+Plans:
+- [x] 18-01-PLAN.md — Auditoria EXTR/PUBL/SRCH/UIUX e matriz de fechamento (`18-AUDIT-MATRIX.md`, evidência parcial+handoff)
+- [x] 18-02-PLAN.md — Cobertura automatizada social/worker e handoffs (`18-AUDIT-MATRIX.md`, sumário 18-02)
+- [x] 18-03-PLAN.md — Backfill `11-VERIFICATION.md` (Fase 11) + reconciliação caveats 07/08 e rastreabilidade (AUD-05 evidência parcial+handoff)
+- [ ] 18-04-PLAN.md — Restante do fechamento/docs conforme plano
+
+**Evidence notes (2026-11-16):** `11-VERIFICATION.md` criado; 07/08 reconciliados com caveats preservados; `18-AUDIT-MATRIX.md` ancorado para AUD-01..05 (parcial+handoff onde aplicável). DB/browser/canônico não executados nesta reconciliação.
 
 ## Progress
 
@@ -131,7 +139,7 @@ Plans:
 | 15. OAuth Meta e Integrações no Admin | 3/3 | Complete    | 2026-11-15 |
 | 16. Geração, Revisão e Aprovação do Post Social | 3/3 | Complete    | 2026-11-16 |
 | 17. Publica�ao Ass�ncrona, Retry, Idempot�ncia e Status | 3/3 | Complete | 2026-11-16 |
-| 18. Testes, Documentação e Fechamento de Gaps v1.1 | 0/0 | Not started | - |
+| 18. Testes, Documentação e Fechamento de Gaps v1.1 | 3/4 | In progress | - |
 
 ## Coverage
 

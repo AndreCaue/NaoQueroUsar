@@ -4,8 +4,8 @@ milestone: v1.2
 milestone_name: Integração com Facebook Pages
 status: executing
 stopped_at: Phase 18 UI-SPEC approved
-last_updated: "2026-11-16T18:10:49.051Z"
-last_activity: 2026-11-16 -- Phase 18 planning complete
+last_updated: "2026-11-16T18:31:01.817Z"
+last_activity: 2026-11-16 -- Phase 18 execution started
 progress:
   total_phases: 5
   completed_phases: 4
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-15)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 17 — publicação assíncrona, retry, idempotência e status
+**Current focus:** Phase 18 — testes-documentacao-e-fechamento-de-gaps-v11
 
 ## Current Position
 
-Phase: 17 (publicacao-assincrona-retry-idempotencia-e-status) - complete
-Plan: 3 of 3 complete
-Status: Ready to execute
-Last activity: 2026-11-16 -- Phase 18 planning complete
+Phase: 18 (testes-documentacao-e-fechamento-de-gaps-v11) — EXECUTING
+Plan: 3 of 4 (18-03 executado: backfill/reconciliação AUD-05; planos restantes conforme orquestrador)
+Status: In progress — evidência parcial+handoff registrada (11-VERIFICATION backfill, caveats 07/08 reconciliados, matrix/traceability atualizadas; DB/browser/canônico pendentes)
+Last activity: 2026-11-16 -- Phase 18 Plan 03 backfill/reconciliation artifacts updated
 
 Progress: [█████████░] 92%
 
@@ -74,7 +74,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- **Carried from v1.1 (audit accepted):** canonical-host live smoke/provisioning pending (handoff), DB-backed test reproducibility gaps, human/browser verification caveats, missing `11-VERIFICATION.md`, unsatisfied EXTR/PUBL/SRCH/UIUX reqs and other partial items — see `.planning/milestones/v1.1-MILESTONE-AUDIT.md`.
+- **Carried from v1.1 (audit accepted, reconciled 18-03):** `11-VERIFICATION.md` backfilled em `.planning/phases/11-verify-phases-7-8-reveal-admin-review-evidence/11-VERIFICATION.md` e caveats 07/08 reconciliados; permanecem pendentes (evidência parcial+handoff) canonical-host live smoke/provisioning, DB-backed test reproducibility (`relation "jobs" does not exist` em execuções registradas), verificações humanas/browser e fechamento com prova de EXTR/PUBL/SRCH/UIUX — ver `.planning/milestones/v1.1-MILESTONE-AUDIT.md`, `18-AUDIT-MATRIX.md`, `11-VERIFICATION.md`.
 - **v1.2 prerequisite:** inspecionar repo antes de planejar (framework Python, ORM/migrations, padrões, LLM/cron/revisão existentes) para alinhar convenções e evitar dependências desnecessárias.
 - **Phase 17 validation:** ambiente atual sem schema migrado no banco de testes DB-backed (`relation "jobs" does not exist`), impedindo execução completa das suítes automatizadas do plano 17-02.
 
@@ -88,7 +88,7 @@ Carried forward from v1.1 close (2026-11-15, audit `gaps_found` accepted):
 
 | Category | Item | Status |
 |----------|------|--------|
-| audit | v1.1-MILESTONE-AUDIT gaps (14 unsatisfied, 8 partial reqs; missing 11-VERIFICATION; 07/08 gaps_found; canonical runtime handoff) | deferred/accepted |
+| audit | v1.1-MILESTONE-AUDIT gaps (14 unsatisfied, 8 partial reqs; 07/08 gaps_found; canonical runtime handoff). 11-VERIFICATION backfilled em 18-03 (AUD-05 evidência parcial+handoff; caveats preservados) | deferred/accepted + reconciled evidence |
 | ops | Live canonical-host smoke/provisioning on `empreganoix.vercel.app` / `empreganoix.onrender.com` (D-10 execution) | pending handoff |
 | testing | Reproducible migrated test DB for DB-backed suites (`jobs` relation) | deferred |
 | requirements | EXTR-10/11/12, PUBL-10/11/12/13/14, SRCH-10/11/12, UIUX-10/11/12 closure | unsatisfied/deferred |
