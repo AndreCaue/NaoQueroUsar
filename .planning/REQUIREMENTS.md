@@ -113,8 +113,8 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 | PUB-06 | Phase 17 | Pending |
 | PUB-07 | Phase 17 | Pending |
 | PUB-08 | Phase 17 | Pending |
-| UI-01 | Phase 17 | Pending |
-| UI-02 | Phase 17 | Pending |
+| UI-01 | Phase 17 | Complete |
+| UI-02 | Phase 17 | Complete |
 | TEST-01 | Phase 18 | Pending |
 | TEST-02 | Phase 18 | Pending |
 | TEST-03 | Phase 18 | Pending |

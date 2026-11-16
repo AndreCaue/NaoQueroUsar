@@ -92,7 +92,7 @@ Plans:
   3. Idempotência impede duplicatas em concorrência, reexecução de cron ou clique duplo (checagem de estado/ID externo + lock/constraint); posts são fire-and-forget (editar/fechar/expirar vaga não altera/remove post no Facebook).
   4. Admin vê badge/status social, erro resumido e link do post publicado por vaga, e pode acionar "tentar novamente" apenas para casos elegíveis respeitando as mesmas regras.
 
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 **Wave 1**
@@ -130,7 +130,7 @@ Plans:
 | 14. Fundação Social, Dados e Configuração | 3/3 | Complete    | 2026-11-15 |
 | 15. OAuth Meta e Integrações no Admin | 3/3 | Complete    | 2026-11-15 |
 | 16. Geração, Revisão e Aprovação do Post Social | 3/3 | Complete    | 2026-11-16 |
-| 17. Publica??o Ass?ncrona, Retry, Idempot?ncia e Status | 2/3 | In progress | - |
+| 17. Publica�ao Ass�ncrona, Retry, Idempot�ncia e Status | 3/3 | Complete | 2026-11-16 |
 | 18. Testes, Documentação e Fechamento de Gaps v1.1 | 0/0 | Not started | - |
 
 ## Coverage

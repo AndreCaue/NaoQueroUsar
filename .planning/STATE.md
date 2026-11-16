@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Integração com Facebook Pages
 status: executing
-stopped_at: Completed 17-02-PLAN.md
-last_updated: "2026-11-16T13:16:05Z"
-last_activity: 2026-11-16 -- Completed 17-02 (worker/status/retry APIs + approve dispatch)
+stopped_at: Completed 17-03-PLAN.md
+last_updated: "2026-11-16T13:38:00Z"
+last_activity: 2026-11-16 -- Completed 17-03 (admin social status/retry UI + social posts view)
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 10
-  percent: 83
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -25,20 +25,20 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 
 ## Current Position
 
-Phase: 17 (publicacao-assincrona-retry-idempotencia-e-status)
-Plan: 2 of 3 complete
-Status: In progress
-Last activity: 2026-11-16 -- Completed 17-02 (worker/status/retry APIs + approve dispatch)
+Phase: 17 (publicacao-assincrona-retry-idempotencia-e-status) - complete
+Plan: 3 of 3 complete
+Status: Phase complete, ready for Phase 18
+Last activity: 2026-11-16 -- Completed 17-03 (admin social status/retry UI + social posts view)
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
 
 - Total plans completed (v1.2): 1
-- Average duration: 20 min
-- Total execution time: 0.3 hours
+- Average duration: 19 min
+- Total execution time: 0.6 hours
 
 **By Phase:**
 
@@ -47,11 +47,11 @@ Progress: [████████░░] 83%
 | 14 | 3 | - | - |
 | 15 | 3 | - | - |
 | 16 | 3 | - | - |
-| 17 | 2 | 20 min | 20 min |
+| 17 | 3 | 38 min | 19 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 15-02, 15-03, 16-01, 16-02, 16-03, 17-01, 17-02
+- Last 5 plans: 16-01, 16-02, 16-03, 17-01, 17-02, 17-03
 - Trend: Stable
 
 *Reset for new milestone; v1.1 metrics archived in project history.*
@@ -65,6 +65,7 @@ Recent decisions affecting current work:
 
 - v1.2: Integração apenas com Facebook (interface `SocialPublisher` prevendo Instagram futuro), 1 página/1 admin, OAuth no painel, falha no Facebook não bloqueia o site, retry/backoff configurável + retry manual, post fire-and-forget, texto gerado por LLM (editável na revisão, imutável após envio), segredos/tokens só no backend (criptografados).
 - Phase 17-02: Retry/status usam elegibilidade centralizada e respostas idempotentes/no-op seguras; approve agenda dispatch imediato apenas pós-commit para posts registrados/devidos; claim direcionado por `post_id` permite retry manual de falha elegível.
+- Phase 17-03: UI admin consome contratos seguros de status/retry com single-flight e feedback idempotente/no-op; retry/alertas de reconexão seguem elegibilidade do backend sem expor segredos.
 
 ### Pending Todos
 
@@ -93,6 +94,6 @@ Carried forward from v1.1 close (2026-11-15, audit `gaps_found` accepted):
 
 ## Session Continuity
 
-Last session: 2026-11-16T13:16:05Z
-Stopped at: Completed 17-02-PLAN.md
-Resume file: .planning/phases/17-publicacao-assincrona-retry-idempotencia-e-status/17-03-PLAN.md
+Last session: 2026-11-16T13:38:00Z
+Stopped at: Completed 17-03-PLAN.md
+Resume file: .planning/phases/18-testes-documentacao-e-fechamento-de-gaps-v11/18-CONTEXT.md (or next plan/discussion artifact)
