@@ -14,7 +14,7 @@
 
 - [x] **Phase 14: Fundação Social, Dados e Configuração** - Criar base de dados, segurança de tokens e contratos de publicação social (Facebook-first, extensível) (completed 2026-11-15)
 - [x] **Phase 15: OAuth Meta e Integrações no Admin** - Conectar/desconectar página do Facebook com fluxo OAuth seguro e status operacional visível (completed 2026-11-15)
-- [ ] **Phase 16: Geração, Revisão e Aprovação do Post Social** - Produzir rascunho de post com IA/template, permitir edição/agendamento na revisão e integrar aprovação sem bloquear o site
+- [x] **Phase 16: Geração, Revisão e Aprovação do Post Social** - Produzir rascunho de post com IA/template, permitir edição/agendamento na revisão e integrar aprovação sem bloquear o site (completed 2026-11-16)
 - [ ] **Phase 17: Publicação Assíncrona, Retry, Idempotência e Status** - Publicar/agendar no Facebook via worker resiliente e expor status/erros/retry no admin
 - [ ] **Phase 18: Testes, Documentação e Fechamento de Gaps v1.1** - Cobrir fluxos críticos com testes/docs operacionais e fechar/registrar evidências dos gaps aceitos do audit v1.1
 
@@ -58,12 +58,12 @@ Plans:
   2. O revisor pode editar, regenerar, ver preview/contador e escolher publicar agora ou agendar (padrão imediato) em `America/Sao_Paulo`.
   3. Aprovar a vaga publica no site imediatamente e registra o `social_post` aprovado (texto imutável após envio) com modo/horário corretos; se a geração/envio social falhar, a vaga do site permanece publicada.
   4. O conteúdo do post segue política configurada (por padrão sem contato direto, apenas link público via `SITE_PUBLIC_URL` + URL da vaga).
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 16-01-PLAN.md — Backend draft foundation (geração LLM/fallback, política/link/BRT, schemas/CRUD/config)
-- [ ] 16-02-PLAN.md — APIs admin de draft e approve site-first com registro social best-effort
-- [ ] 16-03-PLAN.md — UI admin de revisão (seção Post para Facebook) e feedback de aprovação social
+- [x] 16-02-PLAN.md — APIs admin de draft e approve site-first com registro social best-effort
+- [x] 16-03-PLAN.md — UI admin de revisão (seção Post para Facebook) e feedback de aprovação social
 **UI hint**: yes
 
 ### Phase 17: Publicação Assíncrona, Retry, Idempotência e Status
@@ -95,7 +95,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Fundação Social, Dados e Configuração | 3/3 | Complete    | 2026-11-15 |
 | 15. OAuth Meta e Integrações no Admin | 3/3 | Complete    | 2026-11-15 |
-| 16. Geração, Revisão e Aprovação do Post Social | 1/3 | In Progress|  |
+| 16. Geração, Revisão e Aprovação do Post Social | 3/3 | Complete   | 2026-11-16 |
 | 17. Publicação Assíncrona, Retry, Idempotência e Status | 0/0 | Not started | - |
 | 18. Testes, Documentação e Fechamento de Gaps v1.1 | 0/0 | Not started | - |
 
