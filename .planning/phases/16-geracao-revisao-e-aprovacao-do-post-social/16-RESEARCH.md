@@ -387,32 +387,24 @@ else toast("Vaga publicada no site. Não foi possível registrar o post social a
 | A5 | Defensive backend scrubbing of email/phone/contact-like tokens (in addition to prompt/template rules) is the most robust central enforcement for D-17. | Common Pitfalls / Pattern 1 | Over-scrubbing could remove benign text in edge cases; tune patterns conservatively. |
 | A6 | `zoneinfo` timezone data for `America/Sao_Paulo` is available in backend runtime environments (dev/deploy). | Pattern 4 / Environment Availability | Schedule conversion failures at runtime; may require tzdata/package verification. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Exact approve response contract shape**
-   - What we know: Approve must report site success and social registration outcome separately (D-09/D-11/UI-SPEC copy); current `approveJob` returns `JobAdmin` only.
-   - What's unclear: Final field names/status enum for social result and backward-compat strategy.
-   - Recommendation: Use explicit envelope `{ job: JobAdmin, social: { status: 'registered'|'skipped'|'warning', code?, message? } }` and update all callers in same phase.
+1. **Exact approve response contract shape — RESOLVED**
+   - Decision (16-01/16-02/16-03): `PATCH /api/v1/admin/jobs/{job_id}/approve` returns `JobApproveResponse` envelope `{ job: JobAdmin, social: { status: 'registered'|'skipped'|'warning', code?: string|null, message?: string|null } }`.
+   - Compatibility: all callers updated in the same phase (`frontend/lib/api.ts` `approveJob` returns `JobApproveResponse`, `ReviewQueue.tsx` consumes `result.job` and branches toasts on `result.social.status`). No backward-compat shim retained for the old `JobAdmin`-only shape.
 
-2. **Canonical draft endpoint design and payload**
-   - What we know: Need generate, save, and approval to consume last saved draft (D-01/D-02/D-08); dialog currently only edits job fields.
-   - What's unclear: Endpoint split (`get/generate/save`) and whether generate auto-persists.
-   - Recommendation: Provide `GET` (current draft), `POST generate/regenerate` (returns + persists draft), `PUT save` (persists text/mode/schedule) with upsert semantics and draft-only mutability.
+2. **Canonical draft endpoint design and payload — RESOLVED**
+   - Decision (16-02/16-03): admin-protected endpoints `GET /api/v1/admin/jobs/{job_id}/social-post`, `POST /api/v1/admin/jobs/{job_id}/social-post/generate`, `PUT /api/v1/admin/jobs/{job_id}/social-post` (provider fixed to `facebook`).
+   - Behavior: `POST .../generate` generates/regenerates from persisted `Job`, applies policy/link rules, **auto-persists/upserts** the draft (`status='draft'`) and returns `SocialPostDraftResponse` with `origin` (`llm`/`template_fallback`) and `warning` when applicable. `PUT .../social-post` performs explicit save of last edited text + `publish_mode` + BRT schedule inputs with upsert/draft-only mutability. `GET .../social-post` loads current draft state for dialog open/reopen (absence handled consistently per implemented schema with frontend `null`/empty-state handling). Mutations on non-draft (`frozen`) return HTTP 409 `Texto aprovado e bloqueado para envio.`
 
-3. **"Publish now" persistence convention**
-   - What we know: Approving "now" must register `scheduled` with `scheduled_at = agora` (D-10).
-   - What's unclear: Whether draft save before approval stores mode-only, `scheduled_at=now`, or derived value.
-   - Recommendation: Persist explicit mode in API/UI payload but ensure approval registration writes concrete `scheduled_at` (now/future) for Phase 17 compatibility.
+3. **"Publish now" persistence convention — RESOLVED**
+   - Decision (16-01/16-02): draft payload/state persists explicit `publish_mode` (`publish_now`|`schedule`) and BRT schedule inputs for "last saved draft" semantics (D-08). **Approval registration is authoritative:** on approve, draft `status` becomes `scheduled` with concrete timezone-aware `scheduled_at` = `now_utc()` for `publish_now`, or BRT wall-time converted unambiguously (via `zoneinfo("America/Sao_Paulo")`) for `schedule` (D-10), ensuring Phase 17 eligibility/compatibility.
 
-4. **Policy env var naming/format (POST-06/D-16)**
-   - What we know: Backend flag in `Settings`, documented in `.env.example`, default disabled (no contact).
-   - What's unclear: Exact name and boolean/string format.
-   - Recommendation: Choose clear boolean name (e.g. `SOCIAL_POST_INCLUDE_CONTACT=false` default), validate in `Settings`, document pt-BR comment and security intent.
+4. **Policy env var naming/format (POST-06/D-16) — RESOLVED**
+   - Decision (16-01): `SOCIAL_POST_INCLUDE_CONTACT: bool = False` in `backend/app/core/config.py` and `SOCIAL_POST_INCLUDE_CONTACT=false` documented in `backend/.env.example` with pt-BR comment stating default excludes company/contact and keeps only public job link. Central enforcement remains server-side in generation/template/fallback/sanitization/save paths.
 
-5. **How to load/freeze draft state across dialog reopen**
-   - What we know: Approved/scheduled text must be frozen (D-12/UI-SPEC) and edits disabled.
-   - What's unclear: Whether dialog should fetch draft on open for all jobs in this phase.
-   - Recommendation: Add draft read endpoint and load on dialog open/job select; enforce `status != draft` immutability server-side on mutating endpoints.
+5. **How to load/freeze draft state across dialog reopen — RESOLVED**
+   - Decision (16-02/16-03): `EditJobDialog` fetches draft on open/job select via `GET /social-post` and renders saved/frozen/unsaved/origin states per `16-UI-SPEC.md`. Server-side enforcement: only `status='draft'` is mutable (generate/save reject frozen with 409); approve consumes last saved draft and marks registered post `scheduled` (immutable). UI disables editing/controls when `frozen` and shows `Texto aprovado e bloqueado para envio.` / `Texto bloqueado após aprovação` states as specified.
 
 ## Environment Availability
 
