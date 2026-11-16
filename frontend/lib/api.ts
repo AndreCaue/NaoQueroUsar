@@ -405,8 +405,52 @@ export async function listAdminJobs(
   return (await res.json()) as JobAdminListResponse;
 }
 
+/** --- Social post draft (Phase 16) --- */
+
+export type SocialPublishMode = "publish_now" | "schedule";
+export type SocialDraftOrigin = "llm" | "template_fallback";
+export type SocialApproveStatus = "registered" | "skipped" | "warning";
+
+export interface SocialPostDraft {
+  job_id: string;
+  provider: "facebook";
+  status: "draft" | "scheduled" | "publishing" | "published" | "failed" | "cancelled";
+  text: string;
+  publish_mode: SocialPublishMode | null;
+  scheduled_at: string | null;
+  origin: SocialDraftOrigin | null;
+  saved: boolean;
+  frozen: boolean;
+  warning: string | null;
+}
+
+export interface SocialApproveOutcome {
+  status: SocialApproveStatus;
+  code?: string | null;
+  message?: string | null;
+}
+
+export interface JobApproveResponse {
+  job: JobAdmin;
+  social: SocialApproveOutcome;
+}
+
+export interface SocialDraftGenerateRequest {
+  publish_mode: SocialPublishMode;
+  scheduled_date?: string;
+  scheduled_time?: string;
+  text?: string;
+}
+
+export interface SocialDraftSaveRequest {
+  publish_mode: SocialPublishMode;
+  scheduled_date?: string;
+  scheduled_time?: string;
+  text?: string;
+}
+
 /** Approve a job by ID (PATCH /api/v1/admin/jobs/{id}/approve). */
-export async function approveJob(token: string, id: string): Promise<JobAdmin> {
+export async function approveJob(token: string, id: string): Promise<JobApproveResponse> {
   const res = await fetch(`${API}/api/v1/admin/jobs/${id}/approve`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${token}` },
@@ -416,7 +460,61 @@ export async function approveJob(token: string, id: string): Promise<JobAdmin> {
     throw new ApiError(await readError(res), res.status);
   }
 
-  return (await res.json()) as JobAdmin;
+  return (await res.json()) as JobApproveResponse;
+}
+
+export async function getSocialDraft(
+  token: string,
+  jobId: string,
+): Promise<SocialPostDraft | null> {
+  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/social-post`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostDraft;
+}
+
+export async function generateSocialDraft(
+  token: string,
+  jobId: string,
+  payload?: SocialDraftGenerateRequest,
+): Promise<SocialPostDraft> {
+  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/social-post/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostDraft;
+}
+
+export async function saveSocialDraft(
+  token: string,
+  jobId: string,
+  payload: SocialDraftSaveRequest,
+): Promise<SocialPostDraft> {
+  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/social-post`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostDraft;
 }
 
 /** Update a job by ID (PUT /api/v1/admin/jobs/{id}). */

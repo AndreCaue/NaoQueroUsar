@@ -177,8 +177,21 @@ export function ReviewQueue() {
     }));
 
     try {
-      await approveJob(token, job.id);
-      toast("Vaga aprovada e publicada.", "success");
+      const result = await approveJob(token, job.id);
+      const socialStatus = result.social?.status;
+      if (socialStatus === "skipped") {
+        toast(
+          "Vaga publicada no site. Nenhum rascunho social salvo — publicação no Facebook não foi registrada.",
+          "error",
+        );
+      } else if (socialStatus === "warning") {
+        toast(
+          "Vaga publicada no site. Não foi possível registrar o post social agora.",
+          "error",
+        );
+      } else {
+        toast("Vaga publicada no site. Post social registrado para envio.", "success");
+      }
       if (snapshot.length === 1 && page > 1) {
         setPage((prev) => prev - 1);
       } else {
