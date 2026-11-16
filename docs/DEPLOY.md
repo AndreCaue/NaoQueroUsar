@@ -97,16 +97,17 @@ Navegador ──HTTPS──► Vercel (Next.js 16 App Router, SSR + server fetch
 
 Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API_URL`), o HTML servido **nunca** contém `contact_email`, `contact_phone` ou `mailto:` — o contato só aparece após o clique em "Mostrar contato" (Turnstile + rate limit).
 
-**Schedulers de expiração (2 caminhos, 1 regra):**
+**Schedulers/rotinas protegidas por cron (contrato fail-closed, `X-Cron-Secret`):**
 
-1. **Primário** — APScheduler in-process (`backend/app/core/scheduler.py`), diário às 03:00 UTC com `misfire_grace_time=3600`, `coalesce=True`, `max_instances=1`.
-2. **Catch-up** — GitHub Actions chamando `POST /api/v1/admin/expire` com `X-Cron-Secret`. Idempotente.
+1. **Expiração (primário)** — APScheduler in-process (`backend/app/core/scheduler.py`), diário às 03:00 UTC com `misfire_grace_time=3600`, `coalesce=True`, `max_instances=1`.
+2. **Expiração (catch-up/manual)** — `POST /api/v1/admin/expire` com `X-Cron-Secret` (GitHub Actions ou cron externo). Idempotente. **T-06-01 preservado:** somente `X-Cron-Secret` autoriza (Bearer JWT de admin não autoriza).
+3. **Publicação social (worker, v1.2)** — `POST /api/v1/admin/social/worker` com `X-Cron-Secret` (mesmo `CRON_SECRET`) para processar posts elegíveis de forma idempotente (`FOR UPDATE SKIP LOCKED`, 1–5 min recomendado). Pode ser job dedicado no Render ou chamada adicional reaproveitando a infraestrutura de cron existente (sem expor segredos). Falhas sociais não bloqueiam o site (site-first).
 
 ---
 
 ## Pré-requisitos
 
-- [ ] Contas: **Vercel**, **Render**, **Neon**, **Cloudflare** (Turnstile), **Groq**, **GitHub**
+- [ ] Contas: **Vercel**, **Render**, **Neon**, **Cloudflare** (Turnstile), **Groq**, **GitHub** (e **Meta for Developers** se habilitar integração social/Facebook)
 - [ ] Repositório no GitHub com este código (branch de produção)
 - [ ] Projeto **Neon de produção** separado do dev/test
 - [ ] Cloudflare Turnstile: widget de **produção** criado. Turnstile → Hostnames: `empreganoix.vercel.app` (state-alvo). Widget de teste **não** aceito em `ENV=prod` (exceto desvio temporário).
@@ -120,7 +121,14 @@ Fluxo de dados do board: o SSR da Vercel busca as vagas no backend (`BACKEND_API
   ```powershell
   python -c "import secrets; print(secrets.token_urlsafe(64))"
   ```
-- [ ] `CRON_SECRET`: 32+ caracteres aleatórios; mesmo valor no Render e no GitHub (`secrets.CRON_SECRET`)
+- [ ] `CRON_SECRET`: 32+ caracteres aleatórios; mesmo valor no backend e nos executores de cron (GitHub `secrets.CRON_SECRET` e/ou Render), usado nos endpoints protegidos por `X-Cron-Secret` (expiração e worker social).
+
+## Integração Meta/Facebook e envs sociais (DOC-01)
+
+- Roteiro manual, setup em modo desenvolvimento, permissões mínimas (`pages_show_list`, `pages_manage_posts`, `pages_read_engagement`), cron/worker e checklist App Review/modo Live: ver [`docs/META-INTEGRATION-TESTING.md`](META-INTEGRATION-TESTING.md).
+- Configurar variáveis Meta/social **apenas no backend** (Render/env seguro), nunca no frontend: `META_APP_ID`, `META_APP_SECRET`, `META_GRAPH_VERSION`, `META_OAUTH_REDIRECT_URI`, `SOCIAL_TOKEN_ENCRYPTION_KEY`, `SOCIAL_MAX_ATTEMPTS`, `SOCIAL_RETRY_DELAYS`, `SOCIAL_WORKER_SECRET` (reservado), `SITE_PUBLIC_URL`, `SOCIAL_POST_INCLUDE_CONTACT` e demais conforme `backend/.env.example`.
+- `SITE_PUBLIC_URL` deve apontar para a origem pública do site (ex.: `https://empreganoix.vercel.app`) para links de vaga nos posts; `CRON_SECRET` protege rotinas operacionais (`/api/v1/admin/expire` e `/api/v1/admin/social/worker`) com `X-Cron-Secret`.
+- Referência operacional/gate: `scripts/verify-deploy.ps1` (parametrizado; evidência canônico vs legado deve ser registrada sem segredos).
 
 ---
 
@@ -184,11 +192,13 @@ Se necessário: `ALLOW_TEST_TURNSTILE=true` (Render) + site key de teste no fron
 
 ---
 
-## Cron de catch-up
+## Cron (Render / GitHub Actions) e segredos operacionais
 
-- GitHub Actions `vars.API_BASE_URL=https://empreganoix.onrender.com`, `secrets.CRON_SECRET` = valor do Render.
-- Workflow `.github/workflows/expire-cron.yml` (03:00 UTC + manual) chama `POST https://empreganoix.onrender.com/api/v1/admin/expire` com `X-Cron-Secret`.
-- Resposta: `{"deleted": N, "status": "ok"}` (idempotente). **T-06-01:** somente `X-Cron-Secret` (Bearer JWT não autoriza). 503 sem segredo / 401 inválido = fail-closed.
+- **Segredo:** `CRON_SECRET` deve ser idêntico entre backend e o executor do cron (ex.: GitHub `secrets.CRON_SECRET` e/ou job no Render). Nunca versionar valores reais.
+- **Expiração (catch-up):** GitHub Actions `vars.API_BASE_URL=https://empreganoix.onrender.com`, workflow `.github/workflows/expire-cron.yml` (03:00 UTC + manual) chama `POST https://empreganoix.onrender.com/api/v1/admin/expire` com `X-Cron-Secret`.
+  - Resposta: `{"deleted": N, "status": "ok"}` (idempotente). **T-06-01:** somente `X-Cron-Secret` (Bearer JWT não autoriza). 503 sem segredo / 401 inválido = fail-closed.
+- **Worker social (v1.2, Render novo ou reaproveitado):** chamar `POST https://<backend>/api/v1/admin/social/worker` com `X-Cron-Secret` a cada 1–5 minutos (recomendado) para drenar agendados/retries elegíveis. Pode ser configurado como job dedicado no Render ou como chamada adicional no mesmo mecanismo de cron (reaproveitado), desde que o segredo permaneça backend-only e o endpoint continue fail-closed/idempotente.
+- **Gate:** `scripts/verify-deploy.ps1` valida o contrato de expiração/cron fail-closed com `X-Cron-Secret` (checks 7-8) e deve ser executado como evidência operacional quando aplicável.
 
 ---
 

@@ -57,6 +57,14 @@
 | Caveats 07/08 reconciliados | `.planning/phases/07-contact-reveal-anti-spam-completeness/07-VERIFICATION.md`, `.planning/phases/08-admin-review-area-completeness/08-VERIFICATION.md` com cross-ref para `11-VERIFICATION.md` e caveats históricos preservados | evidência parcial+handoff | DB-backed suites bloqueadas por `relation "jobs" does not exist`; checks humanos/browser (reveal, ADMN-10, REVW-10) pendentes. |
 | Rastreabilidade/audit v1.1 | `.planning/REQUIREMENTS.md`, `.planning/STATE.md`, `.planning/ROADMAP.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md` atualizados com status honesto e referências a artefatos | evidência parcial+handoff | Fechar somente com prova reexecutada/operacional registrada; manter canônico vs legado distinto. |
 
+## TEST-04, DOC-01 e AUD-05 (18-04) — documentação/roteiros/handoffs (evidência parcial+handoff)
+
+| Item | Evidência/artefato (repo) | Estado | Handoff / critério objetivo |
+|---|---|---|---|
+| TEST-04 (roteiro manual Meta dev) | `docs/META-INTEGRATION-TESTING.md` (setup app/página em modo desenvolvimento, permissões `pages_show_list`/`pages_manage_posts`/`pages_read_engagement`, `META_GRAPH_VERSION`/redirect/seleção de página, roteiro OAuth→draft→aprovação publicar agora/agendar→status/retry/erros/link, checklist App Review/modo Live) | evidência parcial+handoff (documentado) | Execução real com credenciais/app/página Meta e validação operacional não realizadas nesta sessão; seguir pré-requisitos, passos e critérios de aceite do roteiro e registrar evidência sanitizada. |
+| DOC-01 (setup Meta, envs, cron Render, App Review/Live) | `docs/META-INTEGRATION-TESTING.md`, `docs/DEPLOY.md` (cron Render novo/reaproveitado para `/api/v1/admin/social/worker` e `/api/v1/admin/expire`, `X-Cron-Secret`/T-06-01 preservado, gate `scripts/verify-deploy.ps1`), `backend/.env.example`, `frontend/.env.example` (placeholders, sem segredos; backend-only preservado) | evidência parcial+handoff (documentado/alinhado) | Provisionamento real, cron ativo, e submissão App Review/modo Live dependem de ambiente/credenciais; validar com gate/evidência operacional quando executado. |
+| AUD-05 (D-02/D-04: DB de testes reprodutível + handoffs canônicos/humanos/browser/Meta) | `docs/TESTING-DB.md`, `backend/scripts/setup-test-db.ps1`, `18-HANDOFFS.md` (seções com pré-requisitos, passos/comandos e critério de aceite: DB migrado, smoke `scripts/verify-deploy.ps1` canônico, verificações humanas/browser, Meta real/dev-mode) | evidência parcial+handoff | Não afirmar pass sem execução registrada; DB-backed suites e smoke canônico/browser/Meta permanecem pendentes de infra/credenciais/interação humana. |
+
 
 ## TEST-03 (18-02) — worker/claim/idempotência social (evidência parcial+handoff)
 

@@ -55,8 +55,8 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 - [ ] **TEST-01**: Testes unitários cobrem geração de texto (LLM mockado), classificação de erros e cálculo de backoff
 - [ ] **TEST-02**: Testes de integração cobrem `FacebookPublisher` e OAuth com Graph API mockada (sem chamadas reais em CI)
 - [ ] **TEST-03**: Testes de concorrência do worker (`SKIP LOCKED`) e idempotência (sem duplicatas)
-- [ ] **TEST-04**: Roteiro de teste manual documentado para Página real com app Meta em modo desenvolvimento
-- [ ] **DOC-01**: Documentação inclui setup do app Meta, variáveis de ambiente, configuração do cron no Render (novo ou reaproveitado) e checklist de App Review/modo Live
+- [~] **TEST-04**: Roteiro de teste manual documentado para Página real com app Meta em modo desenvolvimento (documentado em `docs/META-INTEGRATION-TESTING.md` e handoff em `18-HANDOFFS.md`; execução real pendente de credenciais/app/página Meta — evidência parcial+handoff)
+- [~] **DOC-01**: Documentação inclui setup do app Meta, variáveis de ambiente, configuração do cron no Render (novo ou reaproveitado) e checklist de App Review/modo Live (documentado/alinhado em `docs/META-INTEGRATION-TESTING.md`, `docs/DEPLOY.md`, `backend/.env.example`, `frontend/.env.example`, `18-HANDOFFS.md`; execução operacional/App Review real pendente — evidência parcial+handoff)
 
 ### Carry-over: Fechamento de Gaps do Audit v1.1 (aceitos)
 
@@ -118,8 +118,8 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 | TEST-01 | Phase 18 | Pending |
 | TEST-02 | Phase 18 | Pending |
 | TEST-03 | Phase 18 | Pending |
-| TEST-04 | Phase 18 | Pending |
-| DOC-01 | Phase 18 | Pending |
+| TEST-04 | Phase 18 | Evidência parcial+handoff (18-04: `docs/META-INTEGRATION-TESTING.md`, `18-HANDOFFS.md`; execução real pendente) |
+| DOC-01 | Phase 18 | Evidência parcial+handoff (18-04: `docs/META-INTEGRATION-TESTING.md`, `docs/DEPLOY.md`, `.env.example`, `18-HANDOFFS.md`) |
 | AUD-01 | Phase 18 | Pending |
 | AUD-02 | Phase 18 | Pending |
 | AUD-03 | Phase 18 | Pending |
@@ -128,4 +128,4 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 
 ---
 *Requirements defined: 2026-11-15 for v1.2 Integração com Facebook Pages*
-*Last updated: 2026-11-16 — Phase 18 Plan 03: AUD-05 reconciliado como evidência parcial+handoff com backfill `11-VERIFICATION.md` e referências em `18-AUDIT-MATRIX.md` (sem fechar lacunas dependentes de runtime/DB/browser no escuro)*
+*Last updated: 2026-11-16 — Phase 18 Plan 04: TEST-04/DOC-01 documentados e alinhados (Meta/cron/envs/handoffs) e AUD-05 reforçado com setup reprodutível de DB de testes e checklists objetivos em `18-HANDOFFS.md`/`18-AUDIT-MATRIX.md` (evidência parcial+handoff; sem execução real/credenciais fabricada; `STATE.md`/`ROADMAP.md` permanecem sob responsabilidade do orquestrador em worktree paralelo)*
