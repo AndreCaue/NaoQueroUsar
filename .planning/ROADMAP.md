@@ -15,7 +15,8 @@
 
 - [x] **Phase 14: Fundação Social, Dados e Configuração** - Criar base de dados, segurança de tokens e contratos de publicação social (Facebook-first, extensível) (completed 2026-11-15)
 - [x] **Phase 15: OAuth Meta e Integrações no Admin** - Conectar/desconectar página do Facebook com fluxo OAuth seguro e status operacional visível (completed 2026-11-15)
-- [x] **Phase 16: Geração, Revisão e Aprovação do Post Social** - Produzir rascunho de post com IA/template, permitir edição/agendamento na revisão e integrar aprovação sem bloquear o site (completed 2026-11-16)
+- [x] **Phase 16: Geração, Revisão e Aprovação do Post Social** - Produzir rascunho de post com IA/template, permitir edição/agendamento na revisão e integrar aprovação sem bloquear o site
+ (completed 2026-11-16)
 - [ ] **Phase 17: Publicação Assíncrona, Retry, Idempotência e Status** - Publicar/agendar no Facebook via worker resiliente e expor status/erros/retry no admin
 - [ ] **Phase 18: Testes, Documentação e Fechamento de Gaps v1.1** - Cobrir fluxos críticos com testes/docs operacionais e fechar/registrar evidências dos gaps aceitos do audit v1.1
 
@@ -96,11 +97,11 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 17-01-PLAN.md — Backend: FacebookPublisher real, claim/lock, pipeline único, retry/backoff, idempotência e logs seguros
+- [x] 17-01-PLAN.md — Backend: FacebookPublisher real, claim/lock, pipeline único, retry/backoff, idempotência e logs seguros
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 17-02-PLAN.md — Backend: worker cron, status/retry APIs e dispatch imediato pós-aprovação (site-first)
+- [x] 17-02-PLAN.md — Backend: worker cron, status/retry APIs e dispatch imediato pós-aprovação (site-first)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -129,7 +130,7 @@ Plans:
 | 14. Fundação Social, Dados e Configuração | 3/3 | Complete    | 2026-11-15 |
 | 15. OAuth Meta e Integrações no Admin | 3/3 | Complete    | 2026-11-15 |
 | 16. Geração, Revisão e Aprovação do Post Social | 3/3 | Complete    | 2026-11-16 |
-| 17. Publicação Assíncrona, Retry, Idempotência e Status | 0/3 | Planned | - |
+| 17. Publica??o Ass?ncrona, Retry, Idempot?ncia e Status | 2/3 | In progress | - |
 | 18. Testes, Documentação e Fechamento de Gaps v1.1 | 0/0 | Not started | - |
 
 ## Coverage

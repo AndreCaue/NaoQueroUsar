@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Integração com Facebook Pages
 status: executing
-stopped_at: Phase 17 UI-SPEC approved
-last_updated: "2026-11-16T12:53:48.370Z"
-last_activity: 2026-11-16 -- Phase 17 planning complete
+stopped_at: Completed 17-02-PLAN.md
+last_updated: "2026-11-16T13:16:05Z"
+last_activity: 2026-11-16 -- Completed 17-02 (worker/status/retry APIs + approve dispatch)
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 12
-  completed_plans: 9
-  percent: 60
+  completed_plans: 10
+  percent: 83
 ---
 
 # Project State
@@ -25,33 +25,33 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-11-16 -- Phase 17 planning complete
+Phase: 17 (publicacao-assincrona-retry-idempotencia-e-status)
+Plan: 2 of 3 complete
+Status: In progress
+Last activity: 2026-11-16 -- Completed 17-02 (worker/status/retry APIs + approve dispatch)
 
-Progress: [████░░░░░░] 40%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed (v1.2): 0
-- Average duration: — min
-- Total execution time: 0.0 hours
+- Total plans completed (v1.2): 1
+- Average duration: 20 min
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| — | — | — | — |
 | 14 | 3 | - | - |
 | 15 | 3 | - | - |
 | 16 | 3 | - | - |
+| 17 | 2 | 20 min | 20 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 14-01, 14-02, 14-03, 15-01, 15-02, 15-03
+- Last 5 plans: 15-02, 15-03, 16-01, 16-02, 16-03, 17-01, 17-02
 - Trend: Stable
 
 *Reset for new milestone; v1.1 metrics archived in project history.*
@@ -64,6 +64,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - v1.2: Integração apenas com Facebook (interface `SocialPublisher` prevendo Instagram futuro), 1 página/1 admin, OAuth no painel, falha no Facebook não bloqueia o site, retry/backoff configurável + retry manual, post fire-and-forget, texto gerado por LLM (editável na revisão, imutável após envio), segredos/tokens só no backend (criptografados).
+- Phase 17-02: Retry/status usam elegibilidade centralizada e respostas idempotentes/no-op seguras; approve agenda dispatch imediato apenas pós-commit para posts registrados/devidos; claim direcionado por `post_id` permite retry manual de falha elegível.
 
 ### Pending Todos
 
@@ -73,6 +74,7 @@ None yet.
 
 - **Carried from v1.1 (audit accepted):** canonical-host live smoke/provisioning pending (handoff), DB-backed test reproducibility gaps, human/browser verification caveats, missing `11-VERIFICATION.md`, unsatisfied EXTR/PUBL/SRCH/UIUX reqs and other partial items — see `.planning/milestones/v1.1-MILESTONE-AUDIT.md`.
 - **v1.2 prerequisite:** inspecionar repo antes de planejar (framework Python, ORM/migrations, padrões, LLM/cron/revisão existentes) para alinhar convenções e evitar dependências desnecessárias.
+- **Phase 17 validation:** ambiente atual sem schema migrado no banco de testes DB-backed (`relation "jobs" does not exist`), impedindo execução completa das suítes automatizadas do plano 17-02.
 
 ### Quick Tasks Completed
 
@@ -91,6 +93,6 @@ Carried forward from v1.1 close (2026-11-15, audit `gaps_found` accepted):
 
 ## Session Continuity
 
-Last session: 2026-11-16T12:23:11.826Z
-Stopped at: Phase 17 UI-SPEC approved
-Resume file: .planning/phases/17-publicacao-assincrona-retry-idempotencia-e-status/17-UI-SPEC.md
+Last session: 2026-11-16T13:16:05Z
+Stopped at: Completed 17-02-PLAN.md
+Resume file: .planning/phases/17-publicacao-assincrona-retry-idempotencia-e-status/17-03-PLAN.md
