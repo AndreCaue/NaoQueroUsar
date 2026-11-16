@@ -17,7 +17,7 @@
 - [x] **Phase 15: OAuth Meta e Integrações no Admin** - Conectar/desconectar página do Facebook com fluxo OAuth seguro e status operacional visível (completed 2026-11-15)
 - [x] **Phase 16: Geração, Revisão e Aprovação do Post Social** - Produzir rascunho de post com IA/template, permitir edição/agendamento na revisão e integrar aprovação sem bloquear o site
  (completed 2026-11-16)
-- [ ] **Phase 17: Publicação Assíncrona, Retry, Idempotência e Status** - Publicar/agendar no Facebook via worker resiliente e expor status/erros/retry no admin
+- [ ] **Phase 17: Publicação Assíncrona, Retry, Idempotência e Status** - Publicar/agendar no Facebook via worker resiliente e expor status/erros/retry no admin (plans complete, human verification pending)
 - [ ] **Phase 18: Testes, Documentação e Fechamento de Gaps v1.1** - Cobrir fluxos críticos com testes/docs operacionais e fechar/registrar evidências dos gaps aceitos do audit v1.1
 
 ## Phase Details
