@@ -304,3 +304,116 @@ async def seed_expired_job(db_session) -> Job:
     db_session.add(job)
     await db_session.flush()
     return job
+
+
+# ---------------------------------------------------------------------------
+# Phase 17 helpers/fixtures (social publish/status/retry)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def cron_secret_header(monkeypatch) -> dict[str, str]:
+    secret = "cron-secret-test-phase17"
+    monkeypatch.setattr(get_settings(), "CRON_SECRET", secret)
+    return {"X-Cron-Secret": secret}
+
+
+@pytest.fixture
+def social_test_encryption_key(monkeypatch) -> str:
+    from cryptography.fernet import Fernet
+
+    key = Fernet.generate_key().decode("utf-8")
+    monkeypatch.setattr(get_settings(), "SOCIAL_TOKEN_ENCRYPTION_KEY", key)
+    monkeypatch.setenv("SOCIAL_TOKEN_ENCRYPTION_KEY", key)
+    return key
+
+
+@pytest.fixture
+async def seed_connected_facebook_account(db_session, social_test_encryption_key):
+    from app.models.social_account import SocialAccount, SocialAccountStatus
+    from app.services.social.crypto import encrypt_token
+
+    account = SocialAccount(
+        provider="facebook",
+        page_id="page-123",
+        page_name="Pagina Teste",
+        page_access_token=encrypt_token("plain-page-token", social_test_encryption_key),
+        status=SocialAccountStatus.connected,
+    )
+    db_session.add(account)
+    await db_session.flush()
+    return account
+
+
+@pytest.fixture
+async def seed_needs_reconnect_facebook_account(db_session, social_test_encryption_key):
+    from app.models.social_account import SocialAccount, SocialAccountStatus
+    from app.services.social.crypto import encrypt_token
+
+    account = SocialAccount(
+        provider="facebook",
+        page_id="page-123",
+        page_name="Pagina Teste",
+        page_access_token=encrypt_token("plain-page-token", social_test_encryption_key),
+        status=SocialAccountStatus.needs_reconnect,
+    )
+    db_session.add(account)
+    await db_session.flush()
+    return account
+
+
+@pytest.fixture
+async def seed_social_scheduled_due_post(db_session, seed_pending_job):
+    from app.models.social_post import SocialPost, SocialPostStatus
+
+    post = SocialPost(
+        job_id=seed_pending_job.id,
+        provider="facebook",
+        text="Post agendado devido",
+        status=SocialPostStatus.scheduled,
+        scheduled_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+        attempts=0,
+    )
+    db_session.add(post)
+    await db_session.flush()
+    return post
+
+
+@pytest.fixture
+async def seed_social_failed_eligible_post(db_session, seed_published_job):
+    from app.models.social_post import SocialPost, SocialPostStatus
+
+    post = SocialPost(
+        job_id=seed_published_job.id,
+        provider="facebook",
+        text="Post falhou eleg?vel",
+        status=SocialPostStatus.failed,
+        scheduled_at=datetime.now(timezone.utc) - timedelta(minutes=10),
+        attempts=1,
+        next_retry_at=None,
+        last_error="Falha tempor?ria anterior",
+        external_post_id=None,
+    )
+    db_session.add(post)
+    await db_session.flush()
+    return post
+
+
+@pytest.fixture
+async def seed_social_failed_ineligible_published_post(db_session, seed_published_job):
+    from app.models.social_post import SocialPost, SocialPostStatus
+
+    post = SocialPost(
+        job_id=seed_published_job.id,
+        provider="facebook",
+        text="Post j? publicado",
+        status=SocialPostStatus.published,
+        scheduled_at=datetime.now(timezone.utc) - timedelta(minutes=10),
+        attempts=1,
+        published_at=datetime.now(timezone.utc) - timedelta(minutes=5),
+        external_post_id="123_456",
+        last_error=None,
+    )
+    db_session.add(post)
+    await db_session.flush()
+    return post

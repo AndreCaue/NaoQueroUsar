@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 import uuid
 from typing import Literal
 
@@ -14,7 +14,14 @@ from app.crud.jobs import (
     list_by_status,
     update_job,
 )
-from app.crud.social_posts import get_by_job_provider, mark_scheduled, upsert_draft
+from app.crud.social_accounts import get_facebook_account
+from app.crud.social_posts import (
+    get_by_job_provider,
+    get_job_social_status_item,
+    list_social_status_items,
+    mark_scheduled,
+    upsert_draft,
+)
 from app.deps import get_session, require_admin, require_cron_secret
 from app.models.job import JobStatus
 from app.models.social_post import SocialPostStatus
@@ -23,6 +30,10 @@ from app.schemas.social_posts import (
     SocialApproveOutcome,
     SocialPostDraftRequest,
     SocialPostDraftResponse,
+    SocialPostStatusItem,
+    SocialPostStatusListResponse,
+    SocialRetryResponse,
+    SocialWorkerResponse,
 )
 from app.services.cities import resolve_city
 from app.services.social.post_generation import (
@@ -34,6 +45,8 @@ from app.services.social.post_generation import (
     now_utc,
     sanitize_and_enforce_policy,
 )
+from app.services.social.publish_pipeline import process_social_post_safe, run_social_publish_cycle
+
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -121,19 +134,20 @@ async def get_job_detail(
 @router.patch("/jobs/{job_id}/approve", response_model=JobApproveResponse)
 async def approve(
     job_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
     claims: dict = Depends(require_admin),
 ) -> JobApproveResponse:
-    """Approve a reviewable job: publica vaga no site e registra social best-effort (D-09..D-11)."""
+    """Approve a reviewable job: publica vaga no site e registra social best-effort."""
     job = await get_job(session, job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+        raise HTTPException(status_code=404, detail="Vaga n?o encontrada")
     if job.status not in (JobStatus.pending, JobStatus.needs_review):
         raise HTTPException(
-            status_code=409, detail="Vaga não está na fila de revisão"
+            status_code=409, detail="Vaga n?o est? na fila de revis?o"
         )
 
-    # Site-first: sucesso da vaga independe do registro social.
+    # Site-first: sucesso da vaga independe do registro/dispatch social.
     await approve_job(session, job)
     await session.commit()
     await session.refresh(job)
@@ -143,6 +157,7 @@ async def approve(
         code="no_draft",
         message="Nenhum rascunho social salvo",
     )
+    dispatch_post_id: uuid.UUID | None = None
 
     try:
         draft = await get_by_job_provider(session, job_id, provider="facebook")
@@ -154,6 +169,8 @@ async def approve(
             )
         elif draft.status == SocialPostStatus.scheduled:
             social_outcome = SocialApproveOutcome(status="registered", code=None, message=None)
+            if draft.scheduled_at is not None and draft.scheduled_at <= now_utc():
+                dispatch_post_id = draft.id
         elif draft.status == SocialPostStatus.draft:
             final_scheduled_at = draft.scheduled_at if draft.scheduled_at is not None else now_utc()
             await mark_scheduled(
@@ -164,12 +181,13 @@ async def approve(
             )
             await session.commit()
             social_outcome = SocialApproveOutcome(status="registered", code=None, message=None)
+            if final_scheduled_at <= now_utc():
+                dispatch_post_id = draft.id
         else:
-            # Estados não-draft e não-scheduled não são registráveis como aprovação atual
             social_outcome = SocialApproveOutcome(
                 status="warning",
                 code="social_registration_failed",
-                message="Não foi possível registrar o post social agora",
+                message="N?o foi poss?vel registrar o post social agora",
             )
     except Exception:
         try:
@@ -179,8 +197,15 @@ async def approve(
         social_outcome = SocialApproveOutcome(
             status="warning",
             code="social_registration_failed",
-            message="Não foi possível registrar o post social agora",
+            message="N?o foi poss?vel registrar o post social agora",
         )
+        dispatch_post_id = None
+
+    if social_outcome.status == "registered" and dispatch_post_id is not None:
+        try:
+            background_tasks.add_task(process_social_post_safe, dispatch_post_id)
+        except Exception:
+            pass
 
     return JobApproveResponse(job=JobAdmin.model_validate(job), social=social_outcome)
 
@@ -244,8 +269,137 @@ async def delete(
 
 
 # ---------------------------------------------------------------------------
+# Phase 17: Worker cron, status/lista e retry manual (PUB-02..04, PUB-07, UI-01, UI-02)
+# ---------------------------------------------------------------------------
+
+
+def _facebook_account_status_value(account) -> object | None:
+    return getattr(account, "status", None) if account is not None else None
+
+
+@router.post("/social/worker", response_model=SocialWorkerResponse)
+async def social_worker(
+    session: AsyncSession = Depends(get_session),
+    _: None = Depends(require_cron_secret),
+) -> SocialWorkerResponse:
+    """Processa lote de posts sociais elegíveis (cron Render, idempotente)."""
+    # `session` injetada para consistência de dependências; pipeline usa sessões próprias.
+    _ = session
+    counters = await run_social_publish_cycle()
+    defaults = {
+        "claimed": 0,
+        "processed": 0,
+        "published": 0,
+        "retried": 0,
+        "failed_final": 0,
+        "skipped": 0,
+        "idempotent": 0,
+    }
+    defaults.update({k: int(v) for k, v in (counters or {}).items() if k in defaults})
+    return SocialWorkerResponse(status="ok", **defaults)
+
+
+@router.get("/social-posts", response_model=SocialPostStatusListResponse)
+async def list_social_posts(
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+) -> SocialPostStatusListResponse:
+    """Lista visão operacional simples de posts/vagas sociais."""
+    _ = claims
+    account = await get_facebook_account(session)
+    items = await list_social_status_items(
+        session,
+        account_status=_facebook_account_status_value(account),
+        provider="facebook",
+    )
+    return SocialPostStatusListResponse(items=items, total=len(items))
+
+
+@router.get("/jobs/{job_id}/social-status", response_model=SocialPostStatusItem)
+async def get_job_social_status(
+    job_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+) -> SocialPostStatusItem:
+    """Retorna status social seguro por vaga para revisão/edição."""
+    _ = claims
+    account = await get_facebook_account(session)
+    item, job_exists = await get_job_social_status_item(
+        session,
+        job_id,
+        account_status=_facebook_account_status_value(account),
+        provider="facebook",
+    )
+    if not job_exists or item is None:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+    return item
+
+
+@router.post("/jobs/{job_id}/social-post/retry", response_model=SocialRetryResponse)
+async def retry_job_social_post(
+    job_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+) -> SocialRetryResponse:
+    """Retry manual idempotente para post social elegível da vaga."""
+    _ = claims
+    account = await get_facebook_account(session)
+    account_status = _facebook_account_status_value(account)
+
+    item, job_exists = await get_job_social_status_item(
+        session,
+        job_id,
+        account_status=account_status,
+        provider="facebook",
+    )
+    if not job_exists or item is None:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
+    post = await get_by_job_provider(session, job_id, provider="facebook")
+    if post is None:
+        return SocialRetryResponse(
+            outcome="not_eligible",
+            item=item,
+            message="Nenhum post social registrado para esta vaga.",
+        )
+
+    # Idempotência/no-op: estados não elegíveis não disparam duplicata
+    if item.status in {"published", "publishing"} or not item.can_retry:
+        outcome = "noop" if item.status in {"published", "publishing"} else "not_eligible"
+        return SocialRetryResponse(
+            outcome=outcome,
+            item=item,
+            message=item.retry_block_reason or "Nenhuma nova tentativa necessária.",
+        )
+
+    counters = await run_social_publish_cycle(post_id=post.id, limit=1) or {}
+    # Recarregar estado atualizado após processamento direcionado
+    refreshed_item, _ = await get_job_social_status_item(
+        session,
+        job_id,
+        account_status=_facebook_account_status_value(await get_facebook_account(session)),
+        provider="facebook",
+    )
+    if refreshed_item is None:
+        refreshed_item = item
+
+    if counters.get("idempotent", 0) > 0 or refreshed_item.status in {"published", "publishing"}:
+        outcome = "noop"
+        message = "Nenhuma nova tentativa foi necessária. Status atualizado."
+    elif counters.get("processed", 0) > 0 or counters.get("claimed", 0) > 0:
+        outcome = "retried"
+        message = "Nova tentativa iniciada/processada."
+    else:
+        outcome = "not_eligible"
+        message = refreshed_item.retry_block_reason or item.retry_block_reason or "Post não elegível para retry."
+
+    return SocialRetryResponse(outcome=outcome, item=refreshed_item, message=message)
+
+
+# ---------------------------------------------------------------------------
 # POST-03/04/05/06: Social post draft (D-01..D-08, D-12, D-17)
 # ---------------------------------------------------------------------------
+
 
 
 def _draft_publish_mode(post) -> Literal["publish_now", "schedule"]:

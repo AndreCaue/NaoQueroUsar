@@ -1,6 +1,6 @@
-"""CRUD de social_posts (draft/schedule/publish pipeline) — Phases 16/17.
+"""CRUD de social_posts (draft/schedule/publish pipeline/status) - Phases 16/17.
 
-Operações com flush apenas; o chamador controla commit/rollback.
+Operações com flush apenas quando aplicável; o chamador controla commit/rollback.
 """
 
 from __future__ import annotations
@@ -11,7 +11,10 @@ from datetime import datetime, timezone
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.job import Job
+from app.models.social_account import SocialAccountStatus
 from app.models.social_post import SocialPost, SocialPostStatus
+from app.schemas.social_posts import SocialPostStatusItem
 
 
 async def get_by_job_provider(
@@ -34,11 +37,7 @@ async def upsert_draft(
     scheduled_at,
     provider: str = "facebook",
 ) -> SocialPost:
-    """Cria ou atualiza rascunho por (job_id, provider).
-
-    Registros com status diferente de draft são imutáveis para edição.
-    UniqueConstraint uq_social_posts_job_provider garante unicidade por par.
-    """
+    """Cria ou atualiza rascunho por (job_id, provider)."""
     post = await get_by_job_provider(session, job_id, provider=provider)
     if post is None:
         post = SocialPost(
@@ -72,7 +71,6 @@ async def mark_scheduled(
     social_post.status = SocialPostStatus.scheduled
     social_post.text = text
     social_post.scheduled_at = scheduled_at
-    # limpa estado transitório/retry anterior de forma segura
     social_post.next_retry_at = None
     social_post.last_error = None
     await session.flush()
@@ -85,6 +83,13 @@ def _as_uuid(value: uuid.UUID | str | None) -> uuid.UUID | None:
     if isinstance(value, uuid.UUID):
         return value
     return uuid.UUID(str(value))
+
+
+def _as_job_uuid(value: uuid.UUID | str | None) -> uuid.UUID | None:
+    try:
+        return _as_uuid(value)
+    except Exception:
+        return None
 
 
 async def get_social_post_by_id(
@@ -104,21 +109,31 @@ async def list_due_for_claim(
     now: datetime | None = None,
     post_id: uuid.UUID | str | None = None,
 ) -> list[SocialPost]:
-    """Seleciona posts elegíveis para claim com lock (D-04)."""
+    """Seleciona posts elegíveis para claim com lock (D-04/D-12)."""
     now = now or datetime.now(timezone.utc)
     stmt = select(SocialPost).where(SocialPost.provider == provider)
     if post_id is not None:
         stmt = stmt.where(SocialPost.id == _as_uuid(post_id))
-    stmt = stmt.where(
-        or_(
-            (SocialPost.status == SocialPostStatus.scheduled)
-            & (SocialPost.scheduled_at.is_not(None))
-            & (SocialPost.scheduled_at <= now),
-            (SocialPost.status == SocialPostStatus.failed)
-            & (SocialPost.next_retry_at.is_not(None))
-            & (SocialPost.next_retry_at <= now),
+        # Alvo específico: permitir claim do post em estado elegível/idempotente;
+        # elegibilidade funcional (retry/manual) é validada no endpoint/pipeline.
+        stmt = stmt.where(
+            or_(
+                SocialPost.status == SocialPostStatus.scheduled,
+                SocialPost.status == SocialPostStatus.failed,
+            )
         )
-    ).order_by(
+    else:
+        stmt = stmt.where(
+            or_(
+                (SocialPost.status == SocialPostStatus.scheduled)
+                & (SocialPost.scheduled_at.is_not(None))
+                & (SocialPost.scheduled_at <= now),
+                (SocialPost.status == SocialPostStatus.failed)
+                & (SocialPost.next_retry_at.is_not(None))
+                & (SocialPost.next_retry_at <= now),
+            )
+        )
+    stmt = stmt.order_by(
         SocialPost.next_retry_at.asc().nulls_last(),
         SocialPost.scheduled_at.asc().nulls_last(),
         SocialPost.created_at.asc(),
@@ -178,3 +193,160 @@ async def mark_failed(
     await session.flush()
     return post
 
+
+_STATUS_LABELS_PT = {
+    "none": "Sem rascunho",
+    "draft": "Rascunho",
+    "scheduled": "Agendado",
+    "publishing": "Publicando",
+    "published": "Publicado",
+    "failed": "Falhou",
+    "cancelled": "Cancelado",
+}
+
+
+def _safe_published_url(external_post_id: str | None) -> str | None:
+    # Evita derivar permalink possivelmente incorreto; expõe external_post_id com segurança.
+    _ = external_post_id
+    return None
+
+
+def compute_social_retry_state(
+    post: SocialPost | None,
+    account_status: SocialAccountStatus | None,
+    *,
+    now: datetime | None = None,
+) -> tuple[bool, str | None]:
+    """Retorna (can_retry, retry_block_reason) conforme D-15/UI-SPEC."""
+    now = now or datetime.now(timezone.utc)
+    if post is None:
+        return False, None
+
+    if post.status == SocialPostStatus.published or post.external_post_id:
+        return False, "Post já publicado"
+    if post.status == SocialPostStatus.publishing:
+        return False, "Publicação em andamento"
+    if post.status == SocialPostStatus.draft:
+        return False, None
+    if post.status == SocialPostStatus.cancelled:
+        return False, "Post cancelado"
+    if post.status == SocialPostStatus.scheduled:
+        if post.scheduled_at and post.scheduled_at > now:
+            return False, "Aguardando horário agendado"
+        return False, "Publicação em andamento"
+
+    if post.status != SocialPostStatus.failed:
+        return False, "Tentativa automática indisponível. Verifique o erro antes de prosseguir."
+
+    if account_status != SocialAccountStatus.connected:
+        return False, "Reconexão necessária"
+
+    return True, None
+
+
+def build_social_status_item(
+    *,
+    job_id: uuid.UUID,
+    job_title: str | None,
+    post: SocialPost | None,
+    account_status: SocialAccountStatus | None,
+    now: datetime | None = None,
+) -> SocialPostStatusItem:
+    now = now or datetime.now(timezone.utc)
+    if post is None:
+        return SocialPostStatusItem(
+            job_id=job_id,
+            job_title=job_title,
+            provider="facebook",
+            status="none",
+            status_label=_STATUS_LABELS_PT["none"],
+            last_error=None,
+            published_url=None,
+            external_post_id=None,
+            attempts=0,
+            next_retry_at=None,
+            scheduled_at=None,
+            published_at=None,
+            can_retry=False,
+            retry_block_reason=None,
+        )
+
+    status_value = post.status.value if isinstance(post.status, SocialPostStatus) else str(post.status)
+    status_label = _STATUS_LABELS_PT.get(status_value, status_value)
+    can_retry, retry_block_reason = compute_social_retry_state(post, account_status, now=now)
+    return SocialPostStatusItem(
+        job_id=post.job_id,
+        job_title=job_title,
+        provider=post.provider or "facebook",
+        status=status_value,  # type: ignore[arg-type]
+        status_label=status_label,
+        last_error=post.last_error,
+        published_url=_safe_published_url(post.external_post_id),
+        external_post_id=post.external_post_id,
+        attempts=int(post.attempts or 0),
+        next_retry_at=post.next_retry_at,
+        scheduled_at=post.scheduled_at,
+        published_at=post.published_at,
+        can_retry=can_retry,
+        retry_block_reason=retry_block_reason,
+    )
+
+
+async def get_job_social_status_item(
+    session: AsyncSession,
+    job_id: uuid.UUID | str,
+    *,
+    account_status: SocialAccountStatus | None = None,
+    provider: str = "facebook",
+    now: datetime | None = None,
+) -> tuple[SocialPostStatusItem | None, bool]:
+    """Retorna (item, job_exists)."""
+    job_uuid = _as_job_uuid(job_id)
+    if job_uuid is None:
+        return None, False
+    job = await session.get(Job, job_uuid)
+    if job is None:
+        return None, False
+    post = await get_by_job_provider(session, job_uuid, provider=provider)
+    return (
+        build_social_status_item(
+            job_id=job.id,
+            job_title=getattr(job, "title", None),
+            post=post,
+            account_status=account_status,
+            now=now,
+        ),
+        True,
+    )
+
+
+async def list_social_status_items(
+    session: AsyncSession,
+    *,
+    account_status: SocialAccountStatus | None = None,
+    provider: str = "facebook",
+    limit: int = 200,
+    now: datetime | None = None,
+) -> list[SocialPostStatusItem]:
+    """Lista visão operacional simples de posts/vagas sociais (D-13)."""
+    now = now or datetime.now(timezone.utc)
+    stmt = (
+        select(SocialPost, Job)
+        .join(Job, Job.id == SocialPost.job_id)
+        .where(SocialPost.provider == provider)
+        .order_by(SocialPost.updated_at.desc(), SocialPost.created_at.desc())
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    items: list[SocialPostStatusItem] = []
+    for post, job in result.all():
+        items.append(
+            build_social_status_item(
+                job_id=job.id,
+                job_title=getattr(job, "title", None),
+                post=post,
+                account_status=account_status,
+                now=now,
+            )
+        )
+    return items
