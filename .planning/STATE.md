@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Integração com Facebook Pages
-status: ready_to_plan
-stopped_at: Phase 16 complete (3/3) — ready to discuss Phase 17
-last_updated: 2026-11-16T10:28:10.305Z
-last_activity: 2026-11-16 -- Phase 16 execution started
+status: planning
+stopped_at: Phase 17 context gathered
+last_updated: "2026-11-16T12:01:15.763Z"
+last_activity: 2026-11-16
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 31
-  percent: 40
+  completed_plans: 9
+  percent: 60
 ---
 
 # Project State
@@ -91,6 +91,6 @@ Carried forward from v1.1 close (2026-11-15, audit `gaps_found` accepted):
 
 ## Session Continuity
 
-Last session: 2026-11-16T01:05:12.408Z
-Stopped at: Phase 16 UI-SPEC approved
-Resume file: .planning/phases/16-geracao-revisao-e-aprovacao-do-post-social/16-UI-SPEC.md
+Last session: 2026-11-16T12:01:15.733Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-publicacao-assincrona-retry-idempotencia-e-status/17-CONTEXT.md
