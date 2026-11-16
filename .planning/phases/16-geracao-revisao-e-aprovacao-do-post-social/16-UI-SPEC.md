@@ -109,7 +109,7 @@ Status/indicator color mapping (non-accent, restrained):
 | Approve with no saved draft (D-11) | Toast/warning: `Vaga publicada no site. Nenhum rascunho social salvo — publicação no Facebook não foi registrada.` |
 | Approve with social registration failure (D-09/D-11) | Toast/warning: `Vaga publicada no site. Não foi possível registrar o post social agora.` (include resumable hint only if backend provides safe detail; never expose secrets) |
 | Approve with social registered (D-10) | Success: `Vaga publicada no site. Post social registrado para envio.` (or `...agendado para {data/hora BRT}` when scheduled) |
-| Destructive confirmation — Regenerar com IA (overwrites current draft, D-02) | `Regenerar rascunho`: `Isso vai substituir o texto atual do rascunho. Deseja continuar?` Actions: `Cancelar` / `Regenerar` (destructive-styled confirm) |
+| Destructive confirmation — Regenerar com IA (overwrites current draft, D-02) | `Regenerar rascunho`: `Isso vai substituir o texto atual do rascunho. Deseja continuar?` Actions: `Manter rascunho atual` / `Regenerar` (destructive-styled confirm) |
 
 Policy copy constraints (D-15, D-17): UI labels/help text must never instruct or imply inclusion of empresa/contatos in the post. Preview and generated/template text must omit company name and all contact details; CTA in post text always points to site link only.
 
@@ -120,6 +120,11 @@ Policy copy constraints (D-15, D-17): UI labels/help text must never instruct or
 ### Placement (D-05)
 - Add a `Post para Facebook` section inside `EditJobDialog.tsx` below job fields and above the dialog footer, separated by `border-t border-line` and `mt-6 pt-6` (24px rhythm).
 - Section remains within the dialog scroll area; snippet panel behavior unchanged.
+
+### Focal point & hierarchy
+- **Primary visual anchor:** in the editable draft state, the draft textarea + `Prévia do post` pair is the focal area (content-first).
+- **Primary CTA prominence (accent, one at a time):** `Gerar rascunho` when empty; `Salvar rascunho` when a draft exists/has edits. `Regenerar com IA` is secondary to save in the editable state but remains a clear destructive-overwrite action (confirmed).
+- **Secondary emphasis:** origin/state chips, publish-now/schedule mode toggle and schedule controls, counter/helper text — visually quieter than the primary CTA and draft content.
 
 ### States
 | State | Required UI |
