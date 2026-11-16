@@ -353,8 +353,48 @@ async def run_social_publish_cycle(
                         counters["failed_final"] += 1
         except Exception:
             logger.exception("social_publish_item_failed", extra={"social_post_id": str(pid)})
-            counters["failed_final"] += 1
+            recovery_outcome = "failed_final"
+            try:
+                async with async_session_factory() as session:
+                    async with session.begin():
+                        post = await get_social_post_by_id(session, pid)
+                        if post is not None and post.status == SocialPostStatus.publishing and not post.external_post_id:
+                            attempt_number = int(post.attempts or 0) + 1
+                            await mark_failed(
+                                session,
+                                post,
+                                attempts=attempt_number,
+                                last_error=MSG_AMBIGUOUS,
+                                next_retry_at=None,
+                                final=True,
+                            )
+                            await _append_log(
+                                session,
+                                post,
+                                attempt_number=attempt_number,
+                                result="ambiguous",
+                                error_message=MSG_AMBIGUOUS,
+                                response_summary="post_claim_processing_exception",
+                            )
+                            recovery_outcome = "failed_final"
+                        elif post is not None and (
+                            post.status == SocialPostStatus.published or post.external_post_id
+                        ):
+                            recovery_outcome = "idempotent"
+                        else:
+                            recovery_outcome = "failed_final"
+            except Exception:
+                logger.exception(
+                    "social_publish_item_recovery_failed",
+                    extra={"social_post_id": str(pid)},
+                )
+                recovery_outcome = "failed_final"
+
             counters["processed"] += 1
+            if recovery_outcome == "idempotent":
+                counters["idempotent"] += 1
+            else:
+                counters["failed_final"] += 1
     return counters
 
 

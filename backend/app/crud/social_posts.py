@@ -238,6 +238,16 @@ def compute_social_retry_state(
     if post.status != SocialPostStatus.failed:
         return False, "Tentativa automática indisponível. Verifique o erro antes de prosseguir."
 
+    if (
+        post.next_retry_at is None
+        and post.last_error
+        == "Não foi possível confirmar a publicação. Verifique antes de tentar novamente para evitar duplicidade."
+    ):
+        return (
+            False,
+            "Verifique a publicação no Facebook antes de tentar novamente para evitar duplicidade.",
+        )
+
     if account_status != SocialAccountStatus.connected:
         return False, "Reconexão necessária"
 
