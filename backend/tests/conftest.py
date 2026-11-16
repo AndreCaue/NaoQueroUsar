@@ -99,6 +99,11 @@ def pytest_collection_modifyitems(config, items):
         db_independent = {
             "test_social_post_generation.py",
             "test_social_post_policy.py",
+            "test_facebook_publisher.py",
+            "test_social_retry_policy.py",
+            "test_social_idempotency.py",
+            "test_social_publish_pipeline.py",
+            "test_social_publisher.py",
         }
         for item in items:
             path = str(getattr(item, "fspath", "")).replace("\\", "/")
