@@ -130,3 +130,22 @@ async def test_pipeline_schedules_retry_for_transient_failure(monkeypatch):
     assert post.attempts == 1
     assert post.last_error == MSG_TRANSIENT
     assert post.next_retry_at == datetime(2026, 1, 1, 12, 5, tzinfo=timezone.utc)
+
+
+@pytest.mark.asyncio
+async def test_process_social_post_safe_targets_post_id(monkeypatch):
+    from app.services.social import publish_pipeline as pipeline
+
+    called = {}
+
+    async def fake_cycle(*, post_id=None, limit=20):
+        called["post_id"] = post_id
+        called["limit"] = limit
+        return {"claimed": 1}
+
+    monkeypatch.setattr(pipeline, "run_social_publish_cycle", fake_cycle)
+    target = uuid.uuid4()
+    result = await pipeline.process_social_post_safe(target)
+    assert result == {"claimed": 1}
+    assert str(called["post_id"]) == str(target)
+    assert called["limit"] == 1
