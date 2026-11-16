@@ -90,9 +90,20 @@ get_settings.cache_clear()
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip the whole suite (cleanly, exit 0) when no test DB is configured."""
+    """Skip DB-dependent tests when no test DB is configured.
+
+    Pure unit tests introduced in Phase 16 social post generation/policy
+    modules must remain runnable without a database.
+    """
     if not HAS_DB:
+        db_independent = {
+            "test_social_post_generation.py",
+            "test_social_post_policy.py",
+        }
         for item in items:
+            path = str(getattr(item, "fspath", "")).replace("\\", "/")
+            if path.rsplit("/", 1)[-1] in db_independent:
+                continue
             item.add_marker(
                 pytest.mark.skip(reason="TEST_DATABASE_URL/DATABASE_URL not set")
             )

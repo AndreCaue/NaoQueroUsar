@@ -214,3 +214,16 @@ class JobAdminListResponse(BaseModel):
     page: int
     limit: int
     total: int
+
+
+class JobApproveResponse(BaseModel):
+    """Envelope de aprovação da vaga com outcome do registro social."""
+
+    job: JobAdmin
+    social: "SocialApproveOutcome"
+
+
+# Import tardio para evitar import circular em tempo de módulo.
+from app.schemas.social_posts import SocialApproveOutcome  # noqa: E402
+
+JobApproveResponse.model_rebuild()

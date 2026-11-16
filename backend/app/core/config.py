@@ -82,6 +82,8 @@ class Settings(BaseSettings):
     SOCIAL_MAX_ATTEMPTS: int = 5
     SOCIAL_RETRY_DELAYS: str = "300,900,3600,10800,21600"
     SITE_PUBLIC_URL: str = ""
+    # Política de conteúdo do post social (Phase 16): por padrão sem empresa/contatos.
+    SOCIAL_POST_INCLUDE_CONTACT: bool = False
 
     @model_validator(mode="after")
     def _validate_social_foundation(self) -> "Settings":
