@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Integração com Facebook Pages
-status: completed
-stopped_at: Phase 18 context gathered
-last_updated: "2026-11-16T17:04:48.622Z"
-last_activity: 2026-11-16 -- Completed 17-03 (admin social status/retry UI + social posts view)
+status: executing
+stopped_at: Phase 18 UI-SPEC approved
+last_updated: "2026-11-16T18:10:49.051Z"
+last_activity: 2026-11-16 -- Phase 18 planning complete
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 13
+  total_plans: 17
   completed_plans: 13
-  percent: 80
+  percent: 76
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 
 Phase: 17 (publicacao-assincrona-retry-idempotencia-e-status) - complete
 Plan: 3 of 3 complete
-Status: Phase complete, ready for Phase 18
-Last activity: 2026-11-16 -- Completed 17-03 (admin social status/retry UI + social posts view)
+Status: Ready to execute
+Last activity: 2026-11-16 -- Phase 18 planning complete
 
 Progress: [█████████░] 92%
 
@@ -66,6 +66,7 @@ Recent decisions affecting current work:
 - v1.2: Integração apenas com Facebook (interface `SocialPublisher` prevendo Instagram futuro), 1 página/1 admin, OAuth no painel, falha no Facebook não bloqueia o site, retry/backoff configurável + retry manual, post fire-and-forget, texto gerado por LLM (editável na revisão, imutável após envio), segredos/tokens só no backend (criptografados).
 - Phase 17-02: Retry/status usam elegibilidade centralizada e respostas idempotentes/no-op seguras; approve agenda dispatch imediato apenas pós-commit para posts registrados/devidos; claim direcionado por `post_id` permite retry manual de falha elegível.
 - Phase 17-03: UI admin consome contratos seguros de status/retry com single-flight e feedback idempotente/no-op; retry/alertas de reconexão seguem elegibilidade do backend sem expor segredos.
+- Phase 18 planning: `gsd-sdk check.decision-coverage-plan` reported D-01/D-03 uncovered despite explicit plan coverage/citations; user chose to proceed anyway (override recorded for verify-phase re-surfacing).
 
 ### Pending Todos
 
@@ -94,6 +95,6 @@ Carried forward from v1.1 close (2026-11-15, audit `gaps_found` accepted):
 
 ## Session Continuity
 
-Last session: 2026-11-16T17:04:48.597Z
-Stopped at: Phase 18 context gathered
-Resume file: .planning/phases/18-testes-documentacao-e-fechamento-de-gaps-v11/18-CONTEXT.md
+Last session: 2026-11-16T17:25:31.980Z
+Stopped at: Phase 18 UI-SPEC approved
+Resume file: .planning/phases/18-testes-documentacao-e-fechamento-de-gaps-v11/18-UI-SPEC.md
