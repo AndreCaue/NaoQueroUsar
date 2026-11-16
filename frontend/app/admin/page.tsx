@@ -40,6 +40,16 @@ export default function AdminPage() {
           </span>
         </Link>
 
+        <Link href="/admin/social-posts" className={cardClass}>
+          <h2 className="mb-2 text-xl font-semibold">Publicações no Facebook</h2>
+          <p className="mb-4 text-fg-muted">
+            Acompanhe status, erros e links das publicações sociais das vagas.
+          </p>
+          <span className="inline-flex items-center gap-2 text-sm text-accent-soft group-hover:text-accent">
+            Abrir publicações sociais
+          </span>
+        </Link>
+
         <Link href="/admin/integracoes" className={cardClass}>
           <h2 className="mb-2 text-xl font-semibold">Integrações</h2>
           <p className="mb-4 text-fg-muted">

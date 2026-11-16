@@ -38,6 +38,12 @@ export default function AdminLayout({
 
             <div className="flex items-center gap-2">
               <Link
+                href="/admin/social-posts"
+                className="text-sm text-fg-muted transition-colors hover:text-fg focus-visible:text-fg"
+              >
+                Publicações
+              </Link>
+              <Link
                 href="/admin/integracoes"
                 className="text-sm text-fg-muted transition-colors hover:text-fg focus-visible:text-fg"
               >
