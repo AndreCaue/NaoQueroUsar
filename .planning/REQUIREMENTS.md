@@ -15,9 +15,9 @@ Requirements for milestone v1.3 (Chatbot Inteligente de Busca de Vagas). Each ma
 
 ### Chat Search API (API)
 
-- [ ] **API-01**: Existe endpoint público de chat-search que recebe a mensagem do usuário, executa extração→mapeamento→busca determinística reutilizando a lógica/contrato de `GET /api/v1/public/jobs` / `list_published`, e retorna interpretação + resultados pagináveis/limitados em formato público (`JobPublic`, sem contatos) com `total`.
-- [ ] **API-02**: O endpoint público possui proteções de abuso/custo e resiliência: rate limit por IP, limites de tamanho/tempo (request/timeout), erros pt-BR seguros e fallback controlado (ex.: orientação para busca manual/keyword) em falha/timeout/indisponibilidade do LLM.
-- [ ] **API-03**: Para campos sem filtro nativo completo no MVP (ex.: faixa salarial, modalidade, tipo de contrato/senioridade conforme capacidade atual), o sistema aplica estratégia explícita e limitada (mapeamento em `q` e/ou pós-filtro em janela candidata limitada) e sinaliza suporte parcial/aproximado sem afirmar filtragem inexistente.
+- [x] **API-01**: Existe endpoint público de chat-search que recebe a mensagem do usuário, executa extração→mapeamento→busca determinística reutilizando a lógica/contrato de `GET /api/v1/public/jobs` / `list_published`, e retorna interpretação + resultados pagináveis/limitados em formato público (`JobPublic`, sem contatos) com `total`.
+- [x] **API-02**: O endpoint público possui proteções de abuso/custo e resiliência: rate limit por IP, limites de tamanho/tempo (request/timeout), erros pt-BR seguros e fallback controlado (ex.: orientação para busca manual/keyword) em falha/timeout/indisponibilidade do LLM.
+- [x] **API-03**: Para campos sem filtro nativo completo no MVP (ex.: faixa salarial, modalidade, tipo de contrato/senioridade conforme capacidade atual), o sistema aplica estratégia explícita e limitada (mapeamento em `q` e/ou pós-filtro em janela candidata limitada) e sinaliza suporte parcial/aproximado sem afirmar filtragem inexistente.
 
 ### Chat UI (UI)
 
@@ -65,9 +65,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INT-01 | Phase 19 | Complete |
 | INT-02 | Phase 19 | Complete |
 | INT-03 | Phase 19 | Complete |
-| API-01 | Phase 20 | Pending |
-| API-02 | Phase 20 | Pending |
-| API-03 | Phase 20 | Pending |
+| API-01 | Phase 20 | Complete |
+| API-02 | Phase 20 | Complete |
+| API-03 | Phase 20 | Complete |
 | UI-01 | Phase 21 | Pending |
 | UI-02 | Phase 21 | Pending |
 | UI-03 | Phase 21 | Pending |

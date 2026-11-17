@@ -92,6 +92,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 19. Contrato de intenção e mapeamento seguro | 2/2 | Complete | 2026-11-17 |
-| 20. API pública de chat-search resiliente | 2/2 | Complete   | 2026-11-17 |
+| 20. API pública de chat-search resiliente | 2/2 | Complete    | 2026-11-17 |
 | 21. Interface de chat e integração no board | 0/0 | Not started | - |
 | 22. Qualidade, hardening e validação operacional | 0/0 | Not started | - |
