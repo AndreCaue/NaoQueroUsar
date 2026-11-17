@@ -5,7 +5,7 @@
 **Latest shipped milestone:** v1.1 EmpregaNoix — **shipped 2026-11-15** (archived with **accepted audit gaps**).  
 **Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`
 
-**v1.2 progress:** Phase 16 complete — Geração, revisão e aprovação do post social (POST-01..POST-06: draft LLM/fallback, revisão/edição/agendamento BRT, approve site-first com registro social best-effort/imutável, política sem contato/empresa por padrão e link público `/?vaga=<job_id>`) implementado e verificado automaticamente (UAT humana pendente). Phase 15 (OAuth Meta/Integrações, META-01..META-06) e Phase 14 (fundação social, SOC-01..SOC-06) também concluídas.
+**v1.2 progress:** Phase 18 complete — Testes, documentação e fechamento de gaps v1.1 (TEST-01..04, DOC-01, AUD-01..05: cobertura automatizada offline endurecida, roteiros/docs Meta/deploy/env/DB de testes e handoffs rastreáveis, backfill/reconciliação `11-VERIFICATION` + caveats 07/08) com evidências em `18-AUDIT-MATRIX.md`/`18-HANDOFFS.md`; **verificação `human_needed`** (UAT/execuções DB migrado, browser, smoke canônico e Meta real pendentes). Phases 14–17 (fundação social, OAuth Meta, geração/revisão/aprovação e publicação assíncrona/retry/idempotência/status) concluídas anteriormente.
 
 ## Current Milestone: v1.2 Integração com Facebook Pages
 
@@ -123,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-16 after completing Phase 16 (Geração, Revisão e Aprovação do Post Social; human verification accepted for closeout, UAT pending)*
+*Last updated: 2026-11-17 after completing Phase 18 (Testes, documentação e fechamento de gaps v1.1; execution complete, human verification/UAT handoffs pending)*
