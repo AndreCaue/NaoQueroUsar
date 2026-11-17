@@ -394,32 +394,22 @@ class IntentLLMOutput(BaseModel):
 | A4 | No new env vars/caps are strictly required for intent in Phase 19 (can reuse `GROQ_*` defaults/timeouts); if added, they must coexist with extraction caps. | Architecture Patterns / Open Questions | Configuration drift or timeout mismatch with Phase 20 endpoint budget; easy to add later with explicit defaults. |
 | A5 | `npm`/frontend toolchain availability is irrelevant to Phase 19 implementation/tests (backend-only). | Environment Availability | None for Phase 19 scope. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Canonical intent JSON shape and field naming (entendido/aplicado/status per field)**
-   - What we know: Must preserve D-01..D-12: separate understood vs applied, per-field status+reason, explicit final `q/city/sort`. [VERIFIED: D-09/D-11]
-   - What's unclear: Exact key names/types (e.g. `fields` map vs list, `reason_code` enum naming, aggregate `limitations` structure).
-   - Recommendation: Choose stable, testable names (e.g. `understood`, `field_assessments[]` or `{field: {...}}`, `applied_params`, `limitations[]`) and document them in schema docstrings; optimize for Phase 20 serialization and UI display.
+1. **Canonical intent JSON shape and field naming (entendido/aplicado/status per field)** — **RESOLVED**
+   - **Decision:** Final contract MUST expose (names may be refined in implementation but semantics are locked by D-01..D-12) `understood` (candidate/normalized fields as applicable), per-field assessments/status records with `status` (`aplicado|ignorado|aproximado`) + short `reason`/reason code and entendido/aplicado values where relevant, explicit `applied_params` containing final deterministic search inputs `{q, city, sort}`, and aggregate limitation/partial-support signaling. Planner/implementer to choose stable, testable Pydantic/JSON names and document in schema docstrings (Phase 20 serialization/UI-ready).
 
-2. **Enum granularity for modalidade/contrato/senioridade**
-   - What we know: Fixed enums + optional `raw` (D-04), values at implementation discretion. [VERIFIED]
-   - What's unclear: Minimal set that covers milestone examples (CLT, remoto/híbrido/presencial, estágio, pleno, etc.) without overfitting.
-   - Recommendation: Start minimal and explicit (e.g. modalidade: `remoto|hibrido|presencial|unknown-mapped-via-raw?` but prefer null if unclear; contrato: `clt|pj|estagio|temporario|outros`; senioridade: `estagio|junior|pleno|senior|outros`), always keep `raw`; validate/normalize deterministically. Expand only with tests.
+2. **Enum granularity for modalidade/contrato/senioridade** — **RESOLVED**
+   - **Decision:** Use fixed minimal enums + optional `raw` (D-04) covering milestone/contract cases; prefer `null` when unclear rather than invented values. Representative minimal sets (adjustable with tests, deterministic validation): modalidade `remoto|hibrido|presencial` (map clear home-office to `remoto`; do not coerce híbrido/presencial into city), contrato `clt|pj|estagio|temporario|outros`, senioridade `estagio|junior|pleno|senior|outros`. Always preserve `raw` for traceability.
 
-3. **How aggressively to compose non-native terms into `q`**
-   - What we know: May include relevant textual terms when useful, mark `aproximado` when applicable, avoid noise (D-08). [VERIFIED]
-   - What's unclear: Token normalization/dedup/stopword handling for pt-BR in a short query.
-   - Recommendation: Conservative composition: include salient role/skill/contract/seniority terms explicitly stated; deduplicate case-insensitively; avoid adding generic words ("vaga", "emprego") and avoid salary numbers as search tokens unless clearly useful (usually not). Cover with mapper unit tests.
+3. **How aggressively to compose non-native terms into `q`** — **RESOLVED**
+   - **Decision:** Conservative composition (D-08): include salient explicitly stated role/skill/contract/seniority terms useful for recall; deduplicate case-insensitively/normalize whitespace; avoid generic noise ("vaga", "emprego") and avoid salary numbers as tokens unless clearly useful. When non-native info influences `q`, mark field `aproximado` with structured reason; never claim structured filtering.
 
-4. **Sort explicitness detection vocabulary**
-   - What we know: Only when explicit; otherwise null (D-06). [VERIFIED]
-   - What's unclear: Whether phrases like "mais novas/recentes" or "mais antigas/velhas" are treated as explicit by prompt normalization, deterministic rules, or both.
-   - Recommendation: Accept only clear lexical signals mapped to `recentes|antigas`; prefer deterministic post-processing over LLM-only inference; on ambiguity treat as not explicit (null + reason).
+4. **Sort explicitness detection vocabulary** — **RESOLVED**
+   - **Decision:** Sort is set only on explicit user intent (D-06). Accept clear lexical signals mapped to `recentes|antigas` (e.g. mais recentes/novas, mais antigas/velhas) via deterministic post-processing and/or constrained understanding; ambiguity or absence => `null` in understood intent with safe defaulting handled only at mapping/consumption as applicable and signaled (no invented preference).
 
-5. **Intent-specific timeout/call budget**
-   - What we know: Reuse Groq config/timeouts patterns; extraction has separate caps/timeouts. [VERIFIED: `config.py`, D-13]
-   - What's unclear: Whether a distinct `INTENT_TIMEOUT_SECONDS` is needed now vs Phase 20.
-   - Recommendation: For Phase 19, allow injectable settings/client and default to existing `GROQ_TIMEOUT_SECONDS` if no new setting is introduced; document coexistence requirement.
+5. **Intent-specific timeout/call budget** — **RESOLVED**
+   - **Decision:** Phase 19 reuses existing `GROQ_*` config/model-chain/timeout patterns (D-13) via injectable settings/client seams; no new env var required now. If introduced later (Phase 20 wiring), must coexist with extraction caps and remain configurable. Tests must not depend on live network (fake client/injected sleep).
 
 ## Environment Availability
 
