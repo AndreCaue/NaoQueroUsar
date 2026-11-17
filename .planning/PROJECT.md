@@ -8,11 +8,20 @@
 
 **v1.2 delivered (with caveats):** fundação social segura (modelos/migrações/tokens criptografados/`SocialPublisher`), OAuth Meta e Integrações admin, geração/revisão/aprovação de post social (LLM/fallback, site-first), publicação assíncrona resiliente com retry/idempotência/status/retry no admin, e testes/docs/handoffs de fechamento rastreável. **Pendências aceitas:** reconciliação de rastreabilidade `PUB-01..08`, handoffs reais para `TEST-04`/`DOC-01`/`AUD-05`, verificações humanas/runtime/canônicas e débitos carry-over do v1.1.
 
-## Next Milestone Goals
+## Current Milestone: v1.3 Chatbot Inteligente de Busca de Vagas
 
-- Run `/gsd-new-milestone` to define the next milestone scope (questioning → research → requirements → roadmap).
-- Prioritize carry-over/closure as needed: reconciliar evidências/rastreabilidade de `PUB-01..08`, executar handoffs reais (Meta dev/live, DB de testes migrado, smoke/browser canônico) e tratar lacunas remanescentes do v1.1 (EXTR/PUBL/SRCH/UIUX) conforme decisão de produto.
-- Maintain core constraints: acesso público sem login/fricção, operação admin única, falhas sociais nunca bloqueiam publicação do site.
+**Goal:** Permitir que qualquer pessoa encontre vagas descrevendo o que procura em linguagem natural, com resposta rápida e sem fricção — reaproveitando a busca/filtros existentes e mantendo baixo custo operacional.
+
+**Target features:**
+- Extração de intenção/parâmetros em linguagem natural para JSON estruturado e validado (cargo/senioridade, cidade whitelist, modalidade, faixa salarial, tipo de contrato, palavras-chave, ordenação), sem inventar dados
+- Aplicação dos parâmetros na busca pública existente (`GET /api/v1/public/jobs` / `crud.list_published`) com normalização segura; estratégia incremental para campos não nativos hoje (ex.: salário/modalidade/contrato via mapeamento textual/pós-filtro ou extensão controlada de filtros)
+- Endpoint público de chat-search com proteção básica (rate limit/timeout) e respostas com interpretação + resultados (`JobPublic`, sem expor contatos no payload público)
+- Interface de chat simples no frontend público (drawer/modal mobile-first) exibindo parâmetros entendidos e lista de vagas (título, empresa, local, salário quando disponível, acesso ao detalhe/link), suportando combinações de filtros
+- Cobertura dos exemplos de uso do MVP definidos para o milestone (com lacunas explícitas documentadas quando um parâmetro não for totalmente suportado pelo backend atual)
+
+**Carry-over/prioridades paralelas (se decidido em requisitos):** reconciliação `PUB-01..08`, handoffs `TEST-04/DOC-01/AUD-05`, lacunas v1.1 (EXTR/PUBL/SRCH/UIUX) e débitos operacionais/testes podem ser incluídos conforme escopo aprovado.
+
+**Constraints mantidas:** acesso público sem login/fricção, operação admin única, falhas sociais nunca bloqueiam publicação do site. LLM não recebe centenas de vagas; apenas extrai parâmetros. Preferência por soluções gratuitas/baixo custo e boa performance.
 
 ## What This Is
 
@@ -40,9 +49,10 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Active
 
-<!-- No active milestone. Define in next cycle via /gsd-new-milestone. -->
-
-- [ ] (Next milestone) Definir escopo e requisitos em novo `.planning/REQUIREMENTS.md` via `/gsd-new-milestone` (incluir reconciliações/handoffs prioritários conforme necessário).
+- [ ] Definir requisitos do milestone v1.3 (chatbot NL → extração de parâmetros → busca existente → UI de chat) em `.planning/REQUIREMENTS.md`
+- [ ] Pesquisar e definir provider/estratégia de extração (preferência Groq/reuso atual), schema JSON, mapeamento para filtros existentes e tratamento de campos não nativos (salário/modalidade/contrato)
+- [ ] Projetar endpoint público de chat-search, proteções (rate limit/timeout/abuso) e integração frontend (drawer/modal) com boa performance
+- [ ] (A definir) Incluir ou não itens de carry-over/hardening (PUB-01..08, handoffs v1.2, lacunas v1.1) no escopo do milestone
 
 ### Out of Scope
 
@@ -108,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-17 after v1.2 milestone completion (archived with known gaps/handoffs accepted; no v1.2 milestone audit)*
+*Last updated: 2026-11-17 after starting milestone v1.3 Chatbot Inteligente de Busca de Vagas*
