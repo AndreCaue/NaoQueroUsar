@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: planning
-last_updated: "2026-11-17T18:01:45.880Z"
+status: roadmap_ready
+last_updated: "2026-11-17T00:00:00.000Z"
 last_activity: 2026-11-17
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-17)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Planning next milestone (`/gsd-new-milestone`)
+**Current focus:** v1.3 Chatbot Inteligente de Busca de Vagas — roadmap defined, ready to plan Phase 19
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 19 of 22 (Contrato de intenção e mapeamento seguro) — Not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-11-17 — Milestone v1.3 started
+Status: Roadmap ready
+Last activity: 2026-11-17 — Roadmap created for v1.3 (Phases 19–22, 12/12 requirements mapped)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -56,8 +58,10 @@ Last activity: 2026-11-17 — Milestone v1.3 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- v1.2 shipped: Integração apenas com Facebook (interface `SocialPublisher` prevendo Instagram futuro), 1 página/1 admin, OAuth no painel, falha no Facebook não bloqueia o site, retry/backoff configurável + retry manual, post fire-and-forget, texto gerado/editável na revisão e imutável após envio, segredos/tokens só no backend (criptografados).
-- Milestone completion (2026-11-17): proceeded without `v1.2-MILESTONE-AUDIT.md`; known gaps/handoffs accepted and recorded in archives/MILESTONES/PROJECT.
+- v1.3 scope: chatbot NL → extração de parâmetros → busca existente → UI de chat (INT/API/UI/QA-01..03). Carry-over v1.2/v1.1 explicitamente fora deste milestone.
+- LLM extrai apenas parâmetros (nunca recebe corpus de vagas); busca determinística reutiliza `GET /api/v1/public/jobs` / `list_published` e `JobPublic` (sem contatos no chat).
+- Campos não nativos (salário/modalidade/contrato/senioridade) tratados como suporte limitado/aproximado e sinalizado, sem afirmar filtragem inexistente.
+- Roadmap v1.3: 4 phases (19–22), coarse granularity, 100% coverage (12/12).
 
 ### Pending Todos
 
@@ -65,9 +69,9 @@ None tracked.
 
 ### Blockers/Concerns
 
-- **v1.2 close accepted gaps:** reconcile `PUB-01..08` traceability/evidence; execute real handoffs for `TEST-04`, `DOC-01`, `AUD-05` (Meta dev/live, DB-backed reproducible runs, canonical/browser/runtime smoke, human verifications).
-- **Carried from v1.1 (accepted):** EXTR-10/11/12, PUBL-10/11/12/13/14, SRCH-10/11/12, UIUX-10/11/12 unsatisfied in audited scope; canonical-host live smoke/provisioning pending; DB-backed test reproducibility issues (`relation "jobs" does not exist` in recorded runs); see `.planning/milestones/v1.1-MILESTONE-AUDIT.md`.
-- **Pre-flight open artifacts at close:** `gsd-sdk audit-open` reported 11 items (legacy verification/uat gaps incl. phases 07/08/11/16/17/18 contexts and 4 incomplete quick tasks 261110-u28/uik, 261111-krt, 261112-ttk).
+- **v1.2 close accepted gaps (out of v1.3 scope):** reconcile `PUB-01..08` traceability/evidence; execute real handoffs for `TEST-04`, `DOC-01`, `AUD-05` (Meta dev/live, DB-backed reproducible runs, canonical/browser/runtime smoke, human verifications).
+- **Carried from v1.1 (accepted, out of v1.3 scope):** EXTR-10/11/12, PUBL-10/11/12/13/14, SRCH-10/11/12, UIUX-10/11/12 unsatisfied in audited scope; canonical-host live smoke/provisioning pending; DB-backed test reproducibility issues (`relation "jobs" does not exist` in recorded runs); see `.planning/milestones/v1.1-MILESTONE-AUDIT.md`.
+- **v1.3 risks to watch:** fidelidade de filtros não nativos (salário/modalidade/contrato), limites/custos/latência Groq em endpoint público, e preservação do fluxo público sem fricção/sem exposição de contatos.
 
 ### Quick Tasks Completed
 
@@ -93,5 +97,5 @@ Items acknowledged/deferred at or before v1.2 close (2026-11-17):
 ## Session Continuity
 
 Last session: 2026-11-17
-Stopped at: v1.2 milestone completion
+Stopped at: v1.3 roadmap created (Phases 19–22)
 Resume file: —

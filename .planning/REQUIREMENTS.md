@@ -62,23 +62,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INT-01 | Phase [TBD] | Pending |
-| INT-02 | Phase [TBD] | Pending |
-| INT-03 | Phase [TBD] | Pending |
-| API-01 | Phase [TBD] | Pending |
-| API-02 | Phase [TBD] | Pending |
-| API-03 | Phase [TBD] | Pending |
-| UI-01 | Phase [TBD] | Pending |
-| UI-02 | Phase [TBD] | Pending |
-| UI-03 | Phase [TBD] | Pending |
-| QA-01 | Phase [TBD] | Pending |
-| QA-02 | Phase [TBD] | Pending |
-| QA-03 | Phase [TBD] | Pending |
+| INT-01 | Phase 19 | Pending |
+| INT-02 | Phase 19 | Pending |
+| INT-03 | Phase 19 | Pending |
+| API-01 | Phase 20 | Pending |
+| API-02 | Phase 20 | Pending |
+| API-03 | Phase 20 | Pending |
+| UI-01 | Phase 21 | Pending |
+| UI-02 | Phase 21 | Pending |
+| UI-03 | Phase 21 | Pending |
+| QA-01 | Phase 22 | Pending |
+| QA-02 | Phase 22 | Pending |
+| QA-03 | Phase 22 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 12 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-17*
