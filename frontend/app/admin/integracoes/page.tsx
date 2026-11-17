@@ -1,5 +1,4 @@
-"use client";
-
+import { Suspense } from "react";
 import { IntegrationsClient } from "@/app/admin/integracoes/IntegrationsClient";
 
 export default function Page() {
@@ -12,7 +11,14 @@ export default function Page() {
         Conecte sua Página do Facebook para publicar vagas automaticamente
         quando a integração estiver ativa.
       </p>
-      <IntegrationsClient />
+
+      <Suspense
+        fallback={
+          <p className="mt-6 text-fg-muted">Carregando integrações...</p>
+        }
+      >
+        <IntegrationsClient />
+      </Suspense>
     </div>
   );
 }
