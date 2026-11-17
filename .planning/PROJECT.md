@@ -2,31 +2,17 @@
 
 ## Current State
 
-**Latest shipped milestone:** v1.1 EmpregaNoix — **shipped 2026-11-15** (archived with **accepted audit gaps**).  
-**Archives:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`
+**Latest shipped milestone:** v1.2 Integração com Facebook Pages — **shipped 2026-11-17** (archived with **known gaps/handoffs accepted**; no v1.2 milestone audit).  
+**Archives:** `.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`  
+**Previous milestone:** v1.1 EmpregaNoix — shipped 2026-11-15 (`.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`)
 
-**v1.2 progress:** Phase 18 complete — Testes, documentação e fechamento de gaps v1.1 (TEST-01..04, DOC-01, AUD-01..05: cobertura automatizada offline endurecida, roteiros/docs Meta/deploy/env/DB de testes e handoffs rastreáveis, backfill/reconciliação `11-VERIFICATION` + caveats 07/08) com evidências em `18-AUDIT-MATRIX.md`/`18-HANDOFFS.md`; **verificação `human_needed`** (UAT/execuções DB migrado, browser, smoke canônico e Meta real pendentes). Phases 14–17 (fundação social, OAuth Meta, geração/revisão/aprovação e publicação assíncrona/retry/idempotência/status) concluídas anteriormente.
+**v1.2 delivered (with caveats):** fundação social segura (modelos/migrações/tokens criptografados/`SocialPublisher`), OAuth Meta e Integrações admin, geração/revisão/aprovação de post social (LLM/fallback, site-first), publicação assíncrona resiliente com retry/idempotência/status/retry no admin, e testes/docs/handoffs de fechamento rastreável. **Pendências aceitas:** reconciliação de rastreabilidade `PUB-01..08`, handoffs reais para `TEST-04`/`DOC-01`/`AUD-05`, verificações humanas/runtime/canônicas e débitos carry-over do v1.1.
 
-## Current Milestone: v1.2 Integração com Facebook Pages
+## Next Milestone Goals
 
-**Goal:** Ao aprovar uma vaga na revisão, publicar no site e criar/agendar automaticamente uma publicação na Página do Facebook com texto gerado por IA (editável pelo revisor), sem nunca bloquear a publicação no site.
-
-**Target features:**
-- Fundação social: migrações/modelos (`social_accounts`, `social_posts`, opcional `social_post_logs`), interface `SocialPublisher` (Facebook agora; Instagram futuro), criptografia de tokens em repouso e config/envs Meta/social
-- OAuth Meta (Graph API): conectar/desconectar/status no painel admin, fluxo com `state` anti-CSRF, troca por long-lived/page token, seleção de página única, validação/expiração (`needs_reconnect`) e alertas
-- Geração de texto do post: reutilizar integração LLM existente (pt-BR, emojis/hashtags, link da vaga, ~700 chars), fallback por template, rascunho editável na revisão (regenerar/editar/preview, imediato ou agendado, fuso `America/Sao_Paulo`)
-- Publicação assíncrona e resiliente: `FacebookPublisher` (`/{page_id}/feed`), worker/polling acionado por cron (Render) com `FOR UPDATE SKIP LOCKED`, retries com backoff configurável, classificação transitório vs permanente, idempotência (sem duplicatas)
-- UI/admin de status e operações: Integrações (conectar/status/desconectar/reconectar), badge/status social por vaga, erro resumido, link do post publicado, "tentar novamente"
-- Qualidade e docs: testes (unit/integração/mock Graph API, concorrência/idempotência), roteiro manual com app em dev, documentação `.env.example`, setup Meta App/cron Render/App Review
-
-**Key decisions/constraints (milestone):**
-- Apenas Facebook neste milestone; arquitetura preparada para `InstagramPublisher` futuro
-- Uma única Página, único admin; OAuth completo no painel
-- Falha no Facebook nunca bloqueia/derruba vaga no site; post fire-and-forget (editar/fechar/expirar vaga não altera/remove post)
-- Retry automático com backoff (default 5 tentativas: 5min/15min/1h/3h/6h), configurável por env; botão manual de retry
-- Texto aprovado imutável após envio e salvo; por padrão sem contato direto no post (apenas link do site, configurável)
-- Segredos/tokens apenas no backend, criptografados em repouso, nunca em logs/frontend
-- **Antes de planejar:** inspecionar repo (framework Python, ORM/migrations, padrões, LLM/cron/revisão existentes) e seguir convenções; evitar novas dependências sem justificativa
+- Run `/gsd-new-milestone` to define the next milestone scope (questioning → research → requirements → roadmap).
+- Prioritize carry-over/closure as needed: reconciliar evidências/rastreabilidade de `PUB-01..08`, executar handoffs reais (Meta dev/live, DB de testes migrado, smoke/browser canônico) e tratar lacunas remanescentes do v1.1 (EXTR/PUBL/SRCH/UIUX) conforme decisão de produto.
+- Maintain core constraints: acesso público sem login/fricção, operação admin única, falhas sociais nunca bloqueiam publicação do site.
 
 ## What This Is
 
@@ -42,22 +28,21 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Validated
 
-<!-- Shipped and confirmed valuable (high-confidence). -->
+<!-- Shipped and confirmed valuable (high-confidence, with noted caveats where applicable). -->
 
 - [x] Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1: Backend Foundation, Data & Admin Auth (ADMN-01/02/03)
-- [x] Fundação social de integração Facebook (modelos/migração `social_*`, crypto Fernet de tokens, contrato `SocialPublisher`/stub Facebook, config/env `.env.example`) — Validated in Phase 14: Fundacao Social, Dados e Configuracao (SOC-01, SOC-02, SOC-03, SOC-04, SOC-05, SOC-06)
-- [x] Geração, revisão e aprovação do post social (draft LLM/fallback, edição/regeneração/preview, agendamento BRT, approve site-first com registro social best-effort/imutável, política sem contato/empresa por padrão e link público) — Validated in Phase 16: Geracao Revisao e Aprovacao do Post Social (POST-01, POST-02, POST-03, POST-04, POST-05, POST-06; automated verification passed, human UAT pending)
-- [~] v1.1 scope (Phases 7–13): implementação/reconciliação avançada em reveal/anti-spam, revisão admin, lifecycle/trust/legal, rebranding e alinhamento canônico de deploy/ops — **com lacunas aceitas** (ver audit/archives). Não tratar como totalmente validado.
+- [x] Fundação social de integração Facebook (modelos/migração `social_*`, crypto Fernet de tokens, contrato `SocialPublisher`/stub Facebook, config/env `.env.example`) — Validated in Phase 14 (SOC-01..SOC-06)
+- [x] OAuth Meta e Integrações no admin (conectar/desconectar/status, `state` anti-CSRF, troca/validação de tokens, seleção de página única, alertas de reconexão) — Validated in Phase 15 (META-01..META-06)
+- [x] Geração, revisão e aprovação do post social (draft LLM/fallback, edição/regeneração/preview, agendamento BRT, approve site-first com registro social best-effort/imutável, política/link público) — Validated in Phase 16 (POST-01..POST-06; human/UAT items noted)
+- [x] Pipeline assíncrono de publicação social com status/retry no admin (worker/cron, claim/lock, retry/backoff, idempotência, visibilidade/ações operacionais) — Implemented in Phase 17 (UI-01..UI-02 complete; `PUB-01..08` traceability reconciliation pending in archive)
+- [~] Cobertura automatizada/docs/fechamento rastreável de gaps (v1.2 carry-over v1.1) — Phase 18 complete with **partial+handoff** (`TEST-04`, `DOC-01`, `AUD-05`, runtime/canonical/human evidence pending)
+- [~] v1.1 scope (Phases 7–13) — **accepted gaps/caveats** remain (see v1.1/v1.2 archives and audit artifacts); not fully validated.
 
 ### Active
 
-<!-- Current milestone scope (v1.2) — to be formalized in REQUIREMENTS.md/ROADMAP. -->
+<!-- No active milestone. Define in next cycle via /gsd-new-milestone. -->
 
-- [ ] Integração Facebook Pages: publicação automática de vagas aprovadas (OAuth Meta, geração/edição de texto com LLM, agendamento/imediato, publicação assíncrona resiliente, status/retry no admin)
-- [ ] Infra/dados social: `social_accounts`/`social_posts` (+ logs), tokens criptografados, idempotência, worker/cron com retry/backoff configurável
-- [ ] UI admin: tela de Integrações, revisão com editor/preview/agendamento do post, badges/erros/link/retry por vaga
-- [ ] Testes e documentação operacional (Meta app, envs, cron Render, checklist App Review/modo Live)
-- [ ] (Carry-over prioritário, conforme planejamento) Fechar gaps aceitos do v1.1: EXTR/PUBL/SRCH/UIUX, evidências DB/browser/canônicas e verificação pendente
+- [ ] (Next milestone) Definir escopo e requisitos em novo `.planning/REQUIREMENTS.md` via `/gsd-new-milestone` (incluir reconciliações/handoffs prioritários conforme necessário).
 
 ### Out of Scope
 
@@ -123,4 +108,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-17 after completing Phase 18 (Testes, documentação e fechamento de gaps v1.1; execution complete, human verification/UAT handoffs pending)*
+*Last updated: 2026-11-17 after v1.2 milestone completion (archived with known gaps/handoffs accepted; no v1.2 milestone audit)*
