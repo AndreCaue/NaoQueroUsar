@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: Roadmap ready
-stopped_at: Phase 19 context gathered
-last_updated: "2026-11-17T19:31:46.236Z"
-last_activity: 2026-11-17 — Roadmap created for v1.3 (Phases 19–22, 12/12 requirements mapped)
+status: Phase 19 complete
+stopped_at: Phase 19 executed and verified
+last_updated: "2026-11-17T00:00:00.000Z"
+last_activity: 2026-11-17 — Phase 19 complete (2/2 plans, verification passed)
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 25
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-17)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** v1.3 Chatbot Inteligente de Busca de Vagas — roadmap defined, ready to plan Phase 19
+**Current focus:** v1.3 Chatbot Inteligente de Busca de Vagas — Phase 19 complete, ready to plan Phase 20
 
 ## Current Position
 
-Phase: 19 of 22 (Contrato de intenção e mapeamento seguro) — Not started
-Plan: —
-Status: Roadmap ready
-Last activity: 2026-11-17 — Roadmap created for v1.3 (Phases 19–22, 12/12 requirements mapped)
+Phase: 19 of 22 (Contrato de intenção e mapeamento seguro) — Complete
+Plan: 2/2 complete
+Status: Phase 19 verified (passed)
+Last activity: 2026-11-17 — Executed 19-01/19-02, code review advisory recorded, verification passed (INT-01/02/03)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██▌-------] 25%
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 0%
 | 16 | 3/3 | Complete |
 | 17 | 3/3 | Complete |
 | 18 | 4/4 | Complete |
+| 19 | 2/2 | Complete |
 
 *Historical/v1.1 metrics preserved in archives and prior history.*
 
@@ -63,6 +64,7 @@ Recent decisions affecting current work:
 - LLM extrai apenas parâmetros (nunca recebe corpus de vagas); busca determinística reutiliza `GET /api/v1/public/jobs` / `list_published` e `JobPublic` (sem contatos no chat).
 - Campos não nativos (salário/modalidade/contrato/senioridade) tratados como suporte limitado/aproximado e sinalizado, sem afirmar filtragem inexistente.
 - Roadmap v1.3: 4 phases (19–22), coarse granularity, 100% coverage (12/12).
+- Phase 19: contrato de intenção estrito + mapeamento determinístico server-authoritative (`q/city/sort`), seam Groq isolado com prompt seguro/fallback determinístico; campos não nativos nunca viram filtro estruturado garantido.
 
 ### Pending Todos
 
@@ -97,6 +99,6 @@ Items acknowledged/deferred at or before v1.2 close (2026-11-17):
 
 ## Session Continuity
 
-Last session: 2026-11-17T19:31:46.217Z
-Stopped at: Phase 19 context gathered
-Resume file: .planning/phases/19-contrato-de-intencao-e-mapeamento-seguro/19-CONTEXT.md
+Last session: 2026-11-17
+Stopped at: Phase 19 complete (verified); next step plan Phase 20
+Resume file: .planning/phases/19-contrato-de-intencao-e-mapeamento-seguro/19-VERIFICATION.md

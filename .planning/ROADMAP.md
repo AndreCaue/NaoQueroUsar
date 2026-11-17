@@ -8,7 +8,7 @@
 
 ## Phases
 
-- [ ] **Phase 19: Contrato de intenção e mapeamento seguro** - Extrair intenção pt-BR em JSON estrito e mapear com segurança para a busca existente
+- [x] **Phase 19: Contrato de intenção e mapeamento seguro** - Extrair intenção pt-BR em JSON estrito e mapear com segurança para a busca existente
 - [ ] **Phase 20: API pública de chat-search resiliente** - Expor endpoint público protegido que combina extração e busca determinística sem expor contatos
 - [ ] **Phase 21: Interface de chat e integração no board** - Oferecer chat mobile-first no board com interpretação transparente e aplicação na busca canônica
 - [ ] **Phase 22: Qualidade, hardening e validação operacional** - Validar exemplos MVP, cobrir fluxos críticos e garantir controles operacionais mínimos
@@ -24,7 +24,11 @@
   2. Consultas com variações de escrita/ordem e instruções conflitantes resultam em extração validada com defaults seguros (campos não informados permanecem nulos/omitidos conforme contrato)
   3. Cada parâmetro entendido é classificado de forma verificável como aplicado, ignorado ou aproximado, com normalização segura para busca existente (`q`, cidade whitelist SP/RJ/BH/Remoto, `sort` permitido)
   4. Campos sem suporte nativo não são apresentados como filtros garantidos; a resposta deixa explícito o limite de aplicação
-**Plans**: TBD
+**Plans**: 2/2 plans complete
+
+Plans:
+- [x] 19-01-PLAN.md — Contrato/schemas de intenção + mapper determinístico seguro (testes puros)
+- [x] 19-02-PLAN.md — Seam Groq de extração + parser/orquestrador e contrato final (testes fake-client)
 
 ### Phase 20: API pública de chat-search resiliente
 **Goal**: Usuários e o frontend público podem obter resultados de busca por chat via um endpoint seguro, rápido o suficiente e consistente com o contrato público atual
@@ -65,7 +69,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 19. Contrato de intenção e mapeamento seguro | 0/0 | Not started | - |
+| 19. Contrato de intenção e mapeamento seguro | 2/2 | Complete | 2026-11-17 |
 | 20. API pública de chat-search resiliente | 0/0 | Not started | - |
 | 21. Interface de chat e integração no board | 0/0 | Not started | - |
 | 22. Qualidade, hardening e validação operacional | 0/0 | Not started | - |

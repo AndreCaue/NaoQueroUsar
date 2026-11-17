@@ -44,6 +44,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - [x] OAuth Meta e Integrações no admin (conectar/desconectar/status, `state` anti-CSRF, troca/validação de tokens, seleção de página única, alertas de reconexão) — Validated in Phase 15 (META-01..META-06)
 - [x] Geração, revisão e aprovação do post social (draft LLM/fallback, edição/regeneração/preview, agendamento BRT, approve site-first com registro social best-effort/imutável, política/link público) — Validated in Phase 16 (POST-01..POST-06; human/UAT items noted)
 - [x] Pipeline assíncrono de publicação social com status/retry no admin (worker/cron, claim/lock, retry/backoff, idempotência, visibilidade/ações operacionais) — Implemented in Phase 17 (UI-01..UI-02 complete; `PUB-01..08` traceability reconciliation pending in archive)
+- [x] Contrato de intenção pt-BR + mapeamento determinístico seguro para busca pública (`q`, cidade whitelist, sort explícito), classificação auditável por campo e seam Groq isolado com fallback seguro — Validated in Phase 19 (INT-01/02/03)
 - [~] Cobertura automatizada/docs/fechamento rastreável de gaps (v1.2 carry-over v1.1) — Phase 18 complete with **partial+handoff** (`TEST-04`, `DOC-01`, `AUD-05`, runtime/canonical/human evidence pending)
 - [~] v1.1 scope (Phases 7–13) — **accepted gaps/caveats** remain (see v1.1/v1.2 archives and audit artifacts); not fully validated.
 
@@ -118,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-17 after starting milestone v1.3 Chatbot Inteligente de Busca de Vagas*
+*Last updated: 2026-11-17 after completing Phase 19 (Contrato de intenção e mapeamento seguro)*

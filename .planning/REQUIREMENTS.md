@@ -9,9 +9,9 @@ Requirements for milestone v1.3 (Chatbot Inteligente de Busca de Vagas). Each ma
 
 ### Intent Extraction (INT)
 
-- [ ] **INT-01**: Usuário pode enviar uma consulta em linguagem natural (pt-BR) e o sistema extrai parâmetros estruturados em JSON estrito e validado (ex.: cargo/palavras-chave, senioridade, cidade, modalidade remoto/híbrido/presencial, faixa salarial min/max, tipo de contrato, ordenação), sem inventar informações não declaradas/implicadas.
-- [ ] **INT-02**: A extração usa provider LLM configurável de baixo custo (reuso Groq/config existente como padrão) com schema/validação server-side (Pydantic), defaults nulos/seguros e prompt robusto para tolerar variações pt-BR e resistir a instruções conflitantes no texto do usuário.
-- [ ] **INT-03**: O sistema normaliza e mapeia parâmetros extraídos para a busca existente de forma segura (ex.: `q`, cidade apenas na whitelist SP/RJ/BH/Remoto, `sort` permitido), separando/relatando o que foi **aplicado**, **ignorado** ou **aproximado** quando não houver suporte nativo.
+- [x] **INT-01**: Usuário pode enviar uma consulta em linguagem natural (pt-BR) e o sistema extrai parâmetros estruturados em JSON estrito e validado (ex.: cargo/palavras-chave, senioridade, cidade, modalidade remoto/híbrido/presencial, faixa salarial min/max, tipo de contrato, ordenação), sem inventar informações não declaradas/implicadas.
+- [x] **INT-02**: A extração usa provider LLM configurável de baixo custo (reuso Groq/config existente como padrão) com schema/validação server-side (Pydantic), defaults nulos/seguros e prompt robusto para tolerar variações pt-BR e resistir a instruções conflitantes no texto do usuário.
+- [x] **INT-03**: O sistema normaliza e mapeia parâmetros extraídos para a busca existente de forma segura (ex.: `q`, cidade apenas na whitelist SP/RJ/BH/Remoto, `sort` permitido), separando/relatando o que foi **aplicado**, **ignorado** ou **aproximado** quando não houver suporte nativo.
 
 ### Chat Search API (API)
 
@@ -62,9 +62,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INT-01 | Phase 19 | Pending |
-| INT-02 | Phase 19 | Pending |
-| INT-03 | Phase 19 | Pending |
+| INT-01 | Phase 19 | Complete |
+| INT-02 | Phase 19 | Complete |
+| INT-03 | Phase 19 | Complete |
 | API-01 | Phase 20 | Pending |
 | API-02 | Phase 20 | Pending |
 | API-03 | Phase 20 | Pending |
