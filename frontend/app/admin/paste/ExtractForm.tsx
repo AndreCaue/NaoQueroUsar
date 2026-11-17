@@ -17,7 +17,7 @@ import { TERM_REMOVED_NOTICE, stripBlockedTerms } from "@/lib/blocklist";
 // is mandatory: without it the widget does not render and the login stays
 // blocked — fail closed (D-15).
 const TURNSTILE_SITE_KEY =
-  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
+  process.env.TURNSTILE_SITE_KEY ||
   (process.env.NODE_ENV === "production" ? "" : "1x00000000000000000000AA");
 
 export default function ExtractForm() {
@@ -189,14 +189,22 @@ export default function ExtractForm() {
               </div>
             ) : (
               <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">
-                Configuração ausente: defina NEXT_PUBLIC_TURNSTILE_SITE_KEY
+                Configuração ausente: defina TURNSTILE_SITE_KEY
               </div>
             )}
-            <button className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover" onClick={handleLogin} disabled={isLoginDisabled}>
+            <button
+              className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover"
+              onClick={handleLogin}
+              disabled={isLoginDisabled}
+            >
               {loading ? "Entrando..." : "Entrar"}
             </button>
 
-            {error && <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">{error}</div>}
+            {error && (
+              <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">
+                {error}
+              </div>
+            )}
           </div>
         )}
 
@@ -230,15 +238,28 @@ export default function ExtractForm() {
               />
             </label>
             {notice && (
-              <div role="status" className="rounded-lg border border-line-strong bg-canvas p-3 text-fg-muted">
+              <div
+                role="status"
+                className="rounded-lg border border-line-strong bg-canvas p-3 text-fg-muted"
+              >
                 {notice}
               </div>
             )}
-            <button className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover" onClick={handleSubmit} disabled={isSubmitDisabled}>
-              {loading ? "Extraindo... isso pode levar até ~2 minutos para textos grandes" : "Extrair vagas"}
+            <button
+              className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover"
+              onClick={handleSubmit}
+              disabled={isSubmitDisabled}
+            >
+              {loading
+                ? "Extraindo... isso pode levar até ~2 minutos para textos grandes"
+                : "Extrair vagas"}
             </button>
 
-            {error && <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">{error}</div>}
+            {error && (
+              <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">
+                {error}
+              </div>
+            )}
 
             {summary && (
               <div>
@@ -274,7 +295,10 @@ export default function ExtractForm() {
                   </div>
                 )}
 
-                <button className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover" onClick={handleReset}>
+                <button
+                  className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white hover:bg-accent-strong-hover"
+                  onClick={handleReset}
+                >
                   Nova extração
                 </button>
               </div>
