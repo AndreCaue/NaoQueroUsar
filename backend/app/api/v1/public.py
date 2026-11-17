@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from copy import deepcopy
@@ -70,19 +71,23 @@ def _chat_degraded_contract(
     message: str | None, reason_code: str, guidance: str, limitation: str | None = None
 ) -> IntentContract:
     """Build a safe degraded interpretation contract with no automatic results."""
-    contract = build_empty_intent(message, reason_code="no_extractable_params")
-    contract = contract.model_copy(deep=True)
+    contract = build_empty_intent(message, reason_code="no_extractable_params").model_copy(deep=True)
     contract.applied_params.q = None
     contract.applied_params.city = None
     contract.applied_params.sort = None
-    if limitation and limitation not in contract.limitations:
-        contract.limitations.append(limitation)
+
+    limitations: list[str] = list(contract.limitations or [])
+    if limitation:
+        limitations.append(limitation)
     if reason_code == "llm_unavailable":
-        contract.limitations.append("llm_unavailable")
+        limitations.append("llm_unavailable")
     elif reason_code == "timeout":
-        contract.limitations.append("llm_timeout")
+        limitations.append("llm_timeout")
     elif reason_code == "no_extractable_params":
-        contract.limitations.append("no_extractable_params")
+        limitations.append("no_extractable_params")
+    # de-duplicate while preserving order
+    contract.limitations = list(dict.fromkeys(limitations))
+
     contract.meta = {
         **(contract.meta or {}),
         "degraded": True,
@@ -271,13 +276,13 @@ async def chat_search(
             )
         except Exception as exc:  # noqa: BLE001 - fallback controlado (D-08/D-09)
             logger.warning("chat_search_intent_failed", extra={"reason": type(exc).__name__})
-            reason_code = "timeout" if "timeout" in str(exc).lower() else "llm_unavailable"
+            is_timeout = isinstance(exc, (asyncio.TimeoutError, TimeoutError)) or "timeout" in str(exc).lower()
+            reason_code = "timeout" if is_timeout else "llm_unavailable"
             guidance = _CHAT_GUIDANCE_LLM
             degraded = _chat_degraded_contract(
                 payload.message,
                 reason_code,
                 guidance,
-                limitation=("llm_timeout" if reason_code == "timeout" else "llm_unavailable"),
             )
             return ChatSearchResponse(
                 interpretation=degraded,

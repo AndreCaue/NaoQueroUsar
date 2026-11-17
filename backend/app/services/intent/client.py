@@ -266,10 +266,8 @@ async def call_intent_llm(
             response = await _create_once(
                 client, model=model, messages=messages, settings=settings, timeout_seconds=timeout_seconds
             )
-            choice = response.choices[0]
-            content = (choice.message.content or "{}")
             try:
-                return _parse_intent_output(content)
+                return _parse_intent_output(response.choices[0].message.content or "{}")
             except ValidationError:
                 repair_messages = build_messages(text, extra_user=REPAIR_PROMPT)
                 response = await _create_once(
@@ -279,17 +277,14 @@ async def call_intent_llm(
                     settings=settings,
                     timeout_seconds=timeout_seconds,
                 )
-                choice = response.choices[0]
-                content = (choice.message.content or "{}")
                 try:
-                    return _parse_intent_output(content)
+                    return _parse_intent_output(response.choices[0].message.content or "{}")
                 except ValidationError as exc:
-                    raise IntentExtractionError(
-                        "Resposta do LLM de intenção inválida mesmo após correção.",
-                        model=model,
-                    ) from exc
-        except IntentExtractionError:
-            raise
+                    last_failure = f"{model}: invalid schema after repair ({exc})"
+                    continue
+        except IntentExtractionError as exc:
+            last_failure = f"{model}: {exc.detail}"
+            continue
         except Exception as exc:  # noqa: BLE001 - try next model / report controlled failure
             last_failure = f"{model}: {exc}"
             continue
