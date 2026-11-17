@@ -1,521 +1,271 @@
-# Architecture Research: NQU (Não Quero Usar) — Job Board with LLM Extraction
+# Architecture Research
 
-**Domain:** Brazilian public job board (content aggregation + manual curation)
-**Researched:** 2026-10-13
-**Confidence:** HIGH
+**Domain:** NL chatbot search integration for an existing job board (EmpregaNoix v1.3)
+**Researched:** 2026-11-17
+**Confidence:** HIGH (grounded in current codebase) / MEDIUM (performance/rate-limit tuning specifics)
 
 ## Standard Architecture
 
 ### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                    Client Layer                                              │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │ Next.js 15 (App Router) — Vercel                                                      │  │
-│  │ • Public: listing/grid, detail modal, search/city/filter/sort, "reveal contact"       │  │
-│  │ • Admin: protected routes (login), paste+extract, review queue (pending), edit/delete  │  │
-│  │ • Turnstile integration (client token)                                                │  │
-│  └─────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                          │ HTTPS REST                                        │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                    API Layer                                                 │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────────────────────────────────────────┐  │
-│  │ FastAPI (Python) — Railway/Render (local first)                                       │  │
-│  │ • Auth (admin), Jobs CRUD, Extraction (Groq), Turnstile verify, CORS, validation     │  │
-│  │ • Background scheduler (APScheduler) for 14d expiry + HARD DELETE                      │  │
-│  └─────────────────────────────────────────────────────────────────────────────────────────┘  │
-│                                          │ SQL + HTTP                                        │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                  Data & External Services                                     │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────────────────┐  │
-│  │ Neon Postgres│  │ Groq API     │  │ Cloudflare   │  │ Observability/Config                 │  │
-│  │ (serverless) │  │ (llama-3.1-8b│  │ Turnstile    │  │ .env (secrets), structured logging   │  │
-│  │              │  │  -instant or │  │ (server-side)│  │ (uvicorn+fastapi)                    │  │
-│  │              │  │  llama-3.3-70b)│  │             │  │                                      │  │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           FRONTEND (Next.js 16 App Router)                   │
+│  ┌────────────────────────────── Public Board (existing) ──────────────────┐  │
+│  │  (public)/page.tsx  [Server]  ← URL searchParams (q, city, sort, page) │  │
+│  │     ├─ BoardToolbar (client)  ── updates URL / navigates               │  │
+│  │     ├─ JobGrid / JobDetailDialog / RevealContact (client)              │  │
+│  │     └─ ChatSearchLauncher + ChatDrawer/Modal (client)  [NEW]           │  │
+│  └──────────────────────────────────────────────────────────────────────────────┘
+│                 │ GET /api/v1/public/jobs?… (SSR fetchBoard)                 │
+│                 │ POST /api/v1/public/chat-search  [NEW, client fetch]      │
+├─────────────────┴────────────────────────────────────────────────────────────┤
+│                            BACKEND (FastAPI, /api/v1)                        │
+│  ┌────────────── Public API (existing, anonymous) ──────────────┐            │
+│  │ GET  /public/jobs        → crud.list_published                │            │
+│  │ GET  /public/jobs/{id}   → crud.get_published                 │            │
+│  │ POST /public/jobs/{id}/reveal-contact (Turnstile+rate limit)  │            │
+│  │ POST /public/jobs/{id}/report (rate limit, log-only)          │            │
+│  │ POST /public/chat-search  [NEW] (rate limit + timeout)        │            │
+│  └──────────────┬───────────────────────────────────────────────┘            │
+│                 │                                                            │
+│  ┌──────────────▼──────────────┐     ┌───────────────────────────────────┐  │
+│  │ services/chat_search/ [NEW] │     │ services/cities.py (existing)     │  │
+│  │  - schema.py (intent JSON)  │────▶│  resolve_city / resolve_sort      │  │
+│  │  - prompt.py (NL→params)    │     └───────────────────────────────────┘  │
+│  │  - extractor.py (Groq call) │     ┌───────────────────────────────────┐  │
+│  │  - mapper.py (params→query) │────▶│ crud.jobs.list_published (reuse)  │  │
+│  └──────────────┬──────────────┘     │  + optional in-memory post-filter │  │
+│                 │                    └───────────────────────────────────┘  │
+│                 │  async Groq chat completion (strict JSON)                  │
+├─────────────────┴────────────────────────────────────────────────────────────┤
+│  Groq API (existing config: GROQ_API_KEY/MODEL/FALLBACK/TIMEOUT_SECONDS)     │
+│  Neon Postgres: jobs(status,published,expires_at,city,search_text,salary,…)  │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Implementation Notes |
-|-----------|----------------|---------------------|
-| **Next.js 15 (App Router)** | Public UI (list/grid, modal, search/filter/sort), admin UI (paste+extract, review), client-side "reveal contact", Turnstile widget. | Server Components for read-heavy public pages; Client Components only where interactivity (modal, reveal, form state) needed. Route handlers optional if calling same-origin API; prefer typed fetch client. |
-| **FastAPI (API)** | REST API, request validation (Pydantic v2), auth (admin JWT or env-based login), CORS, Turnstile server verification, Groq integration, DB access (SQLAlchemy 2.x/async or psycopg3), scheduler for lifecycle. | Keep thin routers, service layer for domain logic (extraction, lifecycle), repository/CRUD for jobs. Return pt-BR errors. Never expose secrets to frontend. |
-| **Neon Postgres (serverless)** | Primary store for jobs + admin/auth metadata. Enforces constraints, indexes for search/filter/sort. | Use migrations (Alembic). Connection pooling tuned for serverless (pgbouncer-friendly). Soft-state not required; hard deletes on expiry. |
-| **Groq (LLM)** | Extract structured array of jobs from raw pasted text per contract (schema + constraints). | Deterministic-ish via temperature=0 (or low), strict JSON schema in prompt, retry with correction prompt on malformed output. Cost/latency: 8b instant preferred for volume 100–500 jobs/month. |
-| **Cloudflare Turnstile** | Anti-spam for public actions that reveal contact. Verification happens server-side. | Widget rendered on client; `cf-turnstile-response` token sent to backend; backend calls Turnstile verify endpoint with secret. Do not trust client-only checks. |
-| **Scheduler (APScheduler)** | Runs 14-day expiry + HARD DELETE. | In-process APScheduler (BackgroundScheduler) with a lock/heartbeat (single-instance safe in typical Railway/Render single process; or use a scheduled job/cron if scaled). Must be idempotent and transactional. |
-| **Config (.env)** | Secrets/keys: `ADMIN_PASSWORD` or JWT secret, `GROQ_API_KEY`, `TURNSTILE_SECRET_KEY`, `DATABASE_URL`, `CORS_ORIGINS`, `ENV`. | Never commit .env. Vercel/Railway/Render env vars. Validate on startup. |
+| Component | Responsibility | Typical Implementation | Status |
+|-----------|----------------|------------------------|--------|
+| `frontend/app/(public)/page.tsx` | SSR public board from URL filters; renders board + chat entry point | Server Component, `fetchBoard`/`fetchJob`, `cache: "no-store"` | **Modify (small)**: mount chat launcher/drawer |
+| `frontend/lib/filters.ts` | Single source of truth for URL↔filter parsing/serialization (`q,cit y,sort,page,vaga`) | Pure helpers (`normalizeFilters`, `toApiParams`, `buildBoardHref`) | **Modify (optional)**: add helpers to apply chat params to URL (no new persisted state) |
+| `frontend/lib/jobs.ts` | Server-side board fetches against `/api/v1/public/jobs` | `request` + `BoardError`, timeout | **Extend**: add client-callable chat-search helper OR separate `lib/chat-search.ts` for browser `fetch` (avoid coupling to server-only env assumptions) |
+| `frontend/components/board/Chat*` | Chat UI: open/close, message input, show interpreted params + result cards/links | Client Components (`"use client"`), drawer/modal, mobile-first, accessible focus trap | **New** |
+| `backend/app/api/v1/public.py` | Anonymous public endpoints (list/detail/reveal/report) | FastAPI router, `slowapi` limits, Turnstile on reveal | **Modify**: add `POST /public/chat-search` with its own rate limit + request schema |
+| `backend/app/crud/jobs.py` | Published query predicate/order/pagination (`list_published`, `_published_filters`) | SQLAlchemy async, shared predicate for items+total | **Reuse now; Extend later (controlled)** if native filters added (salary/modality/contract) |
+| `backend/app/services/cities.py` | City/sort whitelist normalization | `resolve_city`, `resolve_sort` | **Reuse** (canonical DB city values) |
+| `backend/app/services/chat_search/*` | NL message → validated intent → mapped query params → (optional) post-filter/ranking hints | Pydantic schema + prompt + Groq call seam mirroring `services/extraction/*` patterns | **New** |
+| `backend/app/core/ratelimit.py` (or equivalent limiter config) | Per-IP throttles for anonymous endpoints | `slowapi` decorators (`@limiter.limit(...)`) as used by reveal/report | **Modify**: define chat-search limit key/policy |
+| Groq client/config | Model chain, timeout, strict JSON response handling | Existing `settings.GROQ_*`, patterns in `services/extraction/client.py` | **Reuse** (do not duplicate key/model plumbing) |
 
 ## Recommended Project Structure
 
 ```
-C:\Users\AndreC\Desktop\Teste\NaoQueroUsar\
-├── frontend/                # Next.js 15 (App Router)
-│   ├── app/
-│   │   ├── (public)/        # list, [city?], job modal via parallel route or client
-│   │   ├── admin/           # login + review (protected)
-│   │   ├── layout.tsx
-│   │   └── globals.css
-│   ├── components/
-│   │   ├── ui/              # shadcn-like minimal (dark mode)
-│   │   ├── job-card.tsx
-│   │   ├── job-modal.tsx
-│   │   ├── search-bar.tsx
-│   │   ├── city-filter.tsx
-│   │   ├── turnstile.tsx
-│   │   └── admin/
-│   ├── lib/
-│   │   ├── api-client.ts    # typed fetch to backend
-│   │   ├── types.ts         # shared types (Job)
-│   │   └── utils.ts
-│   └── package.json
-├── backend/                 # FastAPI
-│   ├── app/
-│   │   ├── api/v1/          # routers: auth, jobs, admin, extract
-│   │   ├── core/            # config, security, logging, cors
-│   │   ├── schemas/         # Pydantic v2 (JobCreate/Update/Out, ExtractRequest/Response)
-│   │   ├── models/          # SQLAlchemy models
-│   │   ├── services/        # groq_extractor, lifecycle, turnstile
-│   │   ├── crud/            # db ops
-│   │   ├── deps.py          # dependencies (db, auth)
-│   │   ├── tasks/           # scheduler (lifecycle)
-│   │   └── main.py          # app factory + lifespan (start scheduler)
-│   ├── alembic/             # migrations
-│   ├── pyproject.toml (or requirements.txt)
-│   └── Dockerfile (optional)
-├── .planning/
-│   └── research/            # research outputs
-└── README.md
+backend/app/
+├── api/v1/
+│   └── public.py                 # MODIFY: add POST /public/chat-search
+├── crud/
+│   └── jobs.py                   # REUSE; MODIFY only if adding native filter columns later
+├── schemas/
+│   ├── job.py                    # REUSE: JobPublic/JobListResponse
+│   └── chat_search.py            # NEW: ChatSearchRequest/Response, InterpretedParams
+├── services/
+│   ├── cities.py                 # REUSE: resolve_city/resolve_sort
+│   ├── extraction/               # REUSE patterns (client seam, strict schema, sanitization)
+│   └── chat_search/              # NEW
+│       ├── schema.py             # intent JSON schema + Pydantic models (strict, bounded)
+│       ├── prompt.py             # pt-BR system/user prompt, delimiters, "no inventing"
+│       ├── extractor.py          # call Groq once per request (timeout-bounded), parse/validate
+│       └── mapper.py             # intent → {q, city, sort} + post-filter directives + notes
+└── core/
+    └── ratelimit.py              # MODIFY if needed: chat limit constant/policy
+
+frontend/
+├── app/(public)/
+│   └── page.tsx                  # MODIFY: include Chat entry component
+├── components/board/
+│   ├── ChatSearchButton.tsx      # NEW (client): launcher (FAB/toolbar action)
+│   ├── ChatSearchDrawer.tsx      # NEW (client): drawer/modal, messages, results
+│   └── ...existing board comps   # REUSE (JobCard/list rendering patterns or lightweight result rows)
+├── lib/
+│   ├── filters.ts                # REUSE/MODIFY: map interpreted params → Filters/URL
+│   ├── jobs.ts                   # REUSE for board SSR; keep server fetch semantics
+│   ├── chat-search.ts            # NEW: browser fetch to POST /public/chat-search
+│   └── api.ts                    # EXTEND types if shared
 ```
 
 ### Structure Rationale
 
-- **Separation of concerns:** `frontend/` (UI) and `backend/` (API/domain) as separate apps — matches Vercel (frontend) + Railway/Render (backend). Clean deploy boundaries and CORS.
-- **App Router (Next.js 15):** Colocation of routes, server actions not strictly needed (REST to FastAPI), but RSC for public read paths reduces JS. 
-- **Layered FastAPI:** `api/routers` (transport), `services` (domain: extraction + lifecycle), `crud` (persistence), `schemas` (contracts), `models` (ORM). Prevents fat routers and eases testing.
-- **Lifecycle in `tasks/` + lifespan:** Scheduler starts on app boot (single process). Idempotent hard-delete is critical (see PITFALLS later); keep in service with DB transactions.
-- **Migrations first:** Alembic from day one (Neon schema evolution). 
+- **`services/chat_search/` separate from `extraction/`:** extraction writes/admin flow and parses many jobs from pasted blobs; chat-search is a public, read-only, single-intent parse. Share *patterns* (strict JSON, sanitization, model-chain/error mapping) but not orchestration/storage code.
+- **Keep `crud.list_published` as the search engine:** avoids duplicating visibility rules (`status=published AND expires_at>now()`), predicate parity, and ordering/tie-break semantics already fixed in D-17/04 patterns.
+- **Chat as client-side island on SSR board:** preserves SEO/fast first paint of existing server-rendered board; chat is progressive enhancement and must not block initial HTML.
 
 ## Architectural Patterns
 
-### Pattern 1: Thin vertical slices with service layer
-- **What:** Routers call services; services orchestrate CRUD + external calls (Groq, Turnstile). 
-- **When:** API has mixed concerns (extraction + auth + lifecycle). 
-- **Trade-offs:** +testable, -slightly more files. Worth it for extraction/error handling.
-- **Example (extraction flow):**
+### Pattern 1: Intent Extraction as a Pure, Bounded Translation Step
+
+**What:** Convert one NL message into a strict, validated `InterpretedParams` object (no DB access, no side effects). LLM extracts *parameters only*; it never receives job rows and never invents results.
+**When to use:** Every chat request.
+**Trade-offs:** Deterministic validation prevents prompt drift, but requires clear handling for unsupported/ambiguous fields (return them as notes, not fabricated filters).
+
+**Example (shape, illustrative):**
 ```python
-# api/v1/extract.py -> services/groq_extractor.extract_jobs(text) -> crud.jobs.bulk_create_pending(...)
+class InterpretedParams(BaseModel):
+    q: str | None = None                 # keywords/role text for existing search_text match
+    city: str | None = None             # canonical: São Paulo|Rio de Janeiro|Belo Horizonte|Remoto|None
+    sort: Literal["recentes", "antigas"] = "recentes"
+    salary_min: int | None = None        # BRL/month intent, if confidently stated
+    salary_max: int | None = None
+    modality: Literal["remoto","presencial","hibrido"] | None = None
+    contract: str | None = None          # e.g. CLT/PJ/estágio (normalized enum subset)
+    keywords: list[str] = []             # extracted tokens (merged into q strategy)
+    confidence_notes: list[str] = []     # "salário não filtrado nativamente", etc.
 ```
 
-### Pattern 2: Schema-first contracts (Pydantic v2 + shared TS types)
-- **What:** Single source of truth for Job shape at API boundary; mirror in `frontend/lib/types.ts`. 
-- **When:** Prevent drift between LLM output, DB model, API, UI.
-- **Trade-offs:** +safety, -duplication small. 
-- **Example:** `JobBase` (title/company/activities/requirements/salary/benefits/city/contact_email/contact_phone), `JobOut` includes `id, status, created_at, expires_at`.
+### Pattern 2: Map-to-Existing-Query First, Controlled Degrade for Non-Native Fields
 
-### Pattern 3: Idempotent background jobs + transactional hard deletes
-- **What:** Lifecycle job runs on interval (e.g. every 5–15 min) or hourly; finds jobs with `expires_at <= now()` and `status in (published, pending?)` and deletes in transaction (or with SELECT ... FOR UPDATE SKIP LOCKED). Track last run, use a guard (max rows). 
-- **When:** 14d expiry + hard delete required; single-writer process typical. 
-- **Trade-offs:** +deterministic, -needs care if scaled to multiple workers (use advisory lock or external cron). 
-- **Example:** `DELETE FROM jobs WHERE id = ANY(:ids::uuid[]) AND expires_at <= NOW() RETURNING id;` inside transaction.
+**What:** Drive results through the current public search primitives whenever possible (`q` → `crud.list_published(q=...)`, `city` → `resolve_city`, `sort` → `resolve_sort`). For fields not modeled natively today (`salary` text, no explicit `modality`/`contract` columns), apply **incremental, explicit strategies**:
+- **Phase 1 (MVP, no schema change):** fetch a bounded candidate page/window using mapped `q/city/sort` (e.g. larger `limit` up to a safe cap, or first N pages capped) and apply best-effort in-memory post-filters/ranking (regex/number parse over `salary`, keyword heuristics over `title/activities/requirements/city` for modalidade/contrato). Return `unsupported_or_approximate` notes in interpretation.
+- **Phase 2 (only if needed):** extend DB/CRUD with indexed/normalized columns or structured filters (e.g. `salary_min/max` numeric, `modality`, `contract_type`) behind the same endpoint contract.
+**When to use:** Always prefer reuse; escalate to schema extension only with measured need.
+**Trade-offs:** Post-filtering is fast to ship and zero-migration but can reduce recall/pagination accuracy; native filters are correct/performant but add migration + backfill + extraction alignment work.
 
-### Pattern 4: Server-side Turnstile verification
-- **What:** Client gets token from widget; POST to `/api/v1/public/reveal-contact/verify` (or include in action) with `{ job_id, token }`; backend `POST https://challenges.cloudflare.com/turnstile/v0/siteverify` with secret+response+remoteip; allow reveal only if success. 
-- **When:** Contact reveal is the scraping-sensitive surface. 
-- **Trade-offs:** +prevents naive bots, -small latency/cost free. 
+### Pattern 3: Public Chat Endpoint with Defense-in-Depth (Rate Limit + Timeout + Validation)
 
-### Pattern 5: Strict LLM JSON extraction with repair
-- **What:** Prompt returns a JSON array only (no prose). Validate against schema; if parse/validation fails, send correction prompt with error + raw text + required schema; retry once. Reject if still invalid. Enforce “at least one contact” per job. 
-- **When:** Unstructured pt-BR text from groups. 
-- **Trade-offs:** +robustness, +predictable, -extra call on failure (rare). 
+**What:** Treat chat-search as an abuse/cost-sensitive public endpoint (LLM call per request). Enforce per-IP rate limit, strict request size, server-side timeout budget around Groq, and fail closed to a safe message (no stack traces, no prompt echo).
+**When to use:** The new `POST /public/chat-search`.
+**Trade-offs:** Protects free-tier cost/availability; aggressive limits can frustrate users—start conservative and observable.
 
 ## Data Flow
 
-### Key End-to-End Flows
+### Request Flow (Chat Search)
 
-1. **Paste → Extraction → Pending**
 ```
-Admin pastes text (UI)
-  ↓ POST /api/v1/admin/extract { text }
-FastAPI: validate size, call Groq with strict prompt -> parse JSON array
-  ↓ validate each job (required fields, contact rule, lengths)
-  ↓ bulk_insert_pending -> jobs with status='pending', created_at=now(), expires_at=now()+14d
-  ↓ return list of created pending jobs (with ids)
-UI shows review queue
-```
-
-2. **Review → Publish**
-```
-Admin reviews pending: approve/edit/delete
-  ↓ PATCH /api/v1/admin/jobs/{id} { status: 'published' } or PUT update
-DB update; published jobs appear on public list
+[User types NL query in ChatDrawer]
+    ↓ (client)  POST /api/v1/public/chat-search { message }
+[FastAPI public.chat-search]
+    ↓ @limiter (per-IP) + input validation (max length, trim, empty → 422/400-ptBR)
+[services.chat_search.extractor]  (asyncio.timeout / overall budget)
+    ↓ Groq strict JSON (model chain, retry-on-429 bounded) — NO job rows sent
+[InterpretedParams validated & normalized]
+    ↓ mapper: resolve_city/resolve_sort, build q, derive post-filter directives
+[crud.list_published(session, q, city, sort, page=1, limit=bounded)]
+    ↓ (optional) in-memory post-filter/rank for salary/modality/contract (best-effort)
+[Response: interpretation + results(JobPublic[]) + total/applied + notes]
+    ↓
+[ChatDrawer renders "entendi: …" + result list + "Aplicar no board" (buildBoardHref)]
 ```
 
-3. **Public Browse**
-```
-Anon GET /api/v1/public/jobs?search=&city=&sort=desc&page=&limit=
-DB query with ILIKE (search), city filter, ORDER BY created_at DESC
-Return published jobs (contacts redacted in list; full redacted until reveal)
-```
+### "Apply to Board" Flow (recommended UX integration)
 
-4. **Reveal Contact (behind Turnstile)**
 ```
-User clicks "Mostrar contato" on modal -> client shows Turnstile, gets token
-  ↓ POST /api/v1/public/jobs/{id}/reveal-contact { cf_token }
-Backend: verify Turnstile (server) with remote IP
-  if ok -> return { contact_email, contact_phone } (or masked logic if desired)
-Client displays contacts (client-side only)
+[User clicks "Aplicar filtros"]
+    ↓ map interpreted params → Filters (q, city slug, sort; drop vaga/page=1)
+[router.push(buildBoardHref(...)) or Link href]
+    ↓ URL change
+[(public)/page.tsx re-renders via searchParams] → existing SSR fetchBoard path (source of truth)
 ```
 
-5. **Lifecycle: Expiry → Hard Delete (scheduled)**
-```
-APScheduler job runs every 5–10 min (or hourly). Query:
-  SELECT id FROM jobs WHERE expires_at <= NOW() AND deleted_at IS NULL? 
-  but hard delete required -> DELETE FROM jobs WHERE expires_at <= NOW() 
-    AND (status='published' OR status='pending')  -- be explicit
-  in transaction; log count; commit. Idempotent (no-op if none).
-On next run same rows gone.
-```
+*Key point:* the **board URL/listing remains canonical**. Chat can show a preview result set, but applying filters should delegate to the existing board pipeline for consistency, shareable links, and pagination/SEO behavior.
 
-Notes: `expires_at = created_at + 14 days` (computed at insert). Do not rely on client time.
+### Key Data Flows
 
-## Database Schema
+1. **NL → params:** untrusted user text is delimited/sanitized in prompt (same injection posture as extraction), parsed to strict schema, then clamped/whitelisted server-side (`resolve_city/resolve_sort`, length caps). Never trust model output without normalization.
+2. **Params → jobs:** reuse `list_published` visibility predicates; only augment with post-filters that cannot contradict published/non-expired guarantees.
+3. **Results → user:** return `JobPublic` (contact-free) items only, mirroring existing public list contract; detail/reveal continues through existing endpoints.
 
-### Tables
+## Integration Points & Boundaries
 
-#### `jobs`
-Core entity. Use UUID (or bigserial) PK. Status enum. Timestamps with timezone. 
+### New vs Modified (explicit)
 
-```sql
-CREATE TYPE job_status AS ENUM ('pending', 'published');
+| Area | New | Modified | Rationale |
+|------|-----|----------|-----------|
+| Backend endpoint | `POST /api/v1/public/chat-search` handler + Pydantic request/response schemas | `backend/app/api/v1/public.py` to register route | Public, anonymous capability aligned with existing `/public/*` surface |
+| Intent service | `backend/app/services/chat_search/{schema,prompt,extractor,mapper}.py` | — (reuse `services/cities`, Groq config; optionally factor tiny shared Groq helpers only if duplication becomes harmful) | Isolates NL logic; avoids entangling admin extraction pipeline |
+| Search core | — | **None initially** to `crud.list_published`/`_published_filters` | Preserve behavior; chat adapts to current capabilities |
+| Rate limiting | chat-specific limit value/policy | limiter config/decorator usage | Separate cost profile from report/reveal |
+| Frontend UI | `ChatSearchButton`, `ChatSearchDrawer/Modal`, `lib/chat-search.ts` | `app/(public)/page.tsx` to mount entry; minor `BoardToolbar`/layout hook if entry placed there | Additive, mobile-first, no login/friction |
+| URL/filter contract | — | `lib/filters.ts` only if helper(s) needed to translate interpreted params → board href | Keep URL contract centralized |
 
-CREATE TABLE jobs (
-  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title             VARCHAR(200) NOT NULL CHECK (char_length(trim(title)) > 0),
-  company           VARCHAR(150),
-  activities        TEXT,                -- "início das activities (expansível)" in UI
-  requirements      TEXT,
-  salary            VARCHAR(80),         -- keep string (pt-BR ranges)
-  benefits          VARCHAR(255),
-  city              VARCHAR(80) NOT NULL,
-  contact_email     VARCHAR(254),
-  contact_phone     VARCHAR(30),
-  status            job_status NOT NULL DEFAULT 'pending',
-  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  expires_at        TIMESTAMPTZ NOT NULL, -- created_at + 14d
-  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT at_least_one_contact CHECK (
-    (contact_email IS NOT NULL AND trim(contact_email) <> '') OR
-    (contact_phone IS NOT NULL AND trim(contact_phone) <> '')
-  )
-);
+### External Services
 
--- updated_at trigger (optional but useful)
-CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
-BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
-$$ LANGUAGE plpgsql;
-CREATE TRIGGER jobs_updated_at BEFORE UPDATE ON jobs FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-```
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| Groq (LLM) | Async chat completion, strict JSON schema, model chain + bounded retries/timeout (reuse existing env/settings) | **Do not** send hundreds of jobs; only the user message (+ tiny fixed instructions). Map provider errors to pt-BR, never leak raw upstream details/keys. Cost/latency dominate UX. |
+| Neon/Postgres | Existing SQLAlchemy async session via `get_session` | No new tables required for MVP; consider no chat logging persistence (privacy/cost) unless product asks. |
 
-Indexes (critical for 100–500 jobs/month + responsive UI):
-
-```sql
--- Public list: recent published first, city filter, search
-CREATE INDEX idx_jobs_published_created_desc ON jobs (created_at DESC) WHERE status = 'published';
-CREATE INDEX idx_jobs_city_published ON jobs (city) WHERE status = 'published';
--- Trigram/ILIKE search on title+company+activities (pg_trgm)
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX idx_jobs_search_trgm ON jobs USING GIN (
-  (coalesce(title,'') || ' ' || coalesce(company,'') || ' ' || coalesce(activities,'')) gin_trgm_ops
-) WHERE status = 'published';
-
--- Lifecycle: expire/delete
-CREATE INDEX idx_jobs_expires_at ON jobs (expires_at);
-CREATE INDEX idx_jobs_status_expires ON jobs (status, expires_at);
-```
-
-Notes: 
-- `city` constrained to initial set in app (São Paulo, Rio de Janeiro, Belo Horizonte, Remoto) but keep varchar to avoid premature enum churn.
-- `activities` stored as TEXT (shown truncated then expandable). 
-- `salary` string to support ranges (R$ X–Y, a combinar) per pt-BR reality. 
-- Hard delete only (no `deleted_at` soft delete) per requirement.
-
-#### `admin_users` (minimal, single-master friendly)
-Keep minimal since “solo admin”. 
-
-```sql
-CREATE TABLE admin_users (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username   VARCHAR(50) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL, -- Argon2id or bcrypt
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  last_login TIMESTAMPTZ
-);
--- Seed single user via migration or CLI (use ADMIN_USERNAME/PASSWORD only in bootstrap)
-```
-
-Or simpler: no DB user table if using single master password from `.env` + JWT (stateless). Both acceptable. Recommendation: **JWT stateless auth** (single password in `.env`) avoids DB user mgmt for solo admin — see API surface.
-
-Rationale: out of scope multi-admin; stateless reduces surface. If you later add users, migrate to DB table.
-
-### Data Constraints & Integrity
-- At least one contact enforced by CHECK.
-- `expires_at` always set on insert (never null). 
-- Status transitions: `pending -> published` (and admin can delete pending). Do not auto-publish. 
-- Trim inputs on write.
-
-## REST API Surface
-
-Base: `http://<backend>/api/v1` (prod https). All admin routes require auth. Public read-only except reveal-contact (needs Turnstile).
-
-### Public
-| Method | Path | Purpose | Notes |
-|---|---|---|---|
-| `GET` | `/public/jobs` | List published jobs | Query: `search` (string), `city` (string), `sort` (`asc\|desc`, default desc by created_at), `page` (int>=1), `limit` (int 1–50). Returns jobs with contacts omitted/redacted in list view; modal fetch full detail or include redacted. |
-| `GET` | `/public/jobs/{id}` | Get published job details | Returns full job fields except maybe not needed if modal uses list+reveal; or include redacted contacts. Public can see non-contact fields. |
-| `POST` | `/public/jobs/{id}/reveal-contact` | Reveal contact after Turnstile | Body: `{ "cf_token": "..." }`. Headers: `X-Forwarded-For`/`CF-Connecting-IP` passed to Turnstile. Returns `{ contact_email?, contact_phone? }`. 401/403 on fail. |
-
-### Auth (Admin)
-| Method | Path | Purpose | Notes |
-|---|---|---|---|
-| `POST` | `/auth/login` | Admin login | Body: `{ "password": "..." }` (or username+password). Verify against `ADMIN_PASSWORD` (env). Returns `{ access_token, token_type: "bearer", expires_in }`. Use httpOnly cookie alternative optional; bearer fine for SPA if stored securely (memory/localStorage tradeoffs). Recommend short-lived (e.g. 4–8h). |
-| `POST` | `/auth/logout` | (optional) | If using httpOnly cookies; not necessary for bearer. |
-
-Auth scheme: Bearer JWT signed with `JWT_SECRET`. Claims: `sub=admin`, `role=admin`, `exp`, `iat`.
-
-### Admin (protected)
-| Method | Path | Purpose | Notes |
-|---|---|---|---|
-| `POST` | `/admin/extract` | Extract jobs from text | Body: `{ "text": "..." }`. Max size (e.g. 256KB). Calls Groq, validates, bulk creates pending (expires_at=now+14d). Returns `{ jobs: [JobOut...] }` (pending). Idempotent by content+time not required; paste is explicit action. |
-| `GET` | `/admin/jobs` | List jobs (any status) | Query: `status=pending\|published\|all`, `page`, `limit`. For review queue primary view is pending. |
-| `GET` | `/admin/jobs/{id}` | Get single job | Full fields. |
-| `PATCH` | `/admin/jobs/{id}` | Update job (approve/edit) | Body partial: can set `status='published'`, edit fields, etc. Validates contact rule. |
-| `DELETE` | `/admin/jobs/{id}` | Delete job | Hard delete (admin manual). Also used for review rejections. |
-| `POST` | `/admin/jobs/bulk-approve` | (optional) | `{ ids: [...] }` to approve multiple pending quickly. |
-
-Notes: 
-- All admin ops require `Authorization: Bearer <token>`. 
-- `extract` is the main automation path; manual create optional but not needed. 
-- Never expose internal fields beyond JobOut schema.
-
-## LLM Extraction Contract
-
-### Goal
-Return an **array** of structured job objects from raw unstructured pt-BR text (WhatsApp/Telegram: line breaks, bullets, emojis, multiple jobs).
-
-### Required output schema (strict)
-Each job must match:
-- `title` (string, required, non-empty after trim). e.g. "Analista de Suporte"
-- `company` (string, optional)
-- `activities` (string, optional) — responsibilities/atividades
-- `requirements` (string, optional) — requisitos
-- `salary` (string, optional) — keep ranges/text as is
-- `benefits` (string, optional)
-- `city` (string, required) — must be one of: `"São Paulo"`, `"Rio de Janeiro"`, `"Belo Horizonte"`, `"Remoto"`. If ambiguous, infer or ask? Prefer best inference; if cannot infer -> skip or set to one of allowed? Recommendation: if clearly not in list, map to nearest or set `city="Remoto"` only if stated; otherwise include but UI can filter? Project states initial cities fixed — enforce allowed set; if unknown, do not hallucinate wildly — better to include with best guess but validation can reject? Or instruct LLM to pick from allowed set. 
-- `contact_email` (string, optional, valid email if present)
-- `contact_phone` (string, optional, pt-BR style acceptable)
-
-**Validation rule:** `contact_email OR contact_phone` must be non-empty after trim for every job.
-
-### Prompt design (opinionated)
-Use system+user with explicit constraints:
-
-```text
-SYSTEM:
-You are an extractor that converts Brazilian job posts (pt-BR) from unstructured text into a JSON array.
-Output ONLY valid JSON (no markdown, no prose, no code fences).
-Do not invent facts. Use null/omit empty optional fields.
-For each job return exactly these keys: title, company, activities, requirements, salary, benefits, city, contact_email, contact_phone.
-city MUST be one of: "São Paulo", "Rio de Janeiro", "Belo Horizonte", "Remoto".
-Each job MUST have at least one contact: contact_email OR contact_phone (non-empty).
-If multiple jobs in text, split them. Do not merge unrelated posts.
-Preserve original intent; keep short strings for salary/benefits if ranges given.
-```
-
-```text
-USER:
-{text}
-```
-
-### Parameters
-- Model: `llama-3.1-8b-instant` (default, cheaper/faster) or `llama-3.3-70b` (higher accuracy). Start with 8b-instant.
-- Temperature: `0` (max determinism)
-- Max tokens: sufficient for array (e.g. 4096) 
-- Response format: JSON (if Groq supports json_object/response_format) — prefer strict JSON mode.
-
-### Parsing, validation, error handling
-1. **Parse:** `json.loads(raw)` — if fails, try to strip code fences.
-2. **Type check:** result is `list` of dicts.
-3. **Per-job validation (Pydantic):** 
-- title required non-empty
-- city in allowed set
-- contact rule satisfied
-- email format basic if present (e.g. `r"^[^@\s]+@[^@\s]+\.[^@\s]+$"`)
-- phone basic non-empty if present
-- lengths (title<=200, company<=150 etc.) to avoid abuse
-4. **Filter/repair:** drop jobs failing validation? Or reject whole batch? **Reject whole batch** on critical parse failure (return 422 with details) and suggest reformatting; for individual field issues, prefer to **not insert** that job unless fixable — but better fail with correction prompt to avoid losing data silently. 
-5. **Correction retry (once):**
-```text
-SYSTEM: ... Output ONLY JSON array matching schema. Fix these errors: {errors}. 
-Do not add new jobs.
-```
-User includes original text + errors. Parse again.
-6. **At-least-one-contact enforcement:** hard fail if any job violates (prevents publishing garbage). 
-7. **Safety:** cap max jobs per extract (e.g. 50) to prevent abuse/overspend; cap text size.
-
-### Idempotency
-- `extract` is not globally idempotent by key (pasting same text again creates new pending jobs) — this is correct for manual curation (admin explicitly pasted). 
-- Do **not** dedupe against published jobs in MVP (stated out of scope). 
-- If needed later, dedupe by (normalized title+company+contact_signature+city) but avoid false positives.
-
-## Build Order (Dependencies)
-
-Implement in order to minimize blockers:
-
-1. **DB + models/migrations (foundation)**
-- Neon DB provisioned, `DATABASE_URL`. 
-- SQLAlchemy models + Alembic init + initial migration (jobs + admin_users or skip). 
-- Config/.env validation.
-
-2. **Backend core (API skeleton)**
-- FastAPI app, CORS, logging, Pydantic schemas, deps (DB session, auth). 
-- Health endpoint (`/health`).
-
-3. **Auth + Admin guards**
-- JWT issuance/verification; login endpoint; dependency `require_admin`. 
-- Protect admin routers.
-
-4. **Jobs CRUD + Public read**
-- CRUD for jobs, public list/detail (redacted), admin CRUD. 
-- Validation (contact rule). 
-
-5. **LLM extraction (Groq)**
-- Service + router `/admin/extract`, prompt + parsing + validation + retry. 
-- Bulk create pending with expires_at=now()+14d. 
-
-6. **Turnstile verify (reveal contact)**
-- Service to call Turnstile API (server-side), `/public/jobs/{id}/reveal-contact`. 
-- IP extraction behind proxy (Railway/Render + Vercel). 
-
-7. **Lifecycle scheduler (14d expiry + hard delete)**
-- APScheduler in lifespan; job `expire_and_hard_delete()` runs periodically; transactional; logging. 
-- Indexes for expires_at.
-
-8. **Frontend (Next.js 15)**
-- Public pages (grid, modal, search/filter/sort). 
-- Admin pages (login, paste+extract, review queue). 
-- Turnstile widget + reveal contact. 
-- API client typed to backend.
-
-9. **Integration + deployment wiring**
-- CORS origins (Vercel frontend + local), env vars both sides. 
-- Deploy backend (Railway/Render), frontend (Vercel). Connect Neon.
-
-## Deployment Topology
-
-| Component | Platform | Notes |
-|---|---|---|
-| **Frontend (Next.js 15)** | Vercel | App Router, Node runtime. Env: `NEXT_PUBLIC_API_BASE_URL` (backend URL). No secrets. Dark mode Tailwind. |
-| **Backend (FastAPI)** | Railway or Render | Python 3.11+. Uvicorn/Gunicorn. Single process typical (sufficient for 100–500 jobs/month). If you later scale to multiple instances, scheduler must be singleton (advisory lock or external cron). |
-| **DB (Postgres)** | Neon (serverless) | Connection string with pooling. Use `sslmode=require`. Migrations run from backend CI/CLI (alembic upgrade head). |
-| **Turnstile** | Cloudflare | Free. Add site key to frontend, secret to backend. |
-| **LLM** | Groq | API key server-side only. Models: `llama-3.1-8b-instant` or `llama-3.3-70b`. |
-
-### Network & CORS
-
-- CORS: allow only frontend origin(s). 
-  - Dev: `http://localhost:3000`
-  - Prod: `https://<your-vercel-app>.vercel.app`
-- Backend behind HTTPS. Trust proxy headers for client IP (X-Forwarded-For, CF-Connecting-IP) when verifying Turnstile and for logging.
-- No direct DB access from frontend.
-
-### Environment variables
-
-**Backend (.env):**
-```env
-ENV=dev|prod
-DATABASE_URL=postgresql+psycopg://...@ep-...us-east-1.aws.neon.tech/dbname?sslmode=require
-GROQ_API_KEY=...
-GROQ_MODEL=llama-3.1-8b-instant  # or llama-3.3-70b
-ADMIN_PASSWORD=...  # single master
-JWT_SECRET=...      # strong random
-JWT_EXPIRES_IN=28800  # 8h
-TURNSTILE_SECRET_KEY=...
-CORS_ORIGINS=http://localhost:3000,https://<vercel>.vercel.app
-MAX_EXTRACT_TEXT_KB=256
-EXPIRE_CHECK_INTERVAL_MIN=10  # scheduler frequency
-```
-
-**Frontend (.env.local):**
-```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1  # dev
-# prod: https://<backend>.railway.app/api/v1
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=...
-```
-
-Validate on backend startup (pydantic-settings) — fail fast if missing.
-
-## Where Turnstile Happens (server-side) — explicitly
-
-- **Client:** Render `<Turnstile />` widget on "Mostrar contato" action (modal). On success receive `token`. 
-- **Client → API:** `POST /public/jobs/{id}/reveal-contact` with `{ cf_token: token }` and include job context. 
-- **Server:** Extract client IP (`request.headers.get("CF-Connecting-IP") or "X-Forwarded-For" first IP`). Call `https://challenges.cloudflare.com/turnstile/v0/siteverify` with `secret`, `response=cf_token`, `remoteip`, `sitekey` (optional). 
-- **Decision:** If `success` true and not expired/duplicate — return contacts. Otherwise 403. 
-- **Never:** Trust client-side flags; never embed contacts in public list; never skip server verify.
-
-## Scaling & Performance Considerations
-
-| Scale | Approach |
-|---|---|
-| **0–1k users/month** (expected 100–500 jobs) | Monolith FastAPI + single worker. APScheduler in-process. Neon serverless fine with pool. 8b-instant Groq cheap. |
-| **1k–10k users/month** | Add DB indexes if search slow (trigram already included). Consider HTTP caching for public list (ETag, CDN) but jobs change on publish/delete. Avoid over-caching. |
-| **>10k** | Split: extract as background job queue (Celery/RQ) to avoid blocking request; multiple API replicas -> replace in-process scheduler with external cron (e.g. Render cron, GitHub Actions + HTTP trigger) or DB-backed lock. But premature now. |
-
-Key priorities: 
-1. Correct indexes (published_created_desc, city, trigram) — biggest win for list/search.
-2. Pydantic validation + size caps (abuse prevention).
-3. Transactional hard deletes with `expires_at` index.
-
-## Anti-Patterns to Avoid
-
-| Anti-Pattern | Why wrong | Do instead |
-|---|---|---|
-| **Client-side contact reveal** | Trivial to scrape by inspecting network/js. | Server-side Turnstile verify before returning contacts (as above). |
-| **Soft delete on expiry** | Violates “apagadas do banco (hard delete)”. Bloats table, keeps PII longer than needed. | Hard `DELETE` in scheduled job with transaction + WHERE expires_at <= NOW(). |
-| **Trusting LLM output blindly** | Malformed JSON, missing contacts, hallucinated cities. | Strict schema + parse+validate + correction retry + enforce contact CHECK + app validation. |
-| **Auto-publishing extracted jobs** | Quality gate required (curadoria manual). | Always insert as `status='pending'`; only admin can set `published`. |
-| **Scheduler in multi-replica without lock** | Double-deletes, race conditions. | Use advisory lock (Postgres `pg_try_advisory_lock`) or run single instance; or external cron hitting secured endpoint. |
-| **Exposing DB/LLM from frontend** | Secrets leak. | All external calls server-side; frontend uses API only. |
-| **Using client time for expires_at** | Clock skew -> wrong expiry. | Compute `expires_at = NOW() + interval '14 days'` in DB/service (server time). |
-| **ILIKE only without trigram** | Slow on larger datasets/text search. | Add `pg_trgm` GIN index on title+company+activities (with status filter). |
-
-## Integration Points
+### Internal Boundaries
 
 | Boundary | Communication | Notes |
-|---|---|---|
-| **Next.js → FastAPI** | REST HTTPS (JSON) | CORS restricted. Typed client. Handle 401/403/422. |
-| **FastAPI → Postgres (Neon)** | TCP + SSL (asyncpg/psycopg3) | Connection pooling. Migrations via Alembic. |
-| **FastAPI → Groq** | HTTPS JSON | API key header. Timeout + retry on network errors (not on validation). |
-| **FastAPI → Turnstile** | HTTPS form/urlencode | `siteverify` endpoint. Idempotent verification. |
-| **Scheduler → DB** | Same connection pool | Transactional deletes; index scan on expires_at. |
+|----------|---------------|-------|
+| `api.v1.public` ↔ `services.chat_search` | Direct async call | Service returns typed interpretation + query plan; route owns HTTP concerns (limits, status codes) |
+| `services.chat_search` ↔ `crud.jobs` | Direct call with `AsyncSession` | Reuse published-only predicates; keep total/items consistency if returning paged preview |
+| `chat UI` ↔ `board page state` | URL navigation (`buildBoardHref`) and/or local preview state | Prefer URL as source of truth for "applied" filters; drawer state is ephemeral UI state |
 
-## Sources (current, verified approach)
+## Suggested Build Order (dependency-aware)
 
-- Next.js 15 App Router: official docs (routing, RSC, env). 
-- FastAPI: Pydantic v2, dependencies, lifespan (for scheduler), CORS, background tasks. 
-- Neon Postgres: serverless + pooling, pg_trgm. 
-- Groq: JSON mode/structured output guidance; model choices (llama-3.1-8b-instant, llama-3.3-70b). 
-- Cloudflare Turnstile: server-side siteverify. 
-- APScheduler: BackgroundScheduler in-process with proper shutdown in lifespan. 
-- PostgreSQL: CHECK constraints, partial indexes, trigram search. 
+1. **Contract & schema (backend, no network side effects):** define `ChatSearchRequest/Response`, `InterpretedParams` (strict, bounded enums/lengths), and mapper rules to existing `q/city/sort`. *Deps:* understand `resolve_city`, `list_published` signature.
+2. **Intent extractor service (backend):** prompt + Groq call (timeout-bounded, reuse `GROQ_*` settings/model-chain posture) with deterministic normalization/whitelisting and safe fallbacks when Groq unavailable. *Deps:* (1).
+3. **Public endpoint + protections (backend):** `POST /public/chat-search` wiring service → `crud.list_published` (+ best-effort post-filter for salary/modalidade/contrato with explicit notes), per-IP rate limit, input/timeout guards, pt-BR errors. *Deps:* (1),(2).
+4. **Frontend client integration (minimal):** `lib/chat-search.ts`, chat launcher + drawer/modal rendering interpretation and preview results (contact-free), "apply to board" via `buildBoardHref`. *Deps:* (3) for real responses; can stub types earlier.
+5. **Fit-and-finish & hardening:** mobile UX/a11y, empty/ambiguous states, copy for unsupported params, observability (timings/error classes), and tuning rate limit/timeout/candidate window from real usage. *Deps:* (4).
+6. **Optional evolution (post-MVP, only if justified):** native DB-backed filters for salary/modality/contract, caching of identical intents, conversation follow-ups — each behind explicit requirements/migrations.
+
+*Rationale:* backend contract first de-risks mapping/validation; endpoint protections before public exposure; UI last but can parallelize against a stable mocked contract.
+
+## Rate Limiting, Caching, and Performance Considerations
+
+| Concern | Recommendation | Notes |
+|---------|----------------|-------|
+| Rate limiting | Apply strict per-IP limit on `/public/chat-search` (stricter than report; reveal already limited) via existing `slowapi` limiter; return shared pt-BR 429 + `Retry-After` | Protects Groq quota and cost; consider separate bucket from reveal to avoid cross-flow starvation. |
+| Timeouts | Enforce overall request budget (e.g. asyncio timeout wrapping Groq + search) below platform/proxy limits; keep Groq call bounded by `GROQ_TIMEOUT_SECONDS` semantics | Fail fast with actionable pt-BR message ("não consegui entender agora, tente termos como cargo e cidade"). |
+| Payload/abuse bounds | Cap message length (chars) and reject/trim control noise; single-turn MVP (no long history) to cap tokens/cost | Public, anonymous endpoint. |
+| Caching | **Default: no response cache** (or very short, e.g. 30–60s in-process) keyed by normalized message; rely on `cache: "no-store"` semantics already used for board freshness | Job board changes (expiry/publish) make correctness more important than micro-optimization at 100–500 jobs/month. |
+| Search cost | `list_published` already indexed/optimized for status/expiry/search_text; post-filter only over a bounded candidate set (cap limit/pages) | Never scan unbounded rows in Python for a public request. |
+| Frontend perf | Lazy-mount drawer contents; keep chat JS off critical SSR path; reuse existing card/result presentation primitives where practical | Mobile-first; avoid large client bundles. |
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Sending Job Listings to the LLM
+**What people do:** Stuff current jobs/results into the prompt to "let the model search."
+**Why it's wrong:** Blows token/cost/latency budgets, leaks data patterns, non-deterministic, and explicitly disallowed by project constraints.
+**Do this instead:** LLM extracts **parameters only**; database/query layer returns results.
+
+### Anti-Pattern 2: Bypassing Existing Search/Visibility Rules
+**What people do:** Implement a parallel raw SQL/query for chat results.
+**Why it's wrong:** Risks diverging from `published && not expired`, predicate parity, ordering, and future fixes.
+**Do this instead:** Reuse `crud.list_published` and `services.cities` normalization; only layer safe post-filters.
+
+### Anti-Pattern 3: Trusting Model Output as Already-Valid Filters
+**What people do:** Pass LLM city/sort/filters straight to the DB or URL.
+**Why it's wrong:** Hallucinated/unknown values can break UX or, if schema changes later, create unsafe queries; city must match whitelist semantics.
+**Do this instead:** Strict schema + server-side whitelist (`resolve_city/resolve_sort`), clamp ranges, and surface "não entendido/ignorado" notes.
+
+### Anti-Pattern 4: Making Chat the New Source of Truth for the Board
+**What people do:** Keep results only in chat local state with no URL/apply path.
+**Why it's wrong:** Breaks shareability, back/forward navigation, and consistency with existing SEO/SSR board behavior.
+**Do this instead:** Provide "aplicar no board" mapping to canonical URL params for supported fields.
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-1k users (current target: 100–500 jobs/mo) | Current approach is sufficient: per-request Groq call, reuse `list_published`, bounded post-filter, simple rate limit. Keep synchronous request/response. |
+| 1k-100k users | Add short-TTL intent/result caching for hot queries, tighter abuse controls, metrics/alerting on Groq latency/errors and 429s, consider queueing only if timeouts persist (not default). |
+| 100k+ users | Move to dedicated search/index (or materialized structured fields) for native multi-filter queries; revisit conversational state storage and cost controls; out of scope for v1.3. |
+
+### Scaling Priorities
+
+1. **First bottleneck:** Groq latency/rate limits and per-request cost — mitigate with strict rate limits, tight timeouts, minimal prompts, and optional tiny cache.
+2. **Second bottleneck:** Post-filter pagination/recall mismatch for non-native fields — mitigate by promoting those fields to native indexed filters when product demands it.
+
+## Sources
+
+- Codebase (HIGH): `backend/app/api/v1/public.py`, `backend/app/crud/jobs.py`, `backend/app/services/cities.py`, `backend/app/services/extraction/client.py`, `backend/app/services/extraction/schema.py`, `backend/app/models/job.py`, `frontend/app/(public)/page.tsx`, `frontend/lib/jobs.ts`, `frontend/lib/filters.ts`
+- Project constraints (HIGH): `.planning/PROJECT.md`, `AGENTS.md`
+- Prior research (context, partially superseded on specifics): `.planning/research/ARCHITECTURE.md` (pre-v1.3), `.planning/research/STACK.md`, `.planning/research/PITFALLS.md`
 
 ---
-
-*Architecture research for: NQU (NaoQueroUsar)*  
-*Researched: 2026-10-13 | Confidence: HIGH | Domain: pt-BR job board + LLM extraction + 14d hard-delete lifecycle*
+*Architecture research for: v1.3 Chatbot Inteligente de Busca de Vagas (integration into EmpregaNoix)*
+*Researched: 2026-11-17*

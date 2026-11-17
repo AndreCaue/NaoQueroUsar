@@ -1,250 +1,155 @@
 # Feature Research
 
-**Domain:** Public job board / classifieds (Brazil, mobile-first, no-signup)
-**Researched:** 2026-10-13
-**Confidence:** MEDIUM (domain patterns well-evidenced from competitor products + industry guides; NQU-specific tradeoffs are reasoned, not field-tested)
+**Domain:** Chatbot de busca de vagas por linguagem natural (NL job search) em job board/agregador existente
+**Researched:** 2026-11-17
+**Confidence:** MEDIUM (síntese de padrões comuns do domínio; buscas web retornaram indisponíveis neste ambiente — validar com referências de produto durante planejamento)
 
-## Research Note: The Differentiator Is Already Proven in Market
+## Contexto e escopo (milestone v1.3)
 
-A critical finding: **"no signup" is not a novel claim in Brazil — it is an emerging, contested category.** Direct competitors already market it explicitly:
+Subsequente ao EmpregaNoix (board público sem login). **Já existe:** busca keyword `q` (título/empresa/atividades/requisitos), filtro cidade (SP, RJ, BH, Remoto), ordenação por data, paginação, modal/detalhe, revelação protegida de contato, curadoria/admin e pipeline de extração.
 
-- **EmpregoDaqui** — "Vagas de emprego perto de você... fale direto pelo WhatsApp. **Sem cadastro, sem enrolação.**" Cards + map + swipe ("Gostei ❤ / Passar ✕"), WhatsApp + email buttons, LGPD pages, and a prominent disclaimer that the platform is only a *meio de divulgação* (not a party to hiring).
-- **BrVagas** — "Sem precisar criar conta ou lembrar de senha", WhatsApp groups per city, "vagas verificadas", "origem rastreada", "sem golpe".
-- **Meu Emprego** — AI job search entirely on WhatsApp, "Sem necessidade de baixar novos aplicativos ou criar contas".
-- **BuscarVagas** — "100% gratuito e sem complicações", direct contact "sem intermediários", WhatsApp groups.
-- **Chance na Vaga** — lists jobs publicly "sem precisar de cadastro para ver" but requires an account to apply (i.e., the *partial* version of the model).
-
-**Implication for NQU:** the moat is NOT "no signup" alone (competitors claim it too). The defensible wedge is the **combination**: no-signup + *immediate contact reveal on the listing itself* + **curation quality** (LLM-extracted + human-reviewed, not raw group spam) + **guaranteed freshness** (hard 14-day expiry = zero ghost jobs). Features should reinforce that triad. Confidence: MEDIUM (competitor pages are live and authoritative for their own positioning; market size/moat durability unverified).
-
----
+**Foco exclusivo das novas features:** interface de chat para busca em linguagem natural, extração de parâmetros (cargo, senioridade, cidade, remoto/híbrido/presencial, faixa salarial, tipo de contrato, palavras-chave), aplicação nos filtros/busca existentes, retorno de vagas relevantes, combinações de filtros e “vagas parecidas” (limitado/futuro conforme viável). **Restrição crítica:** o LLM **não** recebe centenas de vagas — apenas extrai parâmetros/intenção para JSON estruturado e validado.
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete or unusable.
+Recursos que usuários assumem existir em um chat de busca de vagas. Ausência faz o recurso parecer quebrado ou inútil.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Public job list (published only), no gate | The entire premise; a gate = instant bounce | LOW | Home query filters `status = published` |
-| Job summary card | Scanning many listings fast is the core loop | LOW | title, company, city, salary-if-present, activities preview |
-| Full job detail view | Candidate must read requirements/benefits before acting | LOW–MED | Modal is fine for UX; see SEO conflict below |
-| Apply / contact action that works | A job you can't reach is worthless | LOW | `mailto:` + `https://wa.me/55...` deep links (pt-BR norm) |
-| Keyword search | Primary way to narrow down | MEDIUM | Server-side; pt-BR **accent- and case-insensitive** ("sao paulo" = "São Paulo"); search title + company + activities |
-| City / location filter | In Brazil, location is the #1 determinant | LOW | Enum + "Remoto" bucket; multi-select eventually |
-| Date sort (newest / oldest) | Freshness is the promise; users scan new-first | LOW | Default = newest desc |
-| Freshness / auto-expiry | Stale listings are the #1 job-board complaint ("ghost jobs") | MEDIUM | Scheduled job flips/hard-deletes at `expires_at`; must be reliable |
-| Salary display when present | Top decision factor; its absence is penalized | LOW | If missing → "A combinar", never blank/broken |
-| Mobile-responsive layout | Majority of BR jobseekers are mobile | LOW–MED | Tailwind mobile-first; test 360px width |
-| No-results / empty state | Dead-ends feel broken; guide the user | LOW | Suggest clearing filters / broader city |
-| Privacy policy + terms + disclaimer | LGPD + trust norm; competitors all have them | LOW | Include "somos apenas meio de divulgação" disclaimer (EmpregoDaqui model) |
-| Report a suspicious job | Jobs from informal groups = real scam risk; users need an escape valve | LOW–MED | MVP can be a `mailto:`/WhatsApp report link; Turnstile-protected form later |
-| Anti-spam on public interaction | Bots/scrapers will hammer any public endpoint | MEDIUM | **Placement TBD** — see open question on Turnstile below |
-| Share listing (WhatsApp) | Sharing jobs in groups is the dominant BR distribution behavior | LOW | `navigator.share` + WhatsApp link |
+| Feature | Why Expected | Complexity | Notes / Dependencies on existing |
+|---------|--------------|------------|----------------------------------|
+| Entrada em linguagem natural (pt-BR) com envio rápido | Usuário espera “digitar como fala” em vez de montar filtros manualmente | LOW | UI (drawer/modal) client-side; texto livre enviado ao endpoint de chat-search. Depende apenas de novo componente frontend. |
+| Extração de intenção/parâmetros para JSON estruturado e validado | Padrão de NL-to-search: converter frase em filtros executáveis sem inventar dados | MEDIUM | LLM (Groq, reuso/baixo custo) + schema rígido (Pydantic/Zod) + defaults seguros. **Sem corpus de vagas no prompt.** Campos-alvo: cargo, senioridade, cidade (whitelist), modalidade, faixa salarial, tipo contrato, palavras-chave, ordenação. |
+| Aplicação segura à busca/filtros existentes | Resultado precisa refletir o que o usuário pediu usando a fonte de verdade atual | MEDIUM | Mapear para `GET /api/v1/public/jobs` / `crud.list_published` (`q`, cidade, sort, paginação). Normalizar cidade para whitelist (SP/RJ/BH/Remoto); ignorar/avisar valores fora. Dependência direta do comportamento atual de `q` e filtros. |
+| Exibição do que o sistema entendeu (parâmetros interpretados) | Transparência: usuário confia quando vê filtros aplicados e pode corrigir | LOW | Mostrar chips/resumo (cargo, cidade, modalidade etc.) na UI do chat. Não requer mudança de backend além de retornar interpretação. |
+| Lista de resultados relevantes no próprio chat com acesso ao detalhe | Expectativa de “perguntei e vi vagas” sem sair do fluxo | LOW-MEDIUM | Reusar cards/lista compacta e abrir modal/detalhe existente; payload público `JobPublic` **sem contatos** (revelação protegida continua no fluxo atual). |
+| Suporte a combinações básicas de filtros na mesma frase | Consultas reais misturam atributos (“dev jr remoto SP”) | MEDIUM | Depende de extração multi-slot + merge correto com `q`/city/sort. Campos não nativos (salário/modalidade/contrato) exigem estratégia incremental (mapeamento textual em `q`, pós-filtro controlado no subconjunto retornado, ou extensão limitada de filtros) — documentar lacunas. |
+| Resposta quando não há resultados (empty state útil) | Comportamento esperado em busca; evita tela “morta” | LOW | Mensagem clara + sugestão de relaxar filtros (ex.: ampliar cidade/remover senioridade). UI apenas. |
+| Baixa latência percebida e estados de carregamento/erro | Chat lento ou silencioso parece quebrado | MEDIUM | Timeout no endpoint, loading indicator, mensagens de erro amigáveis/rate-limit. Proteções básicas (rate limit/timeout) no endpoint público. |
+| Preservação de privacidade/fricção zero | Core value do produto: sem login para buscar | LOW | Endpoint público; sem histórico persistente obrigatório no MVP; não pedir cadastro. Contato continua protegido pelo mecanismo existente. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set the product apart. Align with Core Value: *"encontrar uma vaga e o contato em segundos — sem cadastro, sem login, sem fricção."*
+Recursos que melhoram conversão/confiança além do básico, alinhados ao core value (“encontrar vaga e contato em segundos, sem fricção”).
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Zero-gateway browse→contact (no account ever) | Removes the exact "burocracia de cadastro" frustration that motivates the product | — (positioning) | Must be true end-to-end: no hidden wall at the apply step (where Chance na Vaga fails) |
-| One-tap contact reveal (hidden by default, client-side) | Frictionless for humans, painful for scrapers | LOW | Contact in DOM but masked; reveal on click, no network call = no Turnstile needed here |
-| WhatsApp-native apply (`wa.me` deep link) | Matches exactly how Brazilians already apply | LOW | Highest-conversion contact channel; format phone to E.164 (`55` + DDD + number) |
-| Curated, hand-reviewed listings | "Real vagas, not raw group spam" — the quality moat | LOW (process) | The admin approve-gate IS the feature; market it |
-| "Vaga revisada" / verified trust badge | Signals legitimacy vs. scammy group posts | LOW | Per card + detail; honest framing (reviewed ≠ guaranteed) |
-| Guaranteed freshness (no ghost jobs) | 14-day hard delete = never apply to a dead listing | MEDIUM | Ties directly to expiry job; use as marketing claim |
-| Mobile-first swipe/browse card UX | Fast, low-effort exploration (matches EmpregoDaqui) | MEDIUM | Optional v1.x; grid is enough for MVP |
-| Discreet donation button | Non-intrusive alternative revenue | LOW | Yellow #facc15, hover-only, per project brief |
-| SEO / Google Jobs distribution | Free organic acquisition; jobs reach people off-site | HIGH | **Conflicts with modal-only detail** — needs dedicated per-job URLs + `JobPosting` JSON-LD (see Dependencies) |
-| pt-BR native + informal tone | Speaks the audience's language; trust | LOW | Copy in pt-BR; dates `dd/mm`; currency `R$ 1.837`; not corporate-stiff |
+| Feature | Value Proposition | Complexity | Notes / Dependencies on existing |
+|---------|-------------------|------------|----------------------------------|
+| Interpretação tolerante a variações pt-BR e gírias leves (ex.: “home office”, “CLT”, “estágio”) | Reduz esforço do usuário mobile e aumenta recall sem cadastro/configuração | MEDIUM | Léxico/sinônimos e normalização no prompt/schema (modalidade/contrato/senioridade); mapear para termos buscáveis no `q` quando não houver coluna dedicada. |
+| Refinamento conversacional leve na mesma sessão (ajustar pedido) | Permite “na verdade em BH” sem recomeçar, mantendo rapidez | MEDIUM | Manter contexto curto no frontend (últimos parâmetros) e reenviar; sem memória server-side longa no MVP. Depende de UX do drawer/modal. |
+| Sugestões de “vagas parecidas” quando busca exata é fraca (limitado) | Evita dead-end e ajuda descoberta, comum em buscadores modernos | MEDIUM-HIGH | **Escopo limitado/futuro:** relaxar 1 constraint por vez (ex.: remover cidade específica mantendo `q`, ou ampliar keywords) usando queries existentes; **não** usar embeddings/LLM sobre corpus no MVP. Rotular como “sugestões próximas”. |
+| Resumo curto do porquê dos resultados (grounded nos parâmetros) | Aumenta confiança de que o match veio dos filtros, não “mágica” opaca | LOW | Templatear texto a partir dos parâmetros extraídos/efetivamente aplicados (sem LLM adicional no resultado). |
+| Atalhos/exemplos de consulta (chips) no chat vazio | Onboarding instantâneo sem tutorial; útil para mobile | LOW | UI estática alinhada aos exemplos de MVP do milestone. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but break the core value or bloat scope. **Document explicitly to prevent re-adding.**
+Recursos que parecem bons, mas conflitam com restrições do produto (custo, performance, sem login, LLM sem corpus).
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| User accounts / login | "Engagement", personalization | Directly contradicts the entire premise; adds auth surface, DB, support | Stay permanently anonymous |
-| Saved jobs / favorites | Users like bookmarks | Requires identity/cookies + persistence; friction | Share link / browser bookmark |
-| Job alerts / email subscriptions | Re-engagement standard on big boards | Needs email collection = the very "cadastro" being avoided; deliverability work | WhatsApp groups later if ever (matches BR norm) |
-| Public job submission | "Crowd-source growth" | Opens a spam/scam floodgate; kills curation moat | Admin-only ingestion (pasted group text + LLM) |
-| Applicant tracking / ATS / resume upload | "Be competitive with LinkedIn" | Massive scope; shifts product to recruiter-side | Candidate contacts employer directly |
-| Resume database / talent bank | Monetization potential | Out of scope; needs accounts + PII (LGPD liability) | — |
-| Renewals of expired jobs | "Some jobs should stay" | Complicates the clean 14-day cycle; invites stale listings | Repost manually if still valid |
-| Duplicate detection | Housekeeping | Manual curation already covers at 100–500/mo | Admin eye + edit-by-ID |
-| Multi-admin / roles / moderation queue consumer | "Team scale" | Single master is a feature (fast, simple, consistent) | Keep one admin |
-| Real-time chat / in-platform messaging | "Keep users on site" | Moderation + PII risk; no accounts anyway | Off-platform WhatsApp/email |
-| Heavy faceted filters at MVP (seniority, contract type, salary bands) | "Like the big boards" | Low inventory + mobile screen cost > benefit; dilutes focus | Search + city + date only; add facets when volume justifies |
-| Infinite scroll on the main list | Modern-feeling feed | Poor SEO/shareability; hinders "where am I" on mobile | Simple pagination / "carregar mais" |
-| Map view at MVP | Visual appeal (EmpregoDaqui has it) | Real geo cost (geocoding, normalization from raw text) | Defer to v1.x/v2 once vouchers exist |
-| Ratings / reviews / comments | Social proof | Moderation burden; invites abuse on informal listings | Report link only |
-| Aggregating/scraping other boards | Free inventory | Legal exposure; contradicts "curadoria"; noise | Curated ingestion only |
-| Social login (Google/LinkedIn) | "Easy auth" | Any auth contradicts no-signup | None |
-| "Feature vaga" paid promotion | Revenue | Empty at MVP scale; springs from monetization (out of scope) | Donations + AD placeholders only |
-
----
+| Enviar lista de centenas de vagas ao LLM para “escolher as melhores” | Parece mais “inteligente”/semântico | Viola restrição explícita; alto custo/latência; risco de alucinação e vazamento de dados desnecessário | LLM só extrai parâmetros → busca determinística no backend (`list_published`/filtros). “Parecidas” via relaxamento controlado de filtros. |
+| Ranking semântico/embeddings completos no MVP | Melhor matching além de keyword | Infra/custo/complexidade (índice vetorial, pipeline) desproporcional ao volume (100–500/mês) e ao milestone | Melhorar normalização de keywords/sinônimos e relaxamento de filtros; considerar embeddings em milestone futuro se métricas justificarem. |
+| Chatbot multi-turn longo com memória persistente por usuário | Experiência “assistente pessoal” | Exige identificação/armazenamento, aumenta custo e complexidade; conflita com fricção zero | Contexto efêmero de sessão no cliente (última interpretação) e refinamentos curtos. |
+| Clarifying questions obrigatórias antes de buscar | Máxima precisão de slots | Adiciona atrito; usuários querem resultado rápido | Buscar imediatamente com melhor esforço + mostrar parâmetros entendidos + permitir ajuste rápido. Perguntar só em casos extremos de ambiguidade total (opcional). |
+| Agente que “se candidata”/envia mensagens em nome do usuário | Automação total | Fora de escopo, riscos legais/spam, exige integrações e contas | Manter fluxo atual: encontrar vaga e revelar contato para candidatura manual. |
+| Inventar/normalizar salário, empresa ou modalidade ausentes nos dados | Preencher lacunas para parecer completo | Quebra confiança e pode induzir erro; dados vêm de curadoria | Exibir apenas campos disponíveis (`JobPublic`); parâmetros não suportados devem ser declarados como limitação na resposta. |
+| Expor contatos no payload/resposta do chat | Conveniência | Contraria proteção anti-scraping/fluxo de revelação existente | Retornar `JobPublic` sem contatos; “ver contato” usa mecanismo protegido atual no detalhe. |
 
 ## Feature Dependencies
 
 ```
-[Job card grid]
-    ├──requires──> [Published jobs query] ──requires──> [Admin approve workflow]
-    │                                                        └──requires──> [LLM extraction + review UI]
-    └──requires──> [City/Search/Sort]  (all filter the same query)
+[Schema de extração + validação + normalização pt-BR/whitelist]
+    └──requires──> [LLM provider/estratégia (Groq) + prompt/JSON]
+                         └──requires──> [Config/env, timeout, tratamento de falhas]
 
-[Job detail view / modal]
-    └──requires──> [Job card grid]  (opens from a card)
+[Endpoint público chat-search (interpretação + resultados)]
+    └──requires──> [Schema de extração]
+    └──requires──> [Busca pública existente: GET /api/v1/public/jobs / crud.list_published (q, city, sort, paginação)]
+    └──requires──> [Rate limit/timeout/proteção básica]
 
-[Contact reveal]
-    └──requires──> [Job detail view]
-                       └──requires──> [Contact fields stored + at least one present]
+[Aplicação de parâmetros não nativos (salário/modalidade/contrato)]
+    └──requires──> [Decisão incremental: mapear para q / pós-filtro / extensão controlada]
+    └──enhances──> [Combinações de filtros na mesma frase]
 
-[Auto-expiry / hard delete]
-    └──requires──> [status + expires_at fields] ──requires──> [Scheduled job / cron]
+[UI de chat (drawer/modal mobile-first)]
+    └──requires──> [Endpoint público chat-search]
+    └──requires──> [Componentes de lista/card/modal/detalhe existentes]
+    └──requires──> [Fluxo de revelação de contato existente (sem expor no payload)]
 
-[Trust badge "Vaga revisada"] ──enhances──> [Admin approve workflow]
-[Report suspicious job] ──enhances──> [Trust/anti-scam posture]
-[Anti-spam / Turnstile] ──requires──> [A public form/POST endpoint]  ⚠ see open question
-
-[SEO / JobPosting schema]
-    └──requires──> [Dedicated single-job URL]
-                       └──conflicts──> [Modal-only detail architecture]
-
-[Job alerts / saved searches] ──conflicts──> [No-signup core value]
+[“Vagas parecidas” (limitado)]
+    └──requires──> [Busca existente + lógica de relaxamento de constraints]
+    └──conflicts──> [Embeddings/ranking LLM sobre corpus no MVP]
 ```
 
 ### Dependency Notes
 
-- **[Grid] requires [Admin approve workflow]:** nothing is visible publicly until the master approvals; the curation gate is upstream of the entire public site.
-- **[Detail] requires [Grid]:** detail is reached from a card (modal). This coupling is why the SEO decision matters — see conflict.
-- **[Contact reveal] requires [Detail]:** reveal is a detail-level action; contact fields must be validated (at least one) at ingestion/review time, not at display time.
-- **[Auto-expiry] requires [status + expires_at]:** the data model must carry both; the scheduled job is the single most fragile reliability dependency (missed runs = ghost jobs, the exact failure the product attacks).
-- **[Trust badge] enhances [Approve workflow]:** zero extra machinery — the act of approving *is* the signal; just surface it.
-- **[Anti-spam/Turnstile] requires a form endpoint:** in the current MVP there is **no public write/submit form** (no submission, no signup, no comments). Turnstile is worthless without a target. Two viable placements: (a) protect the **admin login** endpoint against credential stuffing, or (b) protect a **report-a-job** form. **Decision needed before implementation** (flagged as open question).
-- **[SEO] conflicts with [Modal-only detail]:** Google requires `JobPosting` structured data **only on a single-job page, never on a list page**, with a stable URL and `validThrough`. A modal overlaying the home grid has no indexable per-job URL. Resolve via Next.js **intercepting routes / parallel routes**: render a real `/vaga/[id]` page for crawlers and deep links, open it as a modal in-app. This is a HIGH-value, HIGH-complexity item — decide in roadmap whether SEO is MVP or v1.x.
-- **[Alerts] conflicts with [No-signup]:** any notification channel needs an identity/contact to notify = the friction NQU exists to remove. Keep out unless a truly anonymous (WhatsApp group) form emerges.
-
----
-
-## pt-BR + Mobile-First UX Specifics
-
-Concrete patterns validated by competitors and UX research:
-
-- **Search must be accent/case-insensitive.** Users type "sao paulo", "vaga de auxiliar". Normalize accented Portuguese (`São`, `Serviços`, `Analista`) at query time (e.g., unaccent + lowercase). *Detection:* "no results" for a query that clearly has matches.
-- **Filters as chips above results on mobile**, not a hidden sidebar. Make them a fullscreen overlay with an **"Aplicar"** button if they grow; for MVP, city chips + sort toggle are enough. Always show **result count** ("27 vagas") — mobile users need feedback that a filter applied.
-- **Search box visible at top**, ≥45 chars wide on mobile, with a clear pt-BR label ("Buscar vaga, empresa ou palavra-chave"). Avoid auto-collapse.
-- **"Remoto" is a first-class location**, rendered alongside SP/RJ/BH — remote is a *place* in the BR mental model, not a work-mode toggle (this differs from US boards' "remote toggle" pattern).
-- **Salary formatting** in `R$` with thousand separators (`R$ 1.837`); support ranges ("R$ 2.000 a R$ 2.500") and "A combinar" / "Não informado".
-- **Dates** short and relative-friendly (`Publicada há 2 dias`, `Expira em 5 dias`). Showing time-to-expiry is both useful and reinforces the freshness differentiator.
-- **Contact action buttons** as large, thumb-reachable CTAs: primary "Falar no WhatsApp" (green affordance), secondary "Enviar e-mail". Copy the `wa.me/55…` format. On desktop, also reveal a copyable phone/email.
-- **Card = scannable in one thumb glance:** title (bold, 1 line), company, city chip, salary chip, 2-line activities preview. Tap anywhere (or "Ver a vaga") → detail. Never require horizontal scroll.
-- **Detail modal** should trap focus, close on backdrop/ESC, and keep "Mostrar contato" sticky/visible so the reveal is never buried.
-- **pt-BR copy tone:** direct and informal ("Procurar um emprego, não deve dar trabalho"), avoid juridiquês except in the required disclaimer/LGPD pages.
-- **Share** via `navigator.share()` with WhatsApp fallback link — sharing to groups is how listings spread in Brazil.
-
----
+- **Endpoint chat-search requires busca existente:** a consulta determinística deve reutilizar `list_published`/filtros atuais para garantir consistência, paginação e regras de publicação/expiração.
+- **Extração requires validação rígida:** nunca confiar em saída livre do LLM; validar tipos/enums/whitelist e descartar campos inventados.
+- **Parâmetros não nativos enhances combinações:** salário/modalidade/contrato podem não ter colunas/filtros nativos hoje — sem estratégia incremental, combinações que os incluam degradam silenciosamente; é necessário declarar aplicação parcial.
+- **UI requires fluxo de contato existente:** chat pode levar ao detalhe, mas não pode substituir/contornar a revelação protegida.
+- **“Vagas parecidas” conflicts com LLM-sobre-corpus:** aproximação deve ser por relaxamento determinístico, não por re-ranking com todas as vagas no prompt.
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.3)
 
-Minimum to validate: *can a stranger find and contact a real job in seconds without an account?*
+Mínimo para validar busca NL sem fricção, respeitando custo/performance e reuso da busca existente.
 
-- [ ] Public published-jobs grid — the product exists only if jobs are visible, ungated
-- [ ] Job card + detail modal — scan then read
-- [ ] Contact reveal + WhatsApp/email apply — the payoff; the reason to exist
-- [ ] Keyword search (accent-insensitive) — primary narrowing tool
-- [ ] City filter (SP/RJ/BH/Remoto) — top determinant in BR
-- [ ] Date sort (newest default) — freshness
-- [ ] Auto-expiry + hard delete (14 days) — the trust differentiator; must be reliable
-- [ ] Mobile-first responsive layout — most traffic is mobile
-- [ ] "Vaga revisada" badge — cheap, high-signal trust marker
-- [ ] Report-a-job link (mailto/WhatsApp) — trust escape valve for informal listings
-- [ ] Privacy/terms/disclaimer pages (LGPD + "meio de divulgação")
-- [ ] Donations button + AD placeholders — per brief, low priority but in scope
-- [ ] Anti-spam/Turnstile **placed on admin login** (pending the placement decision above)
+- [ ] **Extração NL → JSON validado (sem inventar)** — cargo, senioridade, cidade whitelist, modalidade, remoto/híbrido/presencial, faixa salarial, tipo contrato, palavras-chave, ordenação; normalização segura e descarte de fora do domínio.
+- [ ] **Endpoint público de chat-search** — recebe texto, aplica timeout/rate limit, retorna interpretação + resultados pagináveis (`JobPublic`) com erros/empty states tratados.
+- [ ] **Mapeamento para busca existente** — aplicar `q`/cidade/sort/paginação em `list_published`; estratégia incremental explícita para campos não nativos (ex.: incluir termos no `q` e/ou pós-filtro controlado) com lacunas documentadas na resposta.
+- [ ] **UI de chat (drawer/modal mobile-first)** — entrada, loading/erro, exibição de parâmetros entendidos e lista de vagas com acesso a detalhe/link; exemplos de consulta do MVP.
+- [ ] **Cobertura dos exemplos de uso do MVP** — validar combinações definidas; registrar quais parâmetros são suportados total/parcialmente.
 
 ### Add After Validation (v1.x)
 
-Trigger-gated additions once the core loop works and volume grows.
-
-- [ ] **Per-job URLs + `JobPosting` JSON-LD + Google Jobs** — add when organic discovery becomes the bottleneck (highest-ROI growth lever, but HIGH complexity)
-- [ ] Turnstile-protected report form — when report volume/abuse justifies it
-- [ ] Multi-city selection + more cities — when inventory spans beyond 4 cities
-- [ ] Swipe/browse card mode — when engagement data suggests it helps
-- [ ] "Carregar mais" pagination refinement — when listings exceed one screen
+- [ ] **Refinamento conversacional leve** — reutilizar última interpretação no cliente para ajustes rápidos (“só remoto”, “muda para RJ”). Trigger: usuários repetem buscas do zero.
+- [ ] **“Vagas parecidas” via relaxamento determinístico** — remover/afrouxar 1 constraint e sinalizar aproximação. Trigger: alta taxa de zero resultados em consultas válidas.
+- [ ] **Telemetria mínima de qualidade (agregada, sem PII)** — contagem de buscas, taxa de vazio, uso de sugestões. Trigger: necessidade de calibrar prompt/mapeamentos.
 
 ### Future Consideration (v2+)
 
-- [ ] Map / "perto de mim" (geo) — needs normalized geo from raw text; big lift
-- [ ] Anonymous WhatsApp-group distribution — only if it can avoid identity capture
-- [ ] Featured/promoted listings — only with real monetization (out of scope now)
-- [ ] Light facets (contract type, salary floor) — when inventory makes filters meaningful
-
----
+- [ ] **Busca semântica/embeddings** — adiar até volume/qualidade justificar custo/infra; requer pipeline de indexação e avaliação.
+- [ ] **Suporte nativo a salário/modalidade/contrato no modelo/filtros** — evolução de schema/índices se campos se tornarem estruturados e confiáveis na curadoria.
+- [ ] **Memória/histórico opt-in** — exigiria decisões de identidade/privacidade; conflita com fricção zero no curto prazo.
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Public ungated job grid | HIGH | LOW | P1 |
-| Job card + detail modal | HIGH | LOW–MED | P1 |
-| Contact reveal (hidden by default) | HIGH | LOW | P1 |
-| WhatsApp/email apply links | HIGH | LOW | P1 |
-| Keyword search (accent-insensitive) | HIGH | MEDIUM | P1 |
-| City filter (SP/RJ/BH/Remoto) | HIGH | LOW | P1 |
-| Date sort | MEDIUM | LOW | P1 |
-| Auto-expiry + hard delete | HIGH | MEDIUM | P1 |
-| Mobile-first responsive | HIGH | LOW–MED | P1 |
-| "Vaga revisada" badge | MEDIUM | LOW | P1 |
-| Report-a-job link | MEDIUM | LOW | P1 |
-| Privacy/terms/disclaimer | MEDIUM | LOW | P1 |
-| Anti-spam/Turnstile | MEDIUM | MEDIUM | P1 (placement TBD) |
-| Donations button | LOW | LOW | P2 |
-| AD placeholders | LOW | LOW | P2 |
-| Per-job URL + JobPosting schema | HIGH (growth) | HIGH | P2 |
-| Swipe/browse mode | MEDIUM | MEDIUM | P3 |
-| Map / geo | MEDIUM | HIGH | P3 |
-| Light facets | LOW–MED | MEDIUM | P3 |
+| Extração NL → JSON validado (LLM só parâmetros) | HIGH | MEDIUM | P1 |
+| Endpoint chat-search + rate limit/timeout + mapeamento à busca existente | HIGH | MEDIUM | P1 |
+| UI chat com parâmetros entendidos + resultados (`JobPublic`) + detalhe | HIGH | MEDIUM | P1 |
+| Combinações de filtros com estratégia para campos não nativos (parcial documentado) | HIGH | MEDIUM-HIGH | P1 |
+| Empty states, erros e baixa latência percebida | MEDIUM | LOW-MEDIUM | P1 |
+| Refinamento leve de contexto no cliente | MEDIUM | MEDIUM | P2 |
+| “Vagas parecidas” por relaxamento determinístico (limitado) | MEDIUM | MEDIUM | P2 |
+| Chips/exemplos e resumo grounded dos filtros aplicados | MEDIUM | LOW | P2 |
+| Telemetria agregada de qualidade | MEDIUM | LOW-MEDIUM | P3 |
+| Busca semântica/embeddings/ranking por LLM sobre corpus | MEDIUM | HIGH | P3 (anti-feature no MVP) |
 
-**Priority key:** P1 = must ship for launch · P2 = add when possible · P3 = future.
-
----
+**Priority key:**
+- P1: Must have for launch (v1.3)
+- P2: Should have, add when possible
+- P3: Nice to have, future consideration
 
 ## Competitor Feature Analysis
 
-| Feature | EmpregoDaqui | BrVagas / BuscarVagas | Chance na Vaga | Large boards (InfoJobs/Trabalha Brasil) | NQU Approach |
-|---------|--------------|-----------------------|----------------|------------------------------------------|--------------|
-| Signup to view jobs | No | No | Yes (view free) | Yes (often) | **Never** |
-| Signup to apply/contact | No | No (WhatsApp groups) | **Yes** | Yes | **Never** — direct contact |
-| Contact channel | WhatsApp + email | WhatsApp groups | In-platform | Portal/ATS | WhatsApp + email deep links |
-| Curation / verification | Ads disclaimer; quiz-based premium | "Vagas verificadas / origem rastreada" | Not emphasized | Automated | **LLM-extracted + human-reviewed** |
-| Freshness/expiry | Varies | Daily updates | Not emphasized | Varies | **Hard 14-day delete** |
-| Filters | City, cards/map, swipe | City/area | Distance, state, modality, contract, salary | Full facets | Search + city + date (lean) |
-| Trust UX | Liability disclaimer, LGPD pages | "Sem golpe", verified badges | Best Workplaces badge | Company ratings | "Vaga revisada" badge + report link + freshness |
-| SEO/Google Jobs | Not evident | SEO-optimized (BuscarVagas) | — | Strong | Deferred to v1.x (modal conflict) |
-| Ingestion | Employer posts + premium | Aggregated from official sources | Employer portal | Employer-paid posts | **Paste + LLM + approve** |
-
-**Read:** NQU's realistic edge is **curation quality × guaranteed freshness × zero-friction contact**. It cannot win on inventory (aggregators) or facets (big boards). Lean into the quality/freshness story and the direct WhatsApp funnel.
-
----
+| Feature | Padrão em job boards/assistentes (Indeed, LinkedIn, Google Jobs e chats de busca) | Nosso enfoque (EmpregaNoix v1.3) |
+|---------|----------------------------------------------------------------------------------|----------------------------------|
+| Entrada NL | Barra/chat aceita frases; alguns sugerem prompts | Chat simples pt-BR em drawer/modal, mobile-first, sem login |
+| Extração de filtros | Inferência de cargo/local/remoto/senioridade; nem sempre transparente | JSON estruturado validado, **LLM não vê vagas**, mostrar parâmetros entendidos |
+| Aplicação de filtros | Mapeamento para facets/filtros nativos da plataforma | Reuso de `GET /api/v1/public/jobs`/`list_published`; incremental para campos não nativos com lacunas explícitas |
+| Resultados | Lista ranqueada com resumo e link/detalhe | `JobPublic` sem contato + acesso a modal/detalhe e revelação protegida existente |
+| Refinamento | Follow-ups ajustam busca; às vezes exige conta para salvar | Refinamento leve sem persistência/conta (P2) |
+| “Vagas parecidas” | Recomendações/semântica/ML em grande escala | Apenas relaxamento determinístico limitado (P2/futuro), sem corpus no LLM |
+| Privacidade/atrito | Frequentemente empurra login/alertas | Zero fricção: buscar e ver resultados sem cadastro (core value) |
 
 ## Sources
 
-- EmpregoDaqui (empregodaqui.com.br) — live competitor, "sem cadastro", WhatsApp contact, disclaimer model (HIGH — primary source)
-- BrVagas (brvagas.com.br) — "sem criar conta", "vagas verificadas" (HIGH — primary source)
-- Meu Emprego (meuemprego.com.br) — WhatsApp AI job search, no accounts (HIGH — primary source)
-- BuscarVagas (buscarvagas.com.br) — "100% gratuito", SEO-optimized, WhatsApp groups (HIGH — primary source)
-- Chance na Vaga (chancenavaga.com.br) — partial no-signup model (HIGH — primary source)
-- InfoJobs / Trabalha Brasil / BetaVagas — filter patterns, BR job field norms (HIGH — primary source)
-- Cavuno "Job Board Features: The Complete Guide for Operators" & Job Boardly "Features Employers Expect" — table-stakes feature taxonomy (MEDIUM — vendor content, consistent across sources)
-- Google Search Central, "Job posting structured data" + Schema.org `JobPosting` — required properties, single-page rule, `validThrough` (HIGH — official docs)
-- LogRocket / Algolia / Pencil & Paper — mobile filter UX patterns (MEDIUM — industry UX sources, convergent)
-- FBI/Europol/IC3 job-scam advisories — scam red flags, what to signal against (HIGH — official)
-- UX research case study (Dibimbing) + curated-board concepts (JobCurators, FlexJobs, remoty.work) — verified-badge + reporting recommendations (MEDIUM)
+- `.planning/PROJECT.md` (contexto do produto, milestone v1.3, restrições e busca existente) — HIGH (primário)
+- Conhecimento de domínio sobre padrões de NL search/slot filling em job boards e chatbots de busca (intent → structured filters → retrieval → apresentação) — MEDIUM, **não verificado com fontes externas neste ambiente** (ferramenta de websearch sem resultados)
+- Recomendação: validar durante planejamento com documentação/comportamento público de buscadores de vagas (ex.: Google Jobs, Indeed, LinkedIn) e testes com usuários pt-BR
 
 ---
-
-*Feature research for: NQU — Brazilian no-signup job board*
-*Researched: 2026-10-13*
+*Feature research for: Chatbot de busca de vagas por linguagem natural (EmpregaNoix v1.3)*
+*Researched: 2026-11-17*
