@@ -55,17 +55,19 @@ async def extract_and_map_intent(
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     timeout_seconds: float | int | None = None,
 ) -> IntentContract:
-    """Produce final deterministic IntentContract, degrading safely on failures/empty input."""
+    """Produce final deterministic IntentContract.
+
+    Empty input degrades to a safe empty contract. Extraction/provider failures
+    propagate so the caller (API layer) can classify timeout vs LLM unavailability
+    and return the appropriate user-facing degradation.
+    """
     raw_text = "" if text is None else str(text)
     if _is_empty_input(text):
         return build_empty_intent(text, reason_code="empty_input")
 
-    try:
-        candidate = await parse_intent(
-            text, settings, client=client, sleep=sleep, timeout_seconds=timeout_seconds
-        )
-    except (IntentExtractionError, ValidationError, Exception):
-        return build_empty_intent(text, reason_code="no_extractable_params")
+    candidate = await parse_intent(
+        text, settings, client=client, sleep=sleep, timeout_seconds=timeout_seconds
+    )
 
     contract = map_intent(candidate, raw_text=raw_text)
     if _is_effectively_empty(contract):
