@@ -141,16 +141,21 @@ async def approve(
     """Approve a reviewable job: publica vaga no site e registra social best-effort."""
     job = await get_job(session, job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail="Vaga n?o encontrada")
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
     if job.status not in (JobStatus.pending, JobStatus.needs_review):
         raise HTTPException(
-            status_code=409, detail="Vaga n?o est? na fila de revis?o"
+            status_code=409,
+            detail="Vaga não está na fila de revisão",
         )
 
     # Site-first: sucesso da vaga independe do registro/dispatch social.
     await approve_job(session, job)
     await session.commit()
     await session.refresh(job)
+
+    # Guarda os dados antes do processamento social, que pode executar rollback.
+    job_response = JobAdmin.model_validate(job)
 
     social_outcome = SocialApproveOutcome(
         status="skipped",
@@ -160,19 +165,35 @@ async def approve(
     dispatch_post_id: uuid.UUID | None = None
 
     try:
-        draft = await get_by_job_provider(session, job_id, provider="facebook")
+        draft = await get_by_job_provider(
+            session,
+            job_id,
+            provider="facebook",
+        )
+
         if draft is None:
             social_outcome = SocialApproveOutcome(
                 status="skipped",
                 code="no_draft",
                 message="Nenhum rascunho social salvo",
             )
+
         elif draft.status == SocialPostStatus.scheduled:
-            social_outcome = SocialApproveOutcome(status="registered", code=None, message=None)
+            social_outcome = SocialApproveOutcome(
+                status="registered",
+                code=None,
+                message=None,
+            )
             if draft.scheduled_at is not None and draft.scheduled_at <= now_utc():
                 dispatch_post_id = draft.id
+
         elif draft.status == SocialPostStatus.draft:
-            final_scheduled_at = draft.scheduled_at if draft.scheduled_at is not None else now_utc()
+            final_scheduled_at = (
+                draft.scheduled_at
+                if draft.scheduled_at is not None
+                else now_utc()
+            )
+
             await mark_scheduled(
                 session,
                 draft,
@@ -180,34 +201,50 @@ async def approve(
                 scheduled_at=final_scheduled_at,
             )
             await session.commit()
-            social_outcome = SocialApproveOutcome(status="registered", code=None, message=None)
+
+            social_outcome = SocialApproveOutcome(
+                status="registered",
+                code=None,
+                message=None,
+            )
+
             if final_scheduled_at <= now_utc():
                 dispatch_post_id = draft.id
+
         else:
             social_outcome = SocialApproveOutcome(
                 status="warning",
                 code="social_registration_failed",
-                message="N?o foi poss?vel registrar o post social agora",
+                message="Não foi possível registrar o post social agora",
             )
+
     except Exception:
         try:
             await session.rollback()
         except Exception:
             pass
+
         social_outcome = SocialApproveOutcome(
             status="warning",
             code="social_registration_failed",
-            message="N?o foi poss?vel registrar o post social agora",
+            message="Não foi possível registrar o post social agora",
         )
         dispatch_post_id = None
 
     if social_outcome.status == "registered" and dispatch_post_id is not None:
         try:
-            background_tasks.add_task(process_social_post_safe, dispatch_post_id)
+            background_tasks.add_task(
+                process_social_post_safe,
+                dispatch_post_id,
+            )
         except Exception:
             pass
 
-    return JobApproveResponse(job=JobAdmin.model_validate(job), social=social_outcome)
+    return JobApproveResponse(
+        job=job_response,
+        social=social_outcome,
+    )
+
 
 
 # ---------------------------------------------------------------------------

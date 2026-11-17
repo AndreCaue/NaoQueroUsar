@@ -203,7 +203,11 @@ async def db_session(engine):
     """
     conn = await engine.connect()
     trans = await conn.begin()
-    session = AsyncSession(bind=conn, expire_on_commit=False)
+    session = AsyncSession(
+        bind=conn,
+        expire_on_commit=False,
+        join_transaction_mode="create_savepoint",
+        )
     try:
         await session.execute(text("DELETE FROM jobs"))
         yield session

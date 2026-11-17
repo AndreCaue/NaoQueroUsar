@@ -299,6 +299,8 @@ async def test_approve_social_registration_failure_returns_warning_but_keeps_job
 ):
     token = await _login(client, admin_password)
     job = await _seed_job(db_session)
+    job_id = job.id
+
     monkeypatch.setenv("SITE_PUBLIC_URL", "https://site.exemplo/")
     get_settings.cache_clear()
 
@@ -308,28 +310,35 @@ async def test_approve_social_registration_failure_returns_warning_but_keeps_job
     async def failing_mark_scheduled(*args, **kwargs):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr("app.api.v1.admin.generate_draft_for_job", fake_generate)
-    monkeypatch.setattr("app.api.v1.admin.mark_scheduled", failing_mark_scheduled)
+    monkeypatch.setattr(
+        "app.api.v1.admin.generate_draft_for_job",
+        fake_generate,
+    )
+    monkeypatch.setattr(
+        "app.api.v1.admin.mark_scheduled",
+        failing_mark_scheduled,
+    )
 
     resp = await client.post(
-        f"/api/v1/admin/jobs/{job.id}/social-post/generate",
+        f"/api/v1/admin/jobs/{job_id}/social-post/generate",
         headers={"Authorization": f"Bearer {token}"},
         json={"publish_mode": "publish_now"},
     )
     assert resp.status_code == 200
 
     resp = await client.patch(
-        f"/api/v1/admin/jobs/{job.id}/approve",
+        f"/api/v1/admin/jobs/{job_id}/approve",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 200
+
     body = resp.json()
     assert body["job"]["status"] == "published"
     assert body["social"]["status"] == "warning"
     assert body["social"]["code"] == "social_registration_failed"
 
     get_resp = await client.get(
-        f"/api/v1/admin/jobs/{job.id}",
+        f"/api/v1/admin/jobs/{job_id}",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert get_resp.status_code == 200

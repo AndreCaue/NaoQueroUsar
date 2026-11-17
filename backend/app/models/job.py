@@ -41,7 +41,12 @@ class Job(Base):
     contact_email: Mapped[str | None] = mapped_column(String(254), nullable=True)
     contact_phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     status: Mapped[JobStatus] = mapped_column(
-        SAEnum(JobStatus, name="job_status", native_enum=True),
+        SAEnum(
+         JobStatus,
+         name="job_status",
+         native_enum=True,
+         create_type=False,
+        ),
         nullable=False,
         server_default=text("'pending'"),
     )
