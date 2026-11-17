@@ -2,9 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: roadmap_ready
-last_updated: "2026-11-17T00:00:00.000Z"
-last_activity: 2026-11-17
+status: Roadmap ready
+stopped_at: Phase 19 context gathered
+last_updated: "2026-11-17T19:31:46.236Z"
+last_activity: 2026-11-17 — Roadmap created for v1.3 (Phases 19–22, 12/12 requirements mapped)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -96,6 +97,6 @@ Items acknowledged/deferred at or before v1.2 close (2026-11-17):
 
 ## Session Continuity
 
-Last session: 2026-11-17
-Stopped at: v1.3 roadmap created (Phases 19–22)
-Resume file: —
+Last session: 2026-11-17T19:31:46.217Z
+Stopped at: Phase 19 context gathered
+Resume file: .planning/phases/19-contrato-de-intencao-e-mapeamento-seguro/19-CONTEXT.md
