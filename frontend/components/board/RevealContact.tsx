@@ -29,14 +29,15 @@ import { Whatsapp } from "./icons";
  */
 
 const TURNSTILE_SITE_KEY =
-  process.env.TURNSTILE_SITE_KEY ||
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
   (process.env.NODE_ENV === "production" ? "" : "1x00000000000000000000AA");
 
 const NETWORK_COPY =
   "Falha de conexão. Verifique sua internet e tente novamente.";
 const TIMEOUT_COPY =
   "Não foi possível concluir a verificação. Tente novamente.";
-const MISSING_KEY_COPY = "Configuração ausente: defina TURNSTILE_SITE_KEY";
+const MISSING_KEY_COPY =
+  "Configuração ausente: defina NEXT_PUBLIC_TURNSTILE_SITE_KEY";
 const NO_CONTACT_COPY = "Contato não disponível para esta vaga.";
 
 const PRIMARY_BUTTON =

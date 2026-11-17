@@ -17,7 +17,7 @@ import { TERM_REMOVED_NOTICE, stripBlockedTerms } from "@/lib/blocklist";
 // is mandatory: without it the widget does not render and the login stays
 // blocked — fail closed (D-15).
 const TURNSTILE_SITE_KEY =
-  process.env.TURNSTILE_SITE_KEY ||
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
   (process.env.NODE_ENV === "production" ? "" : "1x00000000000000000000AA");
 
 export default function ExtractForm() {
@@ -189,7 +189,7 @@ export default function ExtractForm() {
               </div>
             ) : (
               <div className="bg-[rgba(248,113,113,0.1)] border border-danger text-danger-soft rounded-lg p-3">
-                Configuração ausente: defina TURNSTILE_SITE_KEY
+                Configuração ausente: defina PUBLIC_TURNSTILE_SITE_KEY
               </div>
             )}
             <button
