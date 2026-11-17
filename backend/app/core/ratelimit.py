@@ -49,6 +49,7 @@ DEFAULT_RETRY_AFTER_SECONDS = 10
 __all__ = [
     "RATE_LIMIT_MESSAGE",
     "RateLimitExceeded",
+    "chat_search_limit",
     "limiter",
     "login_limit",
     "rate_limit_exceeded_handler",
@@ -100,6 +101,11 @@ def reveal_limit() -> str:
 def login_limit() -> str:
     """Rate limit of the admin login route (read from the env per request)."""
     return get_settings().LOGIN_RATE_LIMIT
+
+
+def chat_search_limit() -> str:
+    """Rate limit of the public chat-search route (read from the env per request)."""
+    return get_settings().CHAT_SEARCH_RATE_LIMIT
 
 
 def _retry_after_seconds(request: Request, exc: RateLimitExceeded) -> int:

@@ -196,7 +196,7 @@ def strict_response_format() -> dict[str, Any]:
     }
 
 
-def _build_real_client(settings: Any) -> Any:
+def _build_real_client(settings: Any, timeout_seconds: float | int | None = None) -> Any:
     """Lazily construct AsyncGroq; tests inject client and never hit this."""
     api_key = str(getattr(settings, "GROQ_API_KEY", "") or "").strip()
     if not api_key:
@@ -205,7 +205,10 @@ def _build_real_client(settings: Any) -> Any:
         )
     from groq import AsyncGroq
 
-    return AsyncGroq(api_key=api_key, timeout=getattr(settings, "GROQ_TIMEOUT_SECONDS", 60))
+    effective_timeout = (
+        timeout_seconds if timeout_seconds is not None else getattr(settings, "GROQ_TIMEOUT_SECONDS", 60)
+    )
+    return AsyncGroq(api_key=api_key, timeout=effective_timeout)
 
 
 def _parse_intent_output(content: str) -> IntentLLMOutput:
@@ -219,13 +222,17 @@ async def _create_once(
     model: str,
     messages: list[dict[str, str]],
     settings: Any,
+    timeout_seconds: float | int | None = None,
 ) -> Any:
+    effective_timeout = (
+        timeout_seconds if timeout_seconds is not None else getattr(settings, "GROQ_TIMEOUT_SECONDS", 60)
+    )
     return await client.chat.completions.create(
         model=model,
         messages=messages,
         response_format=strict_response_format(),
         temperature=0,
-        timeout=getattr(settings, "GROQ_TIMEOUT_SECONDS", 60),
+        timeout=effective_timeout,
     )
 
 
@@ -235,6 +242,7 @@ async def call_intent_llm(
     *,
     client: Any | None = None,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+    timeout_seconds: float | int | None = None,
 ) -> IntentLLMOutput:
     """Extract one IntentLLMOutput candidate from NL query via Groq strict JSON.
 
@@ -243,7 +251,7 @@ async def call_intent_llm(
     validation failure to keep behavior bounded and deterministic.
     """
     if client is None:
-        client = _build_real_client(settings)
+        client = _build_real_client(settings, timeout_seconds=timeout_seconds)
 
     chain = model_chain(settings)
     if not chain:
@@ -255,7 +263,9 @@ async def call_intent_llm(
     for model in chain:
         try:
             messages = build_messages(text)
-            response = await _create_once(client, model=model, messages=messages, settings=settings)
+            response = await _create_once(
+                client, model=model, messages=messages, settings=settings, timeout_seconds=timeout_seconds
+            )
             choice = response.choices[0]
             content = (choice.message.content or "{}")
             try:
@@ -263,7 +273,11 @@ async def call_intent_llm(
             except ValidationError:
                 repair_messages = build_messages(text, extra_user=REPAIR_PROMPT)
                 response = await _create_once(
-                    client, model=model, messages=repair_messages, settings=settings
+                    client,
+                    model=model,
+                    messages=repair_messages,
+                    settings=settings,
+                    timeout_seconds=timeout_seconds,
                 )
                 choice = response.choices[0]
                 content = (choice.message.content or "{}")

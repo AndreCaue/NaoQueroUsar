@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     REVEAL_RATE_LIMIT: str = "10/minute"     # D-06 — env-tunable, no deploy needed
     LOGIN_RATE_LIMIT: str = "5/minute"       # D-06 — env-tunable, no deploy needed
 
+    # Chat-search público (Phase 20 — API-01..03, D-05/D-06/D-07)
+    CHAT_SEARCH_RATE_LIMIT: str = "20/minute"
+    CHAT_SEARCH_MAX_MESSAGE_CHARS: int = 400
+    CHAT_SEARCH_INTENT_TIMEOUT_SECONDS: int = 12
+
     # ESCAPE HATCH TEMPORÁRIO (desvio consciente, 2026-11-12).
     # Permite subir ENV=prod com uma chave de TESTE do Cloudflare Turnstile
     # enquanto o operador não tem domínio próprio/cadastro de widget live para

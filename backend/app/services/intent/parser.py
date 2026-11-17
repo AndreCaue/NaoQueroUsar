@@ -26,11 +26,14 @@ async def parse_intent(
     *,
     client: Any | None = None,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+    timeout_seconds: float | int | None = None,
 ) -> IntentLLMOutput:
     """Return LLM-validated intent candidate; empty input yields null candidate without LLM."""
     if _is_empty_input(text):
         return IntentLLMOutput()
-    return await call_intent_llm(str(text).strip(), settings, client=client, sleep=sleep)
+    return await call_intent_llm(
+        str(text).strip(), settings, client=client, sleep=sleep, timeout_seconds=timeout_seconds
+    )
 
 
 def _is_effectively_empty(contract: IntentContract) -> bool:
@@ -50,6 +53,7 @@ async def extract_and_map_intent(
     *,
     client: Any | None = None,
     sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+    timeout_seconds: float | int | None = None,
 ) -> IntentContract:
     """Produce final deterministic IntentContract, degrading safely on failures/empty input."""
     raw_text = "" if text is None else str(text)
@@ -57,7 +61,9 @@ async def extract_and_map_intent(
         return build_empty_intent(text, reason_code="empty_input")
 
     try:
-        candidate = await parse_intent(text, settings, client=client, sleep=sleep)
+        candidate = await parse_intent(
+            text, settings, client=client, sleep=sleep, timeout_seconds=timeout_seconds
+        )
     except (IntentExtractionError, ValidationError, Exception):
         return build_empty_intent(text, reason_code="no_extractable_params")
 
