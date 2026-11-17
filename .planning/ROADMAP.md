@@ -52,7 +52,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 20-01-PLAN.md — Contrato/schemas, knobs e endpoint público chat-search com intent→busca determinística, proteções e fallback seguro (API-01, API-02, API-03)
+- [x] 20-01-PLAN.md — Contrato/schemas, knobs e endpoint público chat-search com intent→busca determinística, proteções e fallback seguro (API-01, API-02, API-03)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -92,6 +92,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 19. Contrato de intenção e mapeamento seguro | 2/2 | Complete | 2026-11-17 |
-| 20. API pública de chat-search resiliente | 0/2 | Planned | - |
+| 20. API pública de chat-search resiliente | 1/2 | In Progress|  |
 | 21. Interface de chat e integração no board | 0/0 | Not started | - |
 | 22. Qualidade, hardening e validação operacional | 0/0 | Not started | - |
