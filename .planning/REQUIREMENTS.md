@@ -52,18 +52,18 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 
 ### Testes & Documentação
 
-- [ ] **TEST-01**: Testes unitários cobrem geração de texto (LLM mockado), classificação de erros e cálculo de backoff
-- [ ] **TEST-02**: Testes de integração cobrem `FacebookPublisher` e OAuth com Graph API mockada (sem chamadas reais em CI)
-- [ ] **TEST-03**: Testes de concorrência do worker (`SKIP LOCKED`) e idempotência (sem duplicatas)
+- [x] **TEST-01**: Testes unitários cobrem geração de texto (LLM mockado), classificação de erros e cálculo de backoff
+- [x] **TEST-02**: Testes de integração cobrem `FacebookPublisher` e OAuth com Graph API mockada (sem chamadas reais em CI)
+- [x] **TEST-03**: Testes de concorrência do worker (`SKIP LOCKED`) e idempotência (sem duplicatas)
 - [~] **TEST-04**: Roteiro de teste manual documentado para Página real com app Meta em modo desenvolvimento (documentado em `docs/META-INTEGRATION-TESTING.md` e handoff em `18-HANDOFFS.md`; execução real pendente de credenciais/app/página Meta — evidência parcial+handoff)
 - [~] **DOC-01**: Documentação inclui setup do app Meta, variáveis de ambiente, configuração do cron no Render (novo ou reaproveitado) e checklist de App Review/modo Live (documentado/alinhado em `docs/META-INTEGRATION-TESTING.md`, `docs/DEPLOY.md`, `backend/.env.example`, `frontend/.env.example`, `18-HANDOFFS.md`; execução operacional/App Review real pendente — evidência parcial+handoff)
 
 ### Carry-over: Fechamento de Gaps do Audit v1.1 (aceitos)
 
-- [ ] **AUD-01**: Fechar/validar requisitos de extração **EXTR-10/11/12** (chunking ≤6K sem perda, regra de ao menos um contato no ingest, fallback de modelo Groq sem saída silenciosa vazia) com evidência verificável
-- [ ] **AUD-02**: Fechar/validar requisitos públicos **PUBL-10/11/12/13/14** (board/cards/modal/reveal/candidatura) no escopo auditado com evidência
-- [ ] **AUD-03**: Fechar/validar requisitos de busca/filtro/ordenação **SRCH-10/11/12** com evidência
-- [ ] **AUD-04**: Fechar/validar requisitos de UI/tema/ads **UIUX-10/11/12** com evidência
+- [x] **AUD-01**: Fechar/validar requisitos de extração **EXTR-10/11/12** (chunking ≤6K sem perda, regra de ao menos um contato no ingest, fallback de modelo Groq sem saída silenciosa vazia) com evidência verificável
+- [x] **AUD-02**: Fechar/validar requisitos públicos **PUBL-10/11/12/13/14** (board/cards/modal/reveal/candidatura) no escopo auditado com evidência
+- [x] **AUD-03**: Fechar/validar requisitos de busca/filtro/ordenação **SRCH-10/11/12** com evidência
+- [x] **AUD-04**: Fechar/validar requisitos de UI/tema/ads **UIUX-10/11/12** com evidência
 - [~] **AUD-05**: Backfill rastreável criado em `.planning/phases/11-verify-phases-7-8-reveal-admin-review-evidence/11-VERIFICATION.md` (D-03) e caveats de 07/08 reconciliados com cross-ref/estado atual; rastreabilidade ancorada em `18-AUDIT-MATRIX.md` e audit v1.1. **Evidência parcial+handoff:** DB-backed suites ainda bloqueadas (`relation "jobs" does not exist`), verificações humanas/browser e smoke/runtime canônico permanecem pendentes (não fechado sem prova).
 
 ## v2 Requirements (Future)
@@ -115,15 +115,15 @@ Requirements for milestone v1.2 — Integração com Facebook Pages (publicaçã
 | PUB-08 | Phase 17 | Pending |
 | UI-01 | Phase 17 | Complete |
 | UI-02 | Phase 17 | Complete |
-| TEST-01 | Phase 18 | Pending |
-| TEST-02 | Phase 18 | Pending |
-| TEST-03 | Phase 18 | Pending |
+| TEST-01 | Phase 18 | Complete |
+| TEST-02 | Phase 18 | Complete |
+| TEST-03 | Phase 18 | Complete |
 | TEST-04 | Phase 18 | Evidência parcial+handoff (18-04: `docs/META-INTEGRATION-TESTING.md`, `18-HANDOFFS.md`; execução real pendente) |
 | DOC-01 | Phase 18 | Evidência parcial+handoff (18-04: `docs/META-INTEGRATION-TESTING.md`, `docs/DEPLOY.md`, `.env.example`, `18-HANDOFFS.md`) |
-| AUD-01 | Phase 18 | Pending |
-| AUD-02 | Phase 18 | Pending |
-| AUD-03 | Phase 18 | Pending |
-| AUD-04 | Phase 18 | Pending |
+| AUD-01 | Phase 18 | Complete |
+| AUD-02 | Phase 18 | Complete |
+| AUD-03 | Phase 18 | Complete |
+| AUD-04 | Phase 18 | Complete |
 | AUD-05 | Phase 18 | Evidência parcial+handoff (18-03: `11-VERIFICATION.md`, caveats 07/08 reconciliados, `18-AUDIT-MATRIX.md`) |
 
 ---
