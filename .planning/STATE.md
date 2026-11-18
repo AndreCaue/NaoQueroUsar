@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: planning
-stopped_at: Phase 21 context gathered
-last_updated: "2026-11-18T00:01:39.433Z"
-last_activity: 2026-11-18
+status: executing
+stopped_at: Phase 21 UI-SPEC approved
+last_updated: "2026-11-18T00:23:06.938Z"
+last_activity: 2026-11-18 -- Phase 21 execution started
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 4
+  total_plans: 6
   completed_plans: 4
   percent: 50
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-17)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 21 — interface de chat e integracao no board
+**Current focus:** Phase 21 — interface-de-chat-e-integracao-no-board
 
 ## Current Position
 
-Phase: 21
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-11-18
+Phase: 21 (interface-de-chat-e-integracao-no-board) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 21
+Last activity: 2026-11-18 -- Phase 21 execution started
 
 Progress: [██▌-------] 25%
 
@@ -99,6 +99,6 @@ Items acknowledged/deferred at or before v1.2 close (2026-11-17):
 
 ## Session Continuity
 
-Last session: 2026-11-18T00:01:39.395Z
-Stopped at: Phase 21 context gathered
-Resume file: .planning/phases/21-interface-de-chat-e-integracao-no-board/21-CONTEXT.md
+Last session: 2026-11-18T00:14:42.199Z
+Stopped at: Phase 21 UI-SPEC approved
+Resume file: .planning/phases/21-interface-de-chat-e-integracao-no-board/21-UI-SPEC.md
