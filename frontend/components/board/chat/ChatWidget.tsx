@@ -134,6 +134,8 @@ export function ChatWidget() {
     if (isLoadingMore || isSending) return;
     if (items.length >= total) return;
 
+    const queryAtStart = activeQuery;
+    const turnAtStart = activeTurnId;
     const nextPage = page + 1;
     const seq = ++requestSeq.current;
     activeRequestRef.current = seq;
@@ -141,15 +143,12 @@ export function ChatWidget() {
 
     try {
       const response = await chatSearch({
-        message: activeQuery,
+        message: queryAtStart,
         page: nextPage,
         limit,
       });
       if (activeRequestRef.current !== seq) return;
-      if (activeQuery !== response.interpretation.applied_params.q && activeQuery) {
-        // keep scope to active query by submitted message; ignore if query changed logically
-      }
-      // ensure still same active turn/query context
+      if (activeQuery !== queryAtStart || activeTurnId !== turnAtStart) return;
       setLastResponse((prev) => prev ?? response);
       setItems((prev) => [...prev, ...(response.results.items ?? [])]);
       setPage(response.results.page ?? nextPage);
@@ -157,6 +156,7 @@ export function ChatWidget() {
       setTotal(response.results.total ?? total);
     } catch (err) {
       if (activeRequestRef.current !== seq) return;
+      if (activeQuery !== queryAtStart || activeTurnId !== turnAtStart) return;
       const msg =
         err instanceof ApiError && err.message
           ? err.message
