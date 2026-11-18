@@ -511,3 +511,434 @@ async def test_chat_search_degraded_timeout_emits_structured_log(client, monkeyp
     assert rec.reason == "timeout"
     assert rec.results_count == 0
     assert rec.total == 0
+
+
+async def test_mvp_dev_pleno_sp_salary_equivalence_and_no_contacts(db_session, client, monkeypatch):
+    """MVP 1: dev pleno SP salário >= 8k (QA-01) — salary not native, SP applied."""
+    await _insert(
+        db_session,
+        title="Desenvolvedor Pleno React",
+        company="Empresa MVP",
+        city=SAO_PAULO,
+        contact_email="mvp1@example.com",
+        contact_phone="+55 11 90000-1001",
+    )
+    await _insert(
+        db_session,
+        title="Analista Financeiro",
+        company="Outra Empresa",
+        city=SAO_PAULO,
+        contact_email="nao-mvp1@example.com",
+    )
+
+    interpretation = IntentContract(
+        understood=UnderstoodIntent(
+            q="dev",
+            city="São Paulo",
+            salary={"min": 8000, "max": None, "currency": "BRL"},
+            seniority={"value": "pleno", "raw": "pleno"},
+            sort=None,
+        ),
+        field_statuses=[
+            FieldAssessment(
+                field="q",
+                understood="dev",
+                applied="dev pleno",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Termo de busca textual composto/normalizado e aplicado.",
+            ),
+            FieldAssessment(
+                field="city",
+                understood="SP",
+                applied="São Paulo",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Cidade normalizada e aplicada via whitelist segura.",
+            ),
+            FieldAssessment(
+                field="salary",
+                understood={"min": 8000, "max": None, "currency": "BRL"},
+                applied=None,
+                status=FieldStatus.IGNORADO,
+                reason_code="unsupported_structured_filter",
+                reason="Faixa salarial entendida, mas não há filtro salarial nativo; não aplicada.",
+            ),
+            FieldAssessment(
+                field="seniority",
+                understood={"value": "pleno", "raw": "pleno"},
+                applied={"q_terms": ["pleno"]},
+                status=FieldStatus.APROXIMADO,
+                reason_code="textual_approximation_in_q",
+                reason="Campo sem filtro estruturado nativo; usado como aproximação textual em q.",
+            ),
+            FieldAssessment(
+                field="sort",
+                understood=None,
+                applied=None,
+                status=FieldStatus.IGNORADO,
+                reason_code="not_explicit",
+                reason="Ordenação não informada explicitamente; nenhuma preferência aplicada.",
+            ),
+        ],
+        applied_params=AppliedParams(q="dev pleno", city=SAO_PAULO, sort=None),
+        limitations=["unsupported_structured_filter", "non_native_fields_limited", "textual_approximation_in_q"],
+        meta={},
+    )
+
+    async def fake_extract(*args, **kwargs):
+        return interpretation
+
+    monkeypatch.setattr("app.api.v1.public.extract_and_map_intent", fake_extract)
+
+    chat = await client.post(
+        "/api/v1/public/chat-search",
+        json={"message": "dev pleno SP salário >= 8k", "page": 1, "limit": 20},
+    )
+    assert chat.status_code == 200
+    body = chat.json()
+
+    jobs = await client.get(
+        "/api/v1/public/jobs",
+        params={"q": "dev pleno", "city": "sao-paulo", "sort": "recentes", "page": 1, "limit": 20},
+    )
+    assert jobs.status_code == 200
+    jobs_body = jobs.json()
+
+    assert body["interpretation"]["applied_params"] == {"q": "dev pleno", "city": SAO_PAULO, "sort": None}
+    assert body["results"]["total"] == jobs_body["total"]
+    assert [i["id"] for i in body["results"]["items"]] == [i["id"] for i in jobs_body["items"]]
+    _assert_no_contacts(body["results"]["items"])
+
+    salary_fs = next(fs for fs in body["interpretation"]["field_statuses"] if fs["field"] == "salary")
+    assert salary_fs["status"] == "ignorado"
+    assert salary_fs["reason_code"] == "unsupported_structured_filter"
+    assert salary_fs["applied"] is None
+
+
+async def test_mvp_remoto_frontend_react_clt_textual_approximation(db_session, client, monkeypatch):
+    """MVP 2: remoto frontend React preferência CLT (QA-01)."""
+    await _insert(
+        db_session,
+        title="Frontend React CLT",
+        company="Empresa Remota",
+        city="Remoto",
+        contact_email="mvp2@example.com",
+    )
+    await _insert(
+        db_session,
+        title="Analista Presencial",
+        company="Outra",
+        city=SAO_PAULO,
+        contact_phone="+55 11 90000-2002",
+    )
+
+    interpretation = IntentContract(
+        understood=UnderstoodIntent(
+            q="frontend React",
+            city="Remoto",
+            work_mode={"value": "remoto", "raw": "remoto"},
+            contract_type={"value": "clt", "raw": "CLT"},
+            sort=None,
+        ),
+        field_statuses=[
+            FieldAssessment(
+                field="q",
+                understood="frontend React",
+                applied="frontend React CLT",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Termo de busca textual composto/normalizado e aplicado.",
+            ),
+            FieldAssessment(
+                field="city",
+                understood="Remoto",
+                applied="Remoto",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Cidade normalizada e aplicada via whitelist segura.",
+            ),
+            FieldAssessment(
+                field="work_mode",
+                understood={"value": "remoto", "raw": "remoto"},
+                applied="Remoto",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Modalidade remota aplicada como cidade na whitelist.",
+            ),
+            FieldAssessment(
+                field="contract_type",
+                understood={"value": "clt", "raw": "CLT"},
+                applied={"q_terms": ["CLT"]},
+                status=FieldStatus.APROXIMADO,
+                reason_code="textual_approximation_in_q",
+                reason="Campo sem filtro estruturado nativo; usado como aproximação textual em q.",
+            ),
+        ],
+        applied_params=AppliedParams(q="frontend React CLT", city="Remoto", sort=None),
+        limitations=["non_native_fields_limited", "textual_approximation_in_q"],
+        meta={},
+    )
+
+    async def fake_extract(*args, **kwargs):
+        return interpretation
+
+    monkeypatch.setattr("app.api.v1.public.extract_and_map_intent", fake_extract)
+
+    chat = await client.post(
+        "/api/v1/public/chat-search",
+        json={"message": "remoto frontend React preferência CLT", "page": 1, "limit": 20},
+    )
+    assert chat.status_code == 200
+    body = chat.json()
+
+    jobs = await client.get(
+        "/api/v1/public/jobs",
+        params={"q": "frontend React CLT", "city": "remoto", "sort": "recentes", "page": 1, "limit": 20},
+    )
+    assert jobs.status_code == 200
+    jobs_body = jobs.json()
+
+    assert body["interpretation"]["applied_params"]["city"] == "Remoto"
+    assert "react" in (body["interpretation"]["applied_params"]["q"] or "").lower()
+    assert body["results"]["total"] == jobs_body["total"]
+    assert [i["id"] for i in body["results"]["items"]] == [i["id"] for i in jobs_body["items"]]
+    _assert_no_contacts(body["results"]["items"])
+
+
+async def test_mvp_parecidas_seed_textual_limitado_no_semantic_link_id(db_session, client, monkeypatch):
+    """MVP 3: vagas parecidas com uma vaga = seed textual limitado (QA-01/D-02)."""
+    await _insert(
+        db_session,
+        title="Analista de Marketing Digital",
+        company="Empresa Seed",
+        city=SAO_PAULO,
+        contact_email="seed@example.com",
+    )
+
+    interpretation = IntentContract(
+        understood=UnderstoodIntent(q="analista marketing", city=None, sort=None),
+        field_statuses=[
+            FieldAssessment(
+                field="q",
+                understood="analista marketing",
+                applied="analista marketing",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Termo de busca textual normalizado e aplicado.",
+            ),
+        ],
+        applied_params=AppliedParams(q="analista marketing", city=None, sort=None),
+        limitations=[],
+        meta={"guidance": "Busca por termos semelhantes (seed textual limitado), sem similaridade semântica/vetorial e sem link/ID de vaga."},
+    )
+
+    async def fake_extract(*args, **kwargs):
+        return interpretation
+
+    monkeypatch.setattr("app.api.v1.public.extract_and_map_intent", fake_extract)
+
+    chat = await client.post(
+        "/api/v1/public/chat-search",
+        json={"message": "vagas parecidas com uma vaga de analista de marketing", "page": 1, "limit": 20},
+    )
+    assert chat.status_code == 200
+    body = chat.json()
+
+    jobs = await client.get(
+        "/api/v1/public/jobs",
+        params={"q": "analista marketing", "sort": "recentes", "page": 1, "limit": 20},
+    )
+    assert jobs.status_code == 200
+    jobs_body = jobs.json()
+
+    assert body["interpretation"]["applied_params"]["q"] == "analista marketing"
+    assert body["results"]["total"] == jobs_body["total"]
+    assert [i["id"] for i in body["results"]["items"]] == [i["id"] for i in jobs_body["items"]]
+    _assert_no_contacts(body["results"]["items"])
+
+    # Seed is textual-only in q: no semantic/vector similarity and no link/ID-based seed support.
+    guidance = str(((body.get("interpretation") or {}).get("meta") or {}).get("guidance", "")).lower()
+    assert "seed textual" in guidance
+    assert "sem" in guidance and "vet" in guidance
+    assert "link/id" in guidance
+
+    forbidden_capability_keys = {
+        "seed_id",
+        "seed_link",
+        "seed_url",
+        "reference_job_id",
+        "similarity_score",
+        "vector",
+        "vectors",
+        "embedding",
+        "embeddings",
+        "semantic_search",
+    }
+    assert forbidden_capability_keys.isdisjoint(set(body.keys()))
+    assert forbidden_capability_keys.isdisjoint(set((body.get("interpretation") or {}).keys()))
+    assert forbidden_capability_keys.isdisjoint(set(((body.get("interpretation") or {}).get("meta") or {}).keys()))
+    applied_params_obj = (body.get("interpretation") or {}).get("applied_params") or {}
+    assert isinstance(applied_params_obj, dict)
+    assert forbidden_capability_keys.isdisjoint(set(applied_params_obj.keys()))
+
+
+async def test_mvp_campinas_ou_remoto_salary_partial_support_signaled(db_session, client, monkeypatch):
+    """MVP 4: analista de dados Campinas ou remoto 6–10k (QA-01)."""
+    await _insert(
+        db_session,
+        title="Analista de Dados BI",
+        company="Empresa Dados",
+        city="Remoto",
+        contact_email="mvp4@example.com",
+    )
+
+    interpretation = IntentContract(
+        understood=UnderstoodIntent(
+            q="analista de dados",
+            city="Campinas",
+            salary={"min": 6000, "max": 10000, "currency": "BRL"},
+            sort=None,
+        ),
+        field_statuses=[
+            FieldAssessment(
+                field="q",
+                understood="analista de dados",
+                applied="analista de dados",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Termo de busca textual normalizado e aplicado.",
+            ),
+            FieldAssessment(
+                field="city",
+                understood="Campinas",
+                applied=None,
+                status=FieldStatus.IGNORADO,
+                reason_code="not_in_whitelist",
+                reason="Cidade fora da whitelist suportada; não aplicada.",
+            ),
+            FieldAssessment(
+                field="salary",
+                understood={"min": 6000, "max": 10000, "currency": "BRL"},
+                applied=None,
+                status=FieldStatus.IGNORADO,
+                reason_code="unsupported_structured_filter",
+                reason="Faixa salarial entendida, mas não há filtro salarial nativo; não aplicada.",
+            ),
+        ],
+        applied_params=AppliedParams(q="analista de dados", city=None, sort=None),
+        limitations=["not_in_whitelist", "unsupported_structured_filter", "non_native_fields_limited"],
+        meta={"guidance": "Cidade fora da whitelist e faixa salarial sem filtro nativo; refine na busca manual."},
+    )
+
+    async def fake_extract(*args, **kwargs):
+        return interpretation
+
+    monkeypatch.setattr("app.api.v1.public.extract_and_map_intent", fake_extract)
+
+    chat = await client.post(
+        "/api/v1/public/chat-search",
+        json={"message": "analista de dados Campinas ou remoto 6–10k", "page": 1, "limit": 20},
+    )
+    assert chat.status_code == 200
+    body = chat.json()
+
+    jobs = await client.get(
+        "/api/v1/public/jobs",
+        params={"q": "analista de dados", "sort": "recentes", "page": 1, "limit": 20},
+    )
+    assert jobs.status_code == 200
+    jobs_body = jobs.json()
+
+    assert body["interpretation"]["applied_params"]["city"] is None
+    assert body["interpretation"]["applied_params"]["q"] == "analista de dados"
+    assert body["results"]["total"] == jobs_body["total"]
+    assert [i["id"] for i in body["results"]["items"]] == [i["id"] for i in jobs_body["items"]]
+    _assert_no_contacts(body["results"]["items"])
+
+    interp = body["interpretation"]
+    reason_codes = {fs.get("reason_code") for fs in interp.get("field_statuses") or []}
+    limitations = set(interp.get("limitations") or [])
+    assert "not_in_whitelist" in reason_codes or "not_in_whitelist" in limitations
+    assert "unsupported_structured_filter" in reason_codes or "unsupported_structured_filter" in limitations
+    combined = " ".join([str((interp.get("meta") or {}).get("guidance", ""))] + list(interp.get("limitations") or [])).lower()
+    assert any(token in combined for token in ["campinas", "whitelist", "sal", "manual", "suport", "aproxima", "limita"])
+
+
+async def test_mvp_estagio_marketing_digital_sp_equivalence(db_session, client, monkeypatch):
+    """MVP 5: estágio marketing digital em SP (QA-01)."""
+    await _insert(
+        db_session,
+        title="Estágio Marketing Digital",
+        company="Agência SP",
+        city=SAO_PAULO,
+        contact_email="mvp5@example.com",
+    )
+    await _insert(
+        db_session,
+        title="Analista de Dados Remoto",
+        company="Outra Empresa",
+        city="Remoto",
+    )
+
+    interpretation = IntentContract(
+        understood=UnderstoodIntent(
+            q="marketing digital",
+            city="São Paulo",
+            seniority={"value": "estagio", "raw": "estágio"},
+            sort=None,
+        ),
+        field_statuses=[
+            FieldAssessment(
+                field="q",
+                understood="marketing digital",
+                applied="marketing digital estágio",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Termo de busca textual composto/normalizado e aplicado.",
+            ),
+            FieldAssessment(
+                field="city",
+                understood="SP",
+                applied="São Paulo",
+                status=FieldStatus.APLICADO,
+                reason_code="normalized",
+                reason="Cidade normalizada e aplicada via whitelist segura.",
+            ),
+            FieldAssessment(
+                field="seniority",
+                understood={"value": "estagio", "raw": "estágio"},
+                applied={"q_terms": ["estágio"]},
+                status=FieldStatus.APROXIMADO,
+                reason_code="textual_approximation_in_q",
+                reason="Campo sem filtro estruturado nativo; usado como aproximação textual em q.",
+            ),
+        ],
+        applied_params=AppliedParams(q="marketing digital estágio", city=SAO_PAULO, sort=None),
+        limitations=["non_native_fields_limited", "textual_approximation_in_q"],
+        meta={},
+    )
+
+    async def fake_extract(*args, **kwargs):
+        return interpretation
+
+    monkeypatch.setattr("app.api.v1.public.extract_and_map_intent", fake_extract)
+
+    chat = await client.post(
+        "/api/v1/public/chat-search",
+        json={"message": "estágio marketing digital em SP", "page": 1, "limit": 20},
+    )
+    assert chat.status_code == 200
+    body = chat.json()
+
+    jobs = await client.get(
+        "/api/v1/public/jobs",
+        params={"q": "marketing digital estágio", "city": "sao-paulo", "sort": "recentes", "page": 1, "limit": 20},
+    )
+    assert jobs.status_code == 200
+    jobs_body = jobs.json()
+
+    assert body["interpretation"]["applied_params"]["city"] == SAO_PAULO
+    assert body["results"]["total"] == jobs_body["total"]
+    assert [i["id"] for i in body["results"]["items"]] == [i["id"] for i in jobs_body["items"]]
+    _assert_no_contacts(body["results"]["items"])

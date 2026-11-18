@@ -23,12 +23,14 @@
 | Mapper MVP 3 | `backend/tests/test_intent_mapper.py::test_mvp_parecidas_com_vaga_seed_textual_limitado_sem_link_id` | "parecidas" = seed textual em `q` apenas; sem semântica/vetor/link/ID | PASS (suite intent pura) |
 | Mapper MVP 4 | `backend/tests/test_intent_mapper.py::test_mvp_analista_dados_campinas_ou_remoto_salary_combo` | `Campinas` `not_in_whitelist`/ignorada, combinação com remoto/salário sinalizada por campo conforme contrato | PASS (suite intent pura) |
 | Mapper MVP 5 | `backend/tests/test_intent_mapper.py::test_mvp_estagio_marketing_digital_em_sp` | SP whitelist aplicada, termos de estágio/marketing/digital refletidos sem filtros inventados | PASS (suite intent pura) |
-| API chat-search MVP 1 | `backend/tests/test_chat_search_api.py::test_mvp_dev_pleno_sp_salary_equivalence_and_no_contacts` | Interpretação + equivalência a `GET /api/v1/public/jobs` (`applied_params`), `JobPublic` sem contatos, salário não nativo | PENDENTE de ambiente DB (`TEST_DATABASE_URL`/`DATABASE_URL` migrado) — não executado neste ambiente sem DB de testes configurado |
-| API chat-search MVP 2 | `backend/tests/test_chat_search_api.py::test_mvp_remoto_frontend_react_clt_textual_approximation` | Remoto/termos textuais, equivalência determinística, sem contatos | PENDENTE de ambiente DB |
-| API chat-search MVP 3 | `backend/tests/test_chat_search_api.py::test_mvp_parecidas_seed_textual_limitado_no_semantic_link_id` | Seed textual limitado em `q`, sem semântica/vetor/link/ID, resposta segura | PENDENTE de ambiente DB |
-| API chat-search MVP 4 | `backend/tests/test_chat_search_api.py::test_mvp_campinas_ou_remoto_salary_partial_support_signaled` | `Campinas` não aplicada (`not_in_whitelist`), salário não nativo, suporte parcial sinalizado, sem contatos | PENDENTE de ambiente DB |
-| API chat-search MVP 5 | `backend/tests/test_chat_search_api.py::test_mvp_estagio_marketing_digital_sp_equivalence` | SP aplicada + equivalência determinística, sem contatos | PENDENTE de ambiente DB |
-| Contratos críticos existentes | `backend/tests/test_chat_search_api.py` (degradação, privacidade, rate limit, disabled/logging), `backend/tests/test_ratelimit.py` | Privacidade (`JobPublic` sem contatos), timeout/`llm_unavailable`/`no_extractable_params`, `chat_disabled`, limites/rate limit | PENDENTE de ambiente DB para suíte DB-backed; intent/rate-limit puro conforme harness |
+| API chat-search MVP 1 | `backend/tests/test_chat_search_api.py::test_mvp_dev_pleno_sp_salary_equivalence_and_no_contacts` | Interpretação + equivalência a `GET /api/v1/public/jobs` (`applied_params`), `JobPublic` sem contatos, salário não nativo | PASS (`python -m pytest -q tests/test_chat_search_api.py tests/test_ratelimit.py`, ambiente com DB de testes) |
+| API chat-search MVP 2 | `backend/tests/test_chat_search_api.py::test_mvp_remoto_frontend_react_clt_textual_approximation` | Remoto/termos textuais, equivalência determinística, sem contatos | PASS (suíte DB-backed) |
+| API chat-search MVP 3 | `backend/tests/test_chat_search_api.py::test_mvp_parecidas_seed_textual_limitado_no_semantic_link_id` | Seed textual limitado em `q`, sem semântica/vetor/link/ID, resposta segura | PASS (suíte DB-backed) |
+| API chat-search MVP 4 | `backend/tests/test_chat_search_api.py::test_mvp_campinas_ou_remoto_salary_partial_support_signaled` | `Campinas` não aplicada (`not_in_whitelist`), salário não nativo, suporte parcial sinalizado, sem contatos | PASS (suíte DB-backed) |
+| API chat-search MVP 5 | `backend/tests/test_chat_search_api.py::test_mvp_estagio_marketing_digital_sp_equivalence` | SP aplicada + equivalência determinística, sem contatos | PASS (suíte DB-backed) |
+| Contratos críticos existentes | `backend/tests/test_chat_search_api.py` (degradação, privacidade, rate limit, disabled/logging), `backend/tests/test_ratelimit.py` | Privacidade (`JobPublic` sem contatos), timeout/`llm_unavailable`/`no_extractable_params`, `chat_disabled`, limites/rate limit | PASS (suíte DB-backed executada neste ambiente; intent/rate-limit puros também verificados) |
+
+> Execuções automatizadas observadas neste ambiente: suites intent puras (30 passed) e suites DB-backed chat/rate-limit (33 passed), com LLM mockado e sem chamadas externas. Em ambientes sem DB de testes configurado/migrado, a execução DB-backed permanece dependente de pré-requisito.
 
 > Observação: execuções DB-backed não foram afirmadas como concluídas sem ambiente. Os casos MVP de API estão implementados como testes determinísticos com `extract_and_map_intent` mockado e devem ser executados em ambiente com banco de testes migrado.
 
@@ -60,7 +62,7 @@
 
 ### Contrato esperado + Resultado observado
 - **Contrato esperado:** cidade SP aplicada com segurança; salário entendido porém não aplicado como filtro estruturado; senioridade aproximada textualmente; resultados equivalentes ao board público sem contatos.
-- **Resultado observado:** contrato de mapeamento determinístico validado por `backend/tests/test_intent_mapper.py::test_mvp_dev_pleno_sp_salary_not_native` (PASS, suite intent pura). Equivalência/privacidade de API para este cenário coberta por `backend/tests/test_chat_search_api.py::test_mvp_dev_pleno_sp_salary_equivalence_and_no_contacts` (implementado, execução DB-backed pendente de ambiente).
+- **Resultado observado:** contrato de mapeamento determinístico validado por `backend/tests/test_intent_mapper.py::test_mvp_dev_pleno_sp_salary_not_native` (PASS, suite intent pura). Equivalência/privacidade de API validada por `backend/tests/test_chat_search_api.py::test_mvp_dev_pleno_sp_salary_equivalence_and_no_contacts` (PASS, suíte DB-backed com LLM mockado).
 
 ### Evidência
 - `backend/tests/test_intent_mapper.py` (`test_mvp_dev_pleno_sp_salary_not_native`)
@@ -91,7 +93,7 @@
 
 ### Contrato esperado + Resultado observado
 - **Contrato esperado:** remoto aplicado com segurança quando suportado; React/CLT refletidos como busca/aproximação textual sem prometer filtro nativo de contrato/modalidade além do contrato atual.
-- **Resultado observado:** mapeamento determinístico validado por `backend/tests/test_intent_mapper.py::test_mvp_remoto_frontend_react_clt_textual_approximation` (PASS, suite intent pura). Equivalência/privacidade de API coberta por `backend/tests/test_chat_search_api.py::test_mvp_remoto_frontend_react_clt_textual_approximation` (implementado, execução DB-backed pendente de ambiente).
+- **Resultado observado:** mapeamento determinístico validado por `backend/tests/test_intent_mapper.py::test_mvp_remoto_frontend_react_clt_textual_approximation` (PASS, suite intent pura). Equivalência/privacidade de API validada por `backend/tests/test_chat_search_api.py::test_mvp_remoto_frontend_react_clt_textual_approximation` (PASS, suíte DB-backed com LLM mockado).
 
 ### Evidência
 - `backend/tests/test_intent_mapper.py` (`test_mvp_remoto_frontend_react_clt_textual_approximation`)
@@ -120,7 +122,7 @@
 
 ### Contrato esperado + Resultado observado
 - **Contrato esperado:** apenas seed textual em `q` (quando possível), com limitações explícitas; nunca afirmar semântica/vetor/link/ID.
-- **Resultado observado:** mapeamento determinístico (seed textual em `q`, sem campos/metadados de semântica/link/ID) validado por `backend/tests/test_intent_mapper.py::test_mvp_parecidas_com_vaga_seed_textual_limitado_sem_link_id` (PASS, suite intent pura). Contrato de API (mockado) para seed textual limitado coberto por `backend/tests/test_chat_search_api.py::test_mvp_parecidas_seed_textual_limitado_no_semantic_link_id` (implementado, execução DB-backed pendente de ambiente).
+- **Resultado observado:** mapeamento determinístico (seed textual em `q`, sem campos/metadados de semântica/link/ID) validado por `backend/tests/test_intent_mapper.py::test_mvp_parecidas_com_vaga_seed_textual_limitado_sem_link_id` (PASS, suite intent pura). Contrato de API (mockado) para seed textual limitado validado por `backend/tests/test_chat_search_api.py::test_mvp_parecidas_seed_textual_limitado_no_semantic_link_id` (PASS, suíte DB-backed com LLM mockado).
 
 ### Evidência
 - `backend/tests/test_intent_mapper.py` (`test_mvp_parecidas_com_vaga_seed_textual_limitado_sem_link_id`)
@@ -155,7 +157,7 @@
 
 ### Contrato esperado + Resultado observado
 - **Contrato esperado:** `Campinas` rejeitada por whitelist (`not_in_whitelist`), salário não nativo ignorado, termos textuais aplicáveis em `q`, limitações explícitas por campo.
-- **Resultado observado:** mapeamento determinístico validado por `backend/tests/test_intent_mapper.py::test_mvp_analista_dados_campinas_ou_remoto_salary_combo` (PASS, suite intent pura) cobrindo `not_in_whitelist` e salário não nativo sem filtros inventados. Resposta/contrato de API para combinação e sinalização de suporte parcial coberta por `backend/tests/test_chat_search_api.py::test_mvp_campinas_ou_remoto_salary_partial_support_signaled` (implementado, execução DB-backed pendente de ambiente).
+- **Resultado observado:** mapeamento determinístico validado por `backend/tests/test_intent_mapper.py::test_mvp_analista_dados_campinas_ou_remoto_salary_combo` (PASS, suite intent pura) cobrindo `not_in_whitelist` e salário não nativo sem filtros inventados. Resposta/contrato de API para combinação e sinalização de suporte parcial validado por `backend/tests/test_chat_search_api.py::test_mvp_campinas_ou_remoto_salary_partial_support_signaled` (PASS, suíte DB-backed com LLM mockado).
 
 ### Evidência
 - `backend/tests/test_intent_mapper.py` (`test_mvp_analista_dados_campinas_ou_remoto_salary_combo`)
@@ -185,7 +187,7 @@
 
 ### Contrato esperado + Resultado observado
 - **Contrato esperado:** SP aplicada com segurança; termos de estágio/marketing/digital refletidos no entendimento/`q` suportado sem inventar filtros.
-- **Resultado observado:** mapeamento determinístico validado por `backend/tests/test_intent_mapper.py::test_mvp_estagio_marketing_digital_em_sp` (PASS, suite intent pura). Equivalência/privacidade de API coberta por `backend/tests/test_chat_search_api.py::test_mvp_estagio_marketing_digital_sp_equivalence` (implementado, execução DB-backed pendente de ambiente).
+- **Resultado observado:** mapeamento determinístico validado por `backend/tests/test_intent_mapper.py::test_mvp_estagio_marketing_digital_em_sp` (PASS, suite intent pura). Equivalência/privacidade de API validada por `backend/tests/test_chat_search_api.py::test_mvp_estagio_marketing_digital_sp_equivalence` (PASS, suíte DB-backed com LLM mockado).
 
 ### Evidência
 - `backend/tests/test_intent_mapper.py` (`test_mvp_estagio_marketing_digital_em_sp`)

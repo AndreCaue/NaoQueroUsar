@@ -124,3 +124,172 @@ def test_applied_params_never_invent_city_or_sort() -> None:
     assert s.applied_params.sort is None
     assert s.applied_params.sort in {None, "recentes", "antigas"}
     assert s.applied_params.sort != "recentes"  # must not be invented when not explicit
+
+
+def test_mvp_dev_pleno_sp_salary_not_native() -> None:
+    """MVP: dev pleno SP salário >= 8k (QA-01)."""
+    contract = map_intent(
+        IntentLLMOutput.model_validate(
+            {
+                "q": "dev",
+                "city": "SP",
+                "salary": {"min": 8000, "max": None, "currency": "BRL"},
+                "seniority": {"value": "pleno", "raw": "pleno"},
+            }
+        ),
+        raw_text="dev pleno SP salário >= 8k",
+    )
+
+    assert contract.applied_params.city == "São Paulo"
+    assert _field(contract, "city").status == "aplicado"
+
+    assert contract.applied_params.q is not None
+    q_lower = contract.applied_params.q.lower()
+    assert "dev" in q_lower
+    assert "pleno" in q_lower
+
+    fs_salary = _field(contract, "salary")
+    assert fs_salary.status == "ignorado"
+    assert fs_salary.reason_code == "unsupported_structured_filter"
+    assert fs_salary.applied is None
+
+    fs_seniority = _field(contract, "seniority")
+    assert fs_seniority.status == "aproximado"
+    assert fs_seniority.reason_code == "textual_approximation_in_q"
+
+    assert contract.applied_params.sort is None
+    assert "unsupported_structured_filter" in contract.limitations
+    assert all(fs.applied != {"native_salary_filter": True} for fs in contract.field_statuses)
+
+
+def test_mvp_remoto_frontend_react_clt_textual_approximation() -> None:
+    """MVP: remoto frontend React preferência CLT (QA-01)."""
+    contract = map_intent(
+        IntentLLMOutput.model_validate(
+            {
+                "q": "frontend React",
+                "city": "Remoto",
+                "work_mode": {"value": "remoto", "raw": "remoto"},
+                "contract_type": {"value": "clt", "raw": "CLT"},
+            }
+        ),
+        raw_text="remoto frontend React preferência CLT",
+    )
+
+    assert contract.applied_params.city == "Remoto"
+    assert _field(contract, "city").status == "aplicado"
+
+    # Remote modality represented via applied whitelist city (safe behavior).
+    assert _field(contract, "work_mode").status == "aplicado"
+
+    assert contract.applied_params.q is not None
+    q_lower = contract.applied_params.q.lower()
+    assert "react" in q_lower
+    assert "frontend" in q_lower
+    assert "clt" in q_lower
+
+    fs_contract = _field(contract, "contract_type")
+    assert fs_contract.status == "aproximado"
+    assert fs_contract.reason_code == "textual_approximation_in_q"
+
+
+def test_mvp_parecidas_com_vaga_seed_textual_limitado_sem_link_id() -> None:
+    """MVP: vagas parecidas com uma vaga (seed textual limitado, QA-01/D-02)."""
+    raw_text = "vagas parecidas com uma vaga de analista de marketing"
+    contract = map_intent(
+        IntentLLMOutput.model_validate({"q": "analista marketing"}),
+        raw_text=raw_text,
+    )
+
+    assert contract.applied_params.q is not None
+    q_lower = contract.applied_params.q.lower()
+    assert "analista" in q_lower
+    assert "marketing" in q_lower
+    assert contract.applied_params.city is None
+    assert contract.applied_params.sort is None
+
+    # No semantic/vector similarity and no link/ID-based seed support in contract.
+    dumped = contract.model_dump(mode="json")
+    blob = str(dumped).lower()
+    assert "semantic" not in blob
+    assert "semant" not in blob
+    assert "vector" not in blob
+    assert "embedding" not in blob
+    assert "seed_id" not in blob
+    assert "vaga_id" not in blob
+    assert "job_id" not in blob
+    assert "http://" not in blob
+    assert "https://" not in blob
+
+    for key in ("seed_id", "seed_link", "seed_url", "reference_job_id", "similarity", "vector", "embedding"):
+        assert key not in dumped
+        assert key not in (dumped.get("meta") or {})
+        assert key not in (dumped.get("understood") or {})
+        assert key not in (dumped.get("applied_params") or {})
+
+
+def test_mvp_analista_dados_campinas_ou_remoto_salary_combo() -> None:
+    """MVP: analista de dados Campinas ou remoto 6–10k (QA-01)."""
+    raw_text = "analista de dados Campinas ou remoto 6–10k"
+    contract = map_intent(
+        IntentLLMOutput.model_validate(
+            {
+                "q": "analista de dados",
+                "city": "Campinas",
+                "salary": {"min": 6000, "max": 10000, "currency": "BRL"},
+            }
+        ),
+        raw_text=raw_text,
+    )
+
+    # Campinas is outside whitelist and must not be applied as city.
+    assert contract.applied_params.city is None
+    fs_city = _field(contract, "city")
+    assert fs_city.status == "ignorado"
+    assert fs_city.reason_code == "not_in_whitelist"
+
+    # Current deterministic mapping: candidate city provided as non-whitelisted Campinas,
+    # so remote alternative in raw text is not promoted to applied city (explicit limitation).
+    assert contract.applied_params.city != "Remoto"
+
+    # Salary is understood but has no native structured filter.
+    fs_salary = _field(contract, "salary")
+    assert fs_salary.status == "ignorado"
+    assert fs_salary.reason_code == "unsupported_structured_filter"
+    assert fs_salary.applied is None
+
+    assert contract.applied_params.q is not None
+    q_lower = contract.applied_params.q.lower()
+    assert "analista" in q_lower
+    assert "dados" in q_lower
+
+    assert "unsupported_structured_filter" in contract.limitations
+    assert "not_in_whitelist" in {_field(contract, "city").reason_code} or "not_in_whitelist" in contract.limitations
+
+
+def test_mvp_estagio_marketing_digital_em_sp() -> None:
+    """MVP: estágio marketing digital em SP (QA-01)."""
+    contract = map_intent(
+        IntentLLMOutput.model_validate(
+            {
+                "q": "marketing digital",
+                "city": "SP",
+                "seniority": {"value": "estagio", "raw": "estágio"},
+            }
+        ),
+        raw_text="estágio marketing digital em SP",
+    )
+
+    assert contract.applied_params.city == "São Paulo"
+    assert _field(contract, "city").status == "aplicado"
+
+    assert contract.applied_params.q is not None
+    q_lower = contract.applied_params.q.lower()
+    assert "marketing" in q_lower
+    assert "digital" in q_lower
+    assert "estag" in q_lower  # textual approximation/reflection of estágio
+
+    fs_seniority = _field(contract, "seniority")
+    assert fs_seniority.status in {"aproximado", "aplicado"}
+    if fs_seniority.status == "aproximado":
+        assert fs_seniority.reason_code == "textual_approximation_in_q"
