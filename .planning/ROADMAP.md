@@ -10,7 +10,7 @@
 
 - [x] **Phase 19: Contrato de intenção e mapeamento seguro** - Extrair intenção pt-BR em JSON estrito e mapear com segurança para a busca existente
 - [x] **Phase 20: API pública de chat-search resiliente** - Expor endpoint público protegido que combina extração e busca determinística sem expor contatos (completed 2026-11-17)
-- [ ] **Phase 21: Interface de chat e integração no board** - Oferecer chat mobile-first no board com interpretação transparente e aplicação na busca canônica
+- [x] **Phase 21: Interface de chat e integração no board** - Oferecer chat mobile-first no board com interpretação transparente e aplicação na busca canônica (completed 2026-11-18)
 - [ ] **Phase 22: Qualidade, hardening e validação operacional** - Validar exemplos MVP, cobrir fluxos críticos e garantir controles operacionais mínimos
 
 ## Phase Details
@@ -93,5 +93,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 19. Contrato de intenção e mapeamento seguro | 2/2 | Complete | 2026-11-17 |
 | 20. API pública de chat-search resiliente | 2/2 | Complete    | 2026-11-18 |
-| 21. Interface de chat e integração no board | 1/2 | In Progress|  |
+| 21. Interface de chat e integração no board | 2/2 | Complete   | 2026-11-18 |
 | 22. Qualidade, hardening e validação operacional | 0/0 | Not started | - |
