@@ -360,22 +360,19 @@ assert resp.status_code == 200
 | A3 | `backend/tests/conftest.py` DB-skip whitelist can be safely extended to include pure intent unit tests (schema/mapper/parser/client) if they remain fixture-independent, improving QA-02 executability without DB. | Validation Architecture / Pitfalls | If those tests rely (now/future) on app/db fixtures, they must stay DB-gated; planner should verify per-file dependencies. |
 | A4 | “Carregar mais” pagination and degraded/disabled UI states are sufficiently covered by existing Phase 21 UAT evidence for regression, needing only targeted runbook steps/cases in Phase 22 (not new browser automation). | QA-02 / Open Questions | Residual UI regressions could slip; mitigated by explicit manual checklist and preserved pure-logic tests. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Exact disabled-state signaling shape and frontend fail-safe default**
+1. **Exact disabled-state signaling shape and frontend fail-safe default** — **RESOLVED (Plans 22-01/02/03).**
    - What we know: D-06/UI-SPEC require backend-safe controlled response and frontend consult/signal to hide launcher/panel when disabled; board must not block. [VERIFIED]
-   - What's unclear: whether to add a dedicated status endpoint, a field in an existing response, or another mechanism; and whether status-fetch failure should default to “show launcher (backend-enforced)” or “hide launcher”.
-   - Recommendation: implement explicit backend flag + lightweight status endpoint returning `{enabled: boolean}` and handle disabled response reason `chat_disabled`; on status uncertainty prefer not blocking board and rely on backend enforcement, but favor hiding only on confirmed-disabled to meet UI-SPEC (planner to choose exact fail-safe and encode tests/runbook).
+   - Resolution: enforce `CHAT_SEARCH_ENABLED` at the backend chat boundary with a controlled 200 disabled contract (`degradation_reason="chat_disabled"`, safe pt-BR guidance, empty `JobPublic` results, `applied_params` null, no internals/LLM/DB coupling) and expose an explicit lightweight public status signal returning `{"enabled": boolean}` for frontend consumption. Frontend consults status and hides the launcher/panel only when disabled is confirmed (backend remains authoritative; status uncertainty must not block board render/manual search and fail-safe behavior/tests/runbook follow the planned contract).
 
-2. **Structured log format compatibility with `configure_logging`**
+2. **Structured log format compatibility with `configure_logging`** — **RESOLVED (Plans 22-01/03).**
    - What we know: stdlib text formatter (`%(asctime)s %(levelname)s %(name)s %(message)s`) is configured; `extra` fields are attachable to records. [VERIFIED: `core/logging.py`]
-   - What's unclear: whether operators require JSON lines or if `extra` inspection/caplog is sufficient for “logs estruturados”.
-   - Recommendation: emit stable `logger.info("chat_search", extra={...})` with required fields and, if useful, include a compact key=value message; avoid new logging deps; verify via `caplog.records` in tests.
+   - Resolution: emit one stable `logger.info("chat_search", extra={...})` per request at the chat boundary with safe fields only (`outcome`, `reason`/`degradation_reason`, `latency_ms`, `results_count`/`total`, `page`/`limit` as applicable). No new logging dependencies and never log message text, contacts, or PII; correctness verified via `caplog`/record inspection in tests.
 
-3. **DB-backed test executability in target environment**
+3. **DB-backed test executability in target environment** — **RESOLVED (Plans 22-01/03, validation artifacts).**
    - What we know: most suites (including `test_chat_search_api.py`) are skipped without `TEST_DATABASE_URL`/`DATABASE_URL`; pure intent files currently not in DB-independent whitelist. [VERIFIED: `conftest.py`]
-   - What's unclear: whether CI/local env provides migrated test DB for Phase 22 validation runs.
-   - Recommendation: mark DB-backed commands as prerequisite-gated in Validation Architecture; whitelist truly pure tests where safe; never claim DB-suite execution without evidence.
+   - Resolution: treat DB-backed `test_chat_search_api.py` execution as prerequisite/environment-gated (`TEST_DATABASE_URL`/`DATABASE_URL` with migrated schema) and do not claim execution without environment evidence. Whitelist truly fixture-free pure intent unit suites as DB-independent where safe to improve QA-02 executability, and capture MVP/manual evidence in `22-MVP-EXAMPLES.md`/`22-MANUAL-UAT.md` per D-01/D-03/D-04.
 
 ## Environment Availability
 
