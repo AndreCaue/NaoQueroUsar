@@ -21,9 +21,9 @@ Requirements for milestone v1.3 (Chatbot Inteligente de Busca de Vagas). Each ma
 
 ### Chat UI (UI)
 
-- [ ] **UI-01**: Usuário acessa uma interface de chat simples (drawer/modal), mobile-first e sem login, a partir do board público, com envio de mensagem, estados de carregamento/erro e boa percepção de performance.
-- [ ] **UI-02**: A interface exibe os parâmetros entendidos/aplicados/ignorados-aproximados e apresenta resultados relevantes (título, empresa, local, salário quando disponível, acesso ao detalhe/link) reutilizando o fluxo atual de detalhe e revelação de contato (contatos nunca expostos no payload do chat).
-- [ ] **UI-03**: Usuário pode aplicar/ajustar a busca entendida no board canônico (URL/filtros existentes) quando aplicável, preservando o comportamento atual de busca/listagem sem fricção.
+- [x] **UI-01**: Usuário acessa uma interface de chat simples (drawer/modal), mobile-first e sem login, a partir do board público, com envio de mensagem, estados de carregamento/erro e boa percepção de performance.
+- [x] **UI-02**: A interface exibe os parâmetros entendidos/aplicados/ignorados-aproximados e apresenta resultados relevantes (título, empresa, local, salário quando disponível, acesso ao detalhe/link) reutilizando o fluxo atual de detalhe e revelação de contato (contatos nunca expostos no payload do chat).
+- [x] **UI-03**: Usuário pode aplicar/ajustar a busca entendida no board canônico (URL/filtros existentes) quando aplicável, preservando o comportamento atual de busca/listagem sem fricção.
 
 ### Quality & Hardening (QA)
 
@@ -68,9 +68,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | API-01 | Phase 20 | Complete |
 | API-02 | Phase 20 | Complete |
 | API-03 | Phase 20 | Complete |
-| UI-01 | Phase 21 | Pending |
-| UI-02 | Phase 21 | Pending |
-| UI-03 | Phase 21 | Pending |
+| UI-01 | Phase 21 | Complete |
+| UI-02 | Phase 21 | Complete |
+| UI-03 | Phase 21 | Complete |
 | QA-01 | Phase 22 | Pending |
 | QA-02 | Phase 22 | Pending |
 | QA-03 | Phase 22 | Pending |

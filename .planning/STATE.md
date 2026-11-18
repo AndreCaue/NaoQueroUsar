@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: executing
-stopped_at: Phase 21 UI-SPEC approved
-last_updated: "2026-11-18T00:23:06.938Z"
+status: ready_to_plan
+stopped_at: Phase 21 complete (2/2) — ready to discuss Phase 22
+last_updated: 2026-11-18T01:16:15.785Z
 last_activity: 2026-11-18 -- Phase 21 execution started
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 6
   percent: 50
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-17)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 21 — interface-de-chat-e-integracao-no-board
+**Current focus:** Phase 22 — qualidade, hardening e validação operacional
 
 ## Current Position
 
-Phase: 21 (interface-de-chat-e-integracao-no-board) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 21
-Last activity: 2026-11-18 -- Phase 21 execution started
+Phase: 22
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-11-18
 
 Progress: [██▌-------] 25%
 
