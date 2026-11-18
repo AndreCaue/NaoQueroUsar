@@ -8,7 +8,7 @@
 
 **v1.2 delivered (with caveats):** fundação social segura (modelos/migrações/tokens criptografados/`SocialPublisher`), OAuth Meta e Integrações admin, geração/revisão/aprovação de post social (LLM/fallback, site-first), publicação assíncrona resiliente com retry/idempotência/status/retry no admin, e testes/docs/handoffs de fechamento rastreável. **Pendências aceitas:** reconciliação de rastreabilidade `PUB-01..08`, handoffs reais para `TEST-04`/`DOC-01`/`AUD-05`, verificações humanas/runtime/canônicas e débitos carry-over do v1.1.
 
-**v1.3 in progress:** Phase 19 complete (contrato INT seguro). Phase 20 complete — endpoint público `POST /api/v1/public/chat-search` entregue com interpretação+resultados `JobPublic` pagináveis (sem contatos), busca determinística equivalente a `list_published` para `applied_params`, proteções/rate limit/timeout e fallback 200 degradado seguro com sinalização de suporte parcial (`API-01/02/03`). Restam UI de chat no board (Phase 21) e qualidade/hardening/validação operacional (Phase 22).
+**v1.3 in progress:** Phase 19 complete (contrato INT seguro). Phase 20 complete — endpoint público `POST /api/v1/public/chat-search` entregue com interpretação+resultados `JobPublic` pagináveis (sem contatos), busca determinística equivalente a `list_published` para `applied_params`, proteções/rate limit/timeout e fallback 200 degradado seguro com sinalização de suporte parcial (`API-01/02/03`). Phase 21 complete (UI-01/02/03, bookkeeping aprovado; verificação humana pendente em `21-HUMAN-UAT.md` / `21-VERIFICATION.md`). Resta qualidade/hardening/validação operacional (Phase 22).
 
 ## Current Milestone: v1.3 Chatbot Inteligente de Busca de Vagas
 
@@ -53,7 +53,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Active
 
-- [ ] Implementar interface de chat no board público (drawer/modal mobile-first) consumindo `chat-search`, exibindo interpretação/parâmetros e resultados com acesso ao detalhe (UI, Phase 21)
+- [x] Implementar interface de chat no board público (drawer/modal mobile-first) consumindo `chat-search`, exibindo interpretação/parâmetros e resultados com acesso ao detalhe (UI, Phase 21) — concluído em 2026-11-18 (UAT humano pendente)
 - [ ] Qualidade, hardening e validação operacional do chatbot (QA, Phase 22): cenários MVP, limites/custos/latência, resiliência e regressão do fluxo público sem fricção
 - [ ] (A definir) Incluir ou não itens de carry-over/hardening (PUB-01..08, handoffs v1.2, lacunas v1.1) no escopo do milestone
 
@@ -121,4 +121,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-17 after completing Phase 20 (API pública de chat-search resiliente)*
+*Last updated: 2026-11-18 after completing Phase 21 (interface de chat e integração no board; UAT humano pendente)*
