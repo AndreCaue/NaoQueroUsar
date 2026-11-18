@@ -808,6 +808,10 @@ export interface ChatSearchResponse {
   results: ChatSearchResults;
 }
 
+export interface ChatSearchStatus {
+  enabled: boolean;
+}
+
 export async function chatSearch(
   payload: ChatSearchRequest,
 ): Promise<ChatSearchResponse> {
@@ -836,4 +840,36 @@ export async function chatSearch(
   }
 
   return (await res.json()) as ChatSearchResponse;
+}
+
+export async function getChatSearchStatus(
+  signal?: AbortSignal,
+): Promise<ChatSearchStatus> {
+  let res: Response;
+  try {
+    res = await fetch(`${API}/api/v1/public/chat-search/status`, {
+      method: "GET",
+      signal: signal ?? AbortSignal.timeout(5_000),
+    });
+  } catch (error) {
+    const timedOut =
+      error instanceof Error &&
+      (error.name === "TimeoutError" || error.name === "AbortError");
+    throw new ApiError(
+      timedOut
+        ? "A requisição demorou demais. Verifique sua conexão e tente novamente."
+        : "Não foi possível verificar a disponibilidade do chat.",
+      0,
+    );
+  }
+
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+
+  try {
+    return (await res.json()) as ChatSearchStatus;
+  } catch {
+    throw new ApiError("Resposta inválida do servidor.", 0);
+  }
 }

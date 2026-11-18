@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { chatSearch, ApiError } from "@/lib/api";
+import { chatSearch, getChatSearchStatus, ApiError } from "@/lib/api";
 import type { ChatSearchResponse, JobPublic } from "@/lib/api";
 import { appliedParamsToBoardFilters, canApplyChatToBoard } from "@/lib/chatApply";
 import { buildBoardHref } from "@/lib/filters";
@@ -38,8 +38,42 @@ function focusManualSearch() {
   }
 }
 
+function isChatDisabledResponse(response: ChatSearchResponse): boolean {
+  return response.interpretation.meta?.degradation_reason === "chat_disabled";
+}
+
+function sanitizeDisabledResponse(response: ChatSearchResponse): ChatSearchResponse {
+  if (!isChatDisabledResponse(response)) return response;
+  const safeGuidance =
+    typeof response.interpretation.meta?.guidance === "string" &&
+    response.interpretation.meta.guidance.trim().length > 0
+      ? response.interpretation.meta.guidance
+      : "A busca por chat está indisponível no momento. Use a busca manual para encontrar vagas.";
+  return {
+    ...response,
+    interpretation: {
+      ...response.interpretation,
+      limitations: (response.interpretation.limitations ?? []).filter(
+        (item) => item !== "chat_disabled",
+      ),
+      meta: {
+        ...response.interpretation.meta,
+        degraded: true,
+        degradation_reason: "chat_disabled",
+        guidance: safeGuidance,
+      },
+    },
+    results: {
+      ...response.results,
+      items: [],
+      total: 0,
+    },
+  };
+}
+
 export function ChatWidget() {
   const router = useRouter();
+  const [chatEnabled, setChatEnabled] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [turns, setTurns] = useState<ChatTurn[]>([]);
@@ -60,6 +94,27 @@ export function ChatWidget() {
   const idRef = useRef(0);
   const detailTriggerRef = useRef<HTMLElement | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const status = await getChatSearchStatus();
+        if (cancelled) return;
+        if (status.enabled === false) {
+          setChatEnabled(false);
+          setIsOpen(false);
+        } else {
+          setChatEnabled(true);
+        }
+      } catch {
+        // Fail safe without blocking the board; backend remains authoritative on send.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const canApply = useMemo(() => {
     if (!lastResponse) return false;
     return canApplyChatToBoard(lastResponse.interpretation);
@@ -73,6 +128,11 @@ export function ChatWidget() {
   const runSend = async (message: string) => {
     const trimmed = message.trim();
     if (!trimmed || isSending) return;
+    if (!chatEnabled) {
+      setIsOpen(false);
+      focusManualSearch();
+      return;
+    }
     const turnId = `turn-${++idRef.current}`;
     const seq = ++requestSeq.current;
     activeRequestRef.current = seq;
@@ -92,6 +152,30 @@ export function ChatWidget() {
     try {
       const response = await chatSearch({ message: trimmed, page: 1, limit: 20 });
       if (activeRequestRef.current !== seq) return;
+
+      if (isChatDisabledResponse(response)) {
+        const disabledResponse = sanitizeDisabledResponse(response);
+        setChatEnabled(false);
+        setIsOpen(false);
+        setLastResponse(disabledResponse);
+        setItems([]);
+        setPage(disabledResponse.results.page ?? 1);
+        setLimit(disabledResponse.results.limit ?? 20);
+        setTotal(0);
+        setActiveQuery(null);
+        setActiveTurnId(null);
+        setSendError(null);
+        setTurns((prev) =>
+          prev.map((t) =>
+            t.id === turnId
+              ? { ...t, status: "done", response: disabledResponse, error: undefined }
+              : t,
+          ),
+        );
+        setDraft("");
+        focusManualSearch();
+        return;
+      }
 
       setLastResponse(response);
       setItems(response.results.items ?? []);
@@ -149,6 +233,21 @@ export function ChatWidget() {
       });
       if (activeRequestRef.current !== seq) return;
       if (activeQuery !== queryAtStart || activeTurnId !== turnAtStart) return;
+      if (isChatDisabledResponse(response)) {
+        const disabledResponse = sanitizeDisabledResponse(response);
+        setChatEnabled(false);
+        setIsOpen(false);
+        setLastResponse(disabledResponse);
+        setItems([]);
+        setPage(disabledResponse.results.page ?? nextPage);
+        setLimit(disabledResponse.results.limit ?? limit);
+        setTotal(0);
+        setActiveQuery(null);
+        setActiveTurnId(null);
+        setSendError(null);
+        focusManualSearch();
+        return;
+      }
       setLastResponse((prev) => prev ?? response);
       setItems((prev) => [...prev, ...(response.results.items ?? [])]);
       setPage(response.results.page ?? nextPage);
@@ -194,9 +293,22 @@ export function ChatWidget() {
     window.requestAnimationFrame(() => trigger?.focus());
   };
 
+  if (!chatEnabled) {
+    return selectedJob ? (
+      <JobDetailDialog job={selectedJob} open onClose={handleCloseDetail} />
+    ) : null;
+  }
+
   return (
     <>
-      {!isOpen && !selectedJob ? <ChatLauncher onOpen={() => setIsOpen(true)} /> : null}
+      {!isOpen && !selectedJob ? (
+        <ChatLauncher
+          onOpen={() => {
+            if (!chatEnabled) return;
+            setIsOpen(true);
+          }}
+        />
+      ) : null}
       <ChatPanel
         open={isOpen}
         titleId="chat-panel-title"
