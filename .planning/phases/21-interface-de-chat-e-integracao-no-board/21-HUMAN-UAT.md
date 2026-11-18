@@ -1,18 +1,14 @@
 ---
-status: partial
+status: complete
 phase: 21-interface-de-chat-e-integracao-no-board
 source: [21-VERIFICATION.md]
 started: 2026-11-17T21:55:00Z
-updated: 2026-11-17T23:48:00Z
+updated: 2026-11-17T23:49:00Z
 ---
 
 ## Current Test
 
-number: 4
-name: Apply-to-board canonical navigation and canonical detail/reveal
-expected: |
-  From a non-degraded response with applicable params, click `Aplicar no board`; separately open a chat result detail and reveal contact in the dialog. Board URL updates canonically (replaces `q/city/sort`, resets `page=1`, clears `vaga`) and board remains usable; opening detail uses canonical dialog/`?vaga` behavior and contact reveal works only in detail flow (never shown in chat).
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -30,14 +26,14 @@ result: pass
 
 ### 4. Apply-to-board canonical navigation and canonical detail/reveal
 expected: From a non-degraded response with applicable params, click `Aplicar no board`; separately open a chat result detail and reveal contact in the dialog. Board URL updates canonically (replaces `q/city/sort`, resets `page=1`, clears `vaga`) and board remains usable; opening detail uses canonical dialog/`?vaga` behavior and contact reveal works only in detail flow (never shown in chat).
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 4
-passed: 3
+passed: 4
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
