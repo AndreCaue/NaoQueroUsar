@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { CITY_OPTIONS } from "@/lib/cities";
+import { CITY_OPTIONS, resolveCitySlugFromText } from "@/lib/cities";
 import { buildBoardHref, type Filters } from "@/lib/filters";
 import { formatJobCount } from "@/lib/format";
 
@@ -46,15 +46,28 @@ export function BoardToolbar({ filters, total }: BoardToolbarProps) {
 
   // Debounced commit while typing.
   useEffect(() => {
-    if (value.trim() === filters.q) {
+    const trimmed = value.trim();
+    if (trimmed === filters.q) {
       return;
     }
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
     timerRef.current = setTimeout(() => {
-      commit({ q: value.trim() });
-      lastCommittedRef.current = value.trim();
+      const matchedCity = resolveCitySlugFromText(trimmed);
+      if (matchedCity) {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+        }
+        timerRef.current = null;
+        commit({ q: "", city: matchedCity });
+        lastCommittedRef.current = "";
+        setValue("");
+      } else {
+        timerRef.current = null;
+        commit({ q: trimmed });
+        lastCommittedRef.current = trimmed;
+      }
     }, DEBOUNCE_MS);
     return () => {
       if (timerRef.current) {
@@ -68,12 +81,22 @@ export function BoardToolbar({ filters, total }: BoardToolbarProps) {
     if (event.key === "Enter") {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
-      commit({ q: value.trim() });
-      lastCommittedRef.current = value.trim();
+      const trimmed = value.trim();
+      const matchedCity = resolveCitySlugFromText(trimmed);
+      if (matchedCity) {
+        commit({ q: "", city: matchedCity });
+        lastCommittedRef.current = "";
+        setValue("");
+      } else {
+        commit({ q: trimmed });
+        lastCommittedRef.current = trimmed;
+      }
     } else if (event.key === "Escape") {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
       setValue("");
       commit({ q: "" });

@@ -35,6 +35,32 @@ function fold(value: string): string {
     .toLowerCase();
 }
 
+const CITY_TEXT_TO_SLUG: ReadonlyMap<string, CitySlug> = (() => {
+  const entries: Array<[string, CitySlug]> = [];
+  for (const option of CITY_OPTIONS) {
+    entries.push([fold(option.slug), option.slug]);
+    entries.push([fold(option.label), option.slug]);
+    entries.push([fold(option.canonical), option.slug]);
+  }
+  const aliases: Array<[string, CitySlug]> = [
+    ["sp", "sao-paulo"],
+    ["sao paulo", "sao-paulo"],
+    ["rj", "rio-de-janeiro"],
+    ["rio", "rio-de-janeiro"],
+    ["rio de janeiro", "rio-de-janeiro"],
+    ["bh", "belo-horizonte"],
+    ["belo horizonte", "belo-horizonte"],
+    ["remoto", "remoto"],
+    ["home office", "remoto"],
+    ["home-office", "remoto"],
+    ["trabalho remoto", "remoto"],
+  ];
+  for (const [alias, slug] of aliases) {
+    entries.push([fold(alias), slug]);
+  }
+  return new Map(entries);
+})();
+
 /** Canonical (or label, or slug) → accented label; unknown values unchanged. */
 export function cityLabel(canonical: string): string {
   if (!canonical) {
@@ -57,4 +83,21 @@ export function cityBySlug(slug: string | null): CityOption | undefined {
   }
   const key = slug.trim().toLowerCase();
   return CITY_OPTIONS.find((option) => option.slug === key);
+}
+
+/**
+ * Resolve free text to a supported city slug (exact, accent/case-insensitive).
+ * Matches slugs/labels/canonicals and safe aliases; returns null for non-matches.
+ */
+export function resolveCitySlugFromText(
+  value: string | null | undefined,
+): CitySlug | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const key = fold(value);
+  if (!key) {
+    return null;
+  }
+  return CITY_TEXT_TO_SLUG.get(key) ?? null;
 }
