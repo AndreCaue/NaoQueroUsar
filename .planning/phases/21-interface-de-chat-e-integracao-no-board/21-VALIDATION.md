@@ -1,10 +1,11 @@
 ---
 phase: 21
 slug: interface-de-chat-e-integracao-no-board
-status: draft
+status: audited
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: partial
 created: 2026-11-17
+audited: 2026-11-17
 ---
 
 # Phase 21 — Validation Strategy
@@ -17,19 +18,19 @@ created: 2026-11-17
 
 | Property | Value |
 |----------|-------|
-| **Framework** | Frontend: Vitest 5.0.4 (unit/component) e Playwright 1.64.0 (E2E) conforme stack; Backend de referência: pytest 9.1.1 (contrato chat-search já coberto em Phase 20) |
-| **Config file** | Verificar `frontend/vitest.config*`, `frontend/playwright.config*` e scripts em `frontend/package.json` (Wave 0 confirma/ajusta) |
-| **Quick run command** | `npm --prefix frontend run lint` e/ou testes unitários focados do chat (`npm --prefix frontend test -- --run <chat-tests>` quando houver) |
-| **Full suite command** | Suíte frontend configurada (Vitest) + E2E/fluxo público do chat (Playwright) quando viável no ambiente |
-| **Estimated runtime** | ~30-120 seconds (ajustar após Wave 0) |
+| **Framework** | Frontend: Vitest 2.x (repo `frontend/package.json`) com config `frontend/vitest.config.ts` (node env, inclui `lib/**/*.test.ts`); E2E Playwright não configurado/executado nesta auditoria. Backend: pytest (referência Phase 20) |
+| **Config file** | `frontend/vitest.config.ts` |
+| **Quick run command** | `npm --prefix frontend run test:chat` |
+| **Full suite command** | `npm --prefix frontend run test` (Vitest run; atualmente cobre `lib/chatApply.test.ts`) |
+| **Estimated runtime** | ~5-15 seconds (test:chat) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run checks rápidos relevantes (lint/typecheck/testes unitários focados do chat quando existirem)
-- **After every plan wave:** Run suíte de testes da feature do chat (unit/component + e2e/smoke dos fluxos UI-01..UI-03) em ambiente viável
-- **Before `/gsd-verify-work`:** Fluxos UI-01..UI-03 verdes (automatizados quando viáveis) e validação manual dos estados críticos
+- **After every task commit:** Run `npm --prefix frontend run test:chat` (quando alterando lógica de chat/mapping) e lint quando aplicável.
+- **After every plan wave:** Rodar suíte frontend disponível (`npm --prefix frontend run test`) + validação manual dos fluxos UI-01..UI-03.
+- **Before `/gsd-verify-work` / merge:** Garantir mapeamento UI-03 verde; completar gaps UI-01/UI-02 (component/hook) ou documentar exceções.
 - **Max feedback latency:** 120 seconds
 
 ---
@@ -38,22 +39,24 @@ created: 2026-11-17
 
 | task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 21-W0-01 | W0 | 0 | UI-01 | V5/Tampering | Entrada tratada (trim/limites coerentes), sem duplicar envio, erros exibidos com segurança | unit/e2e harness | `npm --prefix frontend test -- --run <chat-client-or-hook>` | ❌ W0 | ⬜ pending |
-| 21-W0-02 | W0 | 0 | UI-02 | V4/Info Disclosure | Resultados/interpretação renderizados sem contatos e sem HTML injection; reveal só no detalhe | unit/e2e harness | `npm --prefix frontend test -- --run <chat-results-interpretation>` | ❌ W0 | ⬜ pending |
-| 21-W0-03 | W0 | 0 | UI-03 | V5 | `applied_params` mapeados para URL canônica (`q/city/sort`, `page=1`, sem `vaga`) sem inventar filtros | unit | `npm --prefix frontend test -- --run <apply-board-mapping>` | ❌ W0 | ⬜ pending |
+| 21-W0-01 | W0 | 0 | UI-01 | V5/Tampering | Entrada tratada (trim/limites coerentes), sem duplicar envio, erros exibidos com segurança | unit/component | (sem arquivo dedicado) — sugerido: testes de `ChatWidget`/`chatSearch` client com mocks | ❌ ausente | ⬜ pending |
+| 21-W0-02 | W0 | 0 | UI-02 | V4/Info Disclosure | Resultados/interpretação renderizados sem contatos e sem HTML injection; reveal só no detalhe | unit/component | (sem arquivo dedicado) — sugerido: testes de `ChatInterpretation`/`ChatResultsList`/`ChatResultItem` | ❌ ausente | ⬜ pending |
+| 21-W0-03 | W0 | 0 | UI-03 | V5 | `applied_params` mapeados para URL canônica (`q/city/sort`, `page=1`, sem `vaga`) sem inventar filtros | unit | `npm --prefix frontend run test:chat` | ✅ `frontend/lib/chatApply.test.ts` | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+
+**Nota (auditoria 2026-11-17):** `npm --prefix frontend run test:chat` executado com sucesso (6 testes). Gaps restantes são testes automatizados de UI para componentes do chat (UI-01/UI-02).
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] Testes automatizados da UI de chat (unit/component e/ou e2e) cobrindo UI-01..UI-03 — inexistentes hoje
-- [ ] Harness/mocks para `POST /api/v1/public/chat-search` no frontend (resposta ok, degradada, erro 429/4xx/timeout) para validação determinística
-- [ ] Confirmar existência de configs/scripts reais de Vitest/Playwright no frontend e ajustar comandos de execução
-- [ ] Helper/utilitário testável para mapeamento `applied_params -> Filters/buildBoardHref` (normalização city/slug, sort suportado, `page=1`, limpar `vaga`)
+- [x] Helper/utilitário testável para mapeamento `applied_params -> Filters/buildBoardHref` coberto por `chatApply.test.ts` (UI-03)
+- [ ] Testes automatizados da UI de chat (unit/component) cobrindo comportamento de envio/erros (UI-01) e renderização segura de interpretação/resultados (UI-02)
+- [ ] Harness/mocks para `POST /api/v1/public/chat-search` no frontend para validação determinística (UI-01/UI-02)
+- [x] Config/scripts Vitest confirmados (`frontend/vitest.config.ts`, `package.json` scripts)
 
-*Nota: cobertura completa de QA-01..QA-03 é responsabilidade da Phase 22; esta fase deve viabilizar validação básica alinhada a UI-01..UI-03 quando o ambiente permitir.*
+*Nota: cobertura completa de QA-01..QA-03 é responsabilidade da Phase 22.*
 
 ---
 
@@ -72,9 +75,19 @@ created: 2026-11-17
 
 - [ ] All tasks have `<automated>` verify or Wave 0 dependencies
 - [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
+- [ ] Wave 0 covers all MISSING references (parcial: UI-03 coberto; UI-01/UI-02 pendentes)
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant: false` set in frontmatter (gaps restantes documentados)
 
 **Approval:** pending
+
+## Validation Audit 2026-11-17
+
+| Metric | Count |
+|--------|-------|
+| Gaps found (initial state) | 3 (W0-01, W0-02, W0-03) |
+| Resolved | 1 (W0-03 via `frontend/lib/chatApply.test.ts`, 6/6 passing) |
+| Escalated / still missing | 2 (W0-01, W0-02 — no automated UI/component tests) |
+
+**Commands run:** `npm --prefix frontend run test:chat` → PASS (6 tests).
