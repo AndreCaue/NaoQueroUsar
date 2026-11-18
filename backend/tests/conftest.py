@@ -104,6 +104,10 @@ def pytest_collection_modifyitems(config, items):
             "test_social_idempotency.py",
             "test_social_publish_pipeline.py",
             "test_social_publisher.py",
+            "test_intent_schema.py",
+            "test_intent_mapper.py",
+            "test_intent_parser.py",
+            "test_intent_client.py",
         }
         for item in items:
             path = str(getattr(item, "fspath", "")).replace("\\", "/")
