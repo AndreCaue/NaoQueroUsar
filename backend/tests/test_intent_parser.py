@@ -154,17 +154,12 @@ async def test_extract_and_map_intent_treats_injected_instructions_as_data():
 
 
 @pytest.mark.asyncio
-async def test_extract_and_map_intent_client_failure_degrades_to_safe_contract():
+async def test_extract_and_map_intent_client_failure_propagates_for_api_degradation():
+    from app.services.intent.client import IntentExtractionError
     from app.services.intent.parser import extract_and_map_intent
 
-    contract = await extract_and_map_intent("dev backend", _Settings(), client=RaisingClient())
-
-    assert isinstance(contract, IntentContract)
-    assert contract.applied_params.q is None
-    assert contract.applied_params.city is None
-    assert contract.applied_params.sort is None
-    assert _status(contract, "q").status == "ignorado"
-    assert _status(contract, "q").reason_code in {"no_extractable_params", "empty_input"}
+    with pytest.raises(IntentExtractionError):
+        await extract_and_map_intent("dev backend", _Settings(), client=RaisingClient())
 
 
 @pytest.mark.asyncio
