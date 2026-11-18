@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdSlot } from "@/components/board/AdSlot";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
+import { ChatWidget } from "@/components/board/chat/ChatWidget";
 import { JobGrid } from "@/components/board/JobGrid";
 import { Pagination } from "@/components/board/Pagination";
 import {
@@ -161,6 +162,7 @@ export default async function Page({
           <AdSlot variant="sidebar" />
         </aside>
       </div>
+      <ChatWidget />
     </div>
   );
 }
