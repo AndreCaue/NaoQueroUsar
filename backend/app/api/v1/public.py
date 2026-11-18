@@ -279,25 +279,36 @@ async def chat_search(
     """Busca pública por linguagem natural com interpretação transparente (API-01..03)."""
     settings = get_settings()
     chat_timeout = getattr(settings, "CHAT_SEARCH_INTENT_TIMEOUT_SECONDS", 12)
-
-    if not payload.message or not payload.message.strip():
-        raise HTTPException(status_code=400, detail="Mensagem inválida para busca por chat.")
-
-    if not getattr(settings, "CHAT_SEARCH_ENABLED", True):
-        disabled = _chat_degraded_contract(
-            payload.message,
-            "chat_disabled",
-            _CHAT_GUIDANCE_DISABLED,
-            limitation="chat_disabled",
-        )
-        return ChatSearchResponse(
-            interpretation=disabled,
-            results=ChatSearchResults(
-                items=[], page=payload.page, limit=payload.limit, total=0
-            ),
-        )
+    start = time.perf_counter()
+    outcome = "error"
+    reason: str | None = None
+    results_count = 0
+    total_count = 0
 
     try:
+        if not payload.message or not payload.message.strip():
+            outcome = "error"
+            reason = "invalid_message"
+            raise HTTPException(status_code=400, detail="Mensagem inválida para busca por chat.")
+
+        if not getattr(settings, "CHAT_SEARCH_ENABLED", True):
+            outcome = "disabled"
+            reason = "chat_disabled"
+            results_count = 0
+            total_count = 0
+            disabled = _chat_degraded_contract(
+                payload.message,
+                "chat_disabled",
+                _CHAT_GUIDANCE_DISABLED,
+                limitation="chat_disabled",
+            )
+            return ChatSearchResponse(
+                interpretation=disabled,
+                results=ChatSearchResults(
+                    items=[], page=payload.page, limit=payload.limit, total=0
+                ),
+            )
+
         try:
             contract = await extract_and_map_intent(
                 payload.message, settings, timeout_seconds=chat_timeout
@@ -307,6 +318,10 @@ async def chat_search(
             is_timeout = isinstance(exc, (asyncio.TimeoutError, TimeoutError)) or "timeout" in str(exc).lower()
             reason_code = "timeout" if is_timeout else "llm_unavailable"
             guidance = _CHAT_GUIDANCE_LLM
+            outcome = "degraded"
+            reason = reason_code
+            results_count = 0
+            total_count = 0
             degraded = _chat_degraded_contract(
                 payload.message,
                 reason_code,
@@ -320,6 +335,10 @@ async def chat_search(
             )
 
         if contract is None or _is_effectively_no_params(contract):
+            outcome = "degraded"
+            reason = "no_extractable_params"
+            results_count = 0
+            total_count = 0
             degraded = _chat_degraded_contract(
                 payload.message,
                 "no_extractable_params",
@@ -343,6 +362,10 @@ async def chat_search(
             city=applied.city,
             sort=(applied.sort or "recentes"),
         )
+        outcome = "success"
+        reason = None
+        results_count = len(items)
+        total_count = total
         return ChatSearchResponse(
             interpretation=contract,
             results=ChatSearchResults(
@@ -355,9 +378,24 @@ async def chat_search(
     except HTTPException:
         raise
     except Exception:
+        outcome = "error"
+        reason = "unexpected"
         logger.exception("chat_search_unexpected_error")
         raise HTTPException(
             status_code=500, detail="Erro interno ao processar a busca por chat."
+        )
+    finally:
+        logger.info(
+            "chat_search",
+            extra={
+                "outcome": outcome,
+                "reason": reason,
+                "latency_ms": int((time.perf_counter() - start) * 1000),
+                "results_count": results_count,
+                "total": total_count,
+                "page": payload.page,
+                "limit": payload.limit,
+            },
         )
 
 

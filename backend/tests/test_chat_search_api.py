@@ -6,6 +6,7 @@ the shared test fixtures (real Postgres test DB when configured).
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
 from sqlalchemy import text
@@ -411,3 +412,102 @@ async def test_public_jobs_remain_independent_when_chat_disabled(
     assert body["total"] >= 1
     assert any(item["title"] == "Analista QA" for item in body["items"])
     _assert_no_contacts(body["items"])
+
+
+async def test_chat_search_success_emits_structured_log_without_pii(
+    db_session, client, monkeypatch, caplog
+):
+    await _insert(
+        db_session,
+        title="Analista Dados",
+        city=SAO_PAULO,
+        contact_email="segredo-log@example.com",
+    )
+    interpretation = _contract(q="analista", city=SAO_PAULO, sort="recentes")
+    sentinel_message = "mensagem sensivel usuario 123"
+
+    async def fake_extract(*args, **kwargs):
+        return interpretation
+
+    monkeypatch.setattr("app.api.v1.public.extract_and_map_intent", fake_extract)
+
+    with caplog.at_level(logging.INFO):
+        resp = await client.post(
+            "/api/v1/public/chat-search",
+            json={"message": sentinel_message, "page": 1, "limit": 20},
+        )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    records = [r for r in caplog.records if r.message == "chat_search"]
+    assert records, "expected a chat_search log record"
+    rec = records[-1]
+    assert rec.outcome == "success"
+    assert rec.reason is None
+    assert isinstance(rec.latency_ms, int) and rec.latency_ms >= 0
+    assert rec.results_count == len(body["results"]["items"])
+    assert rec.total == body["results"]["total"]
+    assert rec.page == 1
+    assert rec.limit == 20
+
+    for r in caplog.records:
+        rendered = r.getMessage() + " " + " ".join(
+            str(v) for v in getattr(r, "__dict__", {}).values()
+        )
+        assert sentinel_message not in rendered
+        assert "segredo-log@example.com" not in rendered
+        assert "contact_email" not in rendered
+        assert "contact_phone" not in rendered
+
+
+async def test_chat_search_disabled_emits_structured_log_without_pii(
+    client, monkeypatch, caplog
+):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "CHAT_SEARCH_ENABLED", False)
+    sentinel_message = "mensagem privada desativada"
+
+    with caplog.at_level(logging.INFO):
+        resp = await client.post(
+            "/api/v1/public/chat-search",
+            json={"message": sentinel_message, "page": 1, "limit": 20},
+        )
+
+    assert resp.status_code == 200
+    records = [r for r in caplog.records if r.message == "chat_search"]
+    assert records, "expected a chat_search log record"
+    rec = records[-1]
+    assert rec.outcome == "disabled"
+    assert rec.reason == "chat_disabled"
+    assert isinstance(rec.latency_ms, int) and rec.latency_ms >= 0
+    assert rec.results_count == 0
+    assert rec.total == 0
+    assert rec.page == 1
+    assert rec.limit == 20
+
+    for r in caplog.records:
+        rendered = r.getMessage() + " " + " ".join(
+            str(v) for v in getattr(r, "__dict__", {}).values()
+        )
+        assert sentinel_message not in rendered
+        assert "contact_email" not in rendered
+        assert "contact_phone" not in rendered
+
+
+async def test_chat_search_degraded_timeout_emits_structured_log(client, monkeypatch, caplog):
+    async def fake_extract(*args, **kwargs):
+        raise Exception("timeout while waiting for provider")
+
+    monkeypatch.setattr("app.api.v1.public.extract_and_map_intent", fake_extract)
+
+    with caplog.at_level(logging.INFO):
+        resp = await client.post("/api/v1/public/chat-search", json={"message": "vaga dev"})
+
+    assert resp.status_code == 200
+    records = [r for r in caplog.records if r.message == "chat_search"]
+    assert records
+    rec = records[-1]
+    assert rec.outcome == "degraded"
+    assert rec.reason == "timeout"
+    assert rec.results_count == 0
+    assert rec.total == 0
