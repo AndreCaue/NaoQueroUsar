@@ -1,10 +1,10 @@
 ---
-status: complete
+status: diagnosed
 phase: 22-qualidade-hardening-e-valida-o-operacional
 source:
   - 22-VERIFICATION.md
   - 22-MANUAL-UAT.md
-updated: 2026-11-18T12:28:00Z
+updated: 2026-11-18T12:45:00Z
 ---
 
 # Phase 22 — Human UAT (Pending Verification)
@@ -58,10 +58,31 @@ blocked: 0
   reason: "User reported: O toolbar não está reconhecendo a cidade que corresponde a uma vaga cadastrada, está utilizando ?q=city-name  e retornando nada. O chat-bot também não reconhece a cidade que está cadastrada no banco retornando um status como ignorado ."
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: "Duas causas relacionadas: (1) Toolbar/manual: o input de busca sempre grava `q` (commit({ q })) e nunca promove nome/alias de cidade suportada para `city`; filtros/URL não inferem `city` a partir de `q` e o backend aplica `q` apenas em `Job.search_text` (title/company/activities/requirements, sem `Job.city`), então `?q=<cidade>` não casa com vagas cujo match está só na coluna `city`. (2) Chat: `_resolve_city_safe` resolve cidade do candidato contra whitelist e só faz fallback em `raw_text` para remoto quando `candidate.city` está ausente; não detecta SP/RJ/BH (nomes/aliases comuns) no texto cru, gerando `ignorado` (`missing`/`not_in_whitelist`/conflito) quando a extração omite ou erra a cidade suportada."
+  artifacts:
+    - path: "frontend/components/board/BoardToolbar.tsx"
+      issue: "Busca textual sempre commitada como `q`; cidade só aplicada via chips (`commit({ city })`), sem detecção/promoção de cidade suportada."
+    - path: "frontend/lib/filters.ts"
+      issue: "Normaliza/serializa `q` e `city` de forma independente; sem inferência de `city` a partir de `q`."
+    - path: "frontend/lib/cities.ts"
+      issue: "Fonte de slugs/labels/canônicos suportados (SP/RJ/BH/Remoto) para toolbar/filtros."
+    - path: "backend/app/api/v1/public.py"
+      issue: "Listagem pública trata `q` e `city` separadamente; chat retorna `field_statuses`/aplicação conforme interpretação mapeada."
+    - path: "backend/app/crud/jobs.py"
+      issue: "`_published_filters`: `city` filtra `Job.city`; `q` filtra apenas `search_text`."
+    - path: "backend/app/models/job.py"
+      issue: "`city` e `search_text` são colunas distintas (cidade não integra `search_text`)."
+    - path: "backend/app/services/intent/mapper.py"
+      issue: "`_resolve_city_safe` sem fallback em `raw_text` para SP/RJ/BH quando `candidate.city` ausente; pode marcar cidade como ignorada."
+    - path: "backend/app/services/intent/parser.py"
+      issue: "Orquestra extração + mapeamento; qualidade/ausência de `candidate.city` impacta resultado final."
+    - path: "backend/app/services/cities.py"
+      issue: "Resolução/whitelist canônica de cidades suportadas usada no mapeamento."
+  missing:
+    - "No toolbar/busca manual: detectar texto correspondente a cidade suportada (label/slug/canônico/alias, case/acento-insensível) e aplicar como `city=<slug>` (com regra clara de precedência vs `q`) em vez de enviar apenas `q`."
+    - "No chat/mapper: fallback determinístico server-side para detectar cidades whitelist SP/RJ/BH em `raw_text` quando `candidate.city` ausente/ambíguo-seguro, preservando salvaguardas (sem inventar cidade fora da whitelist, sem conflitos multi-cidade inseguros) e refletindo `applied_params`/`field_statuses` corretos."
+    - "Cobertura de testes determinísticos (UI/filtros se aplicável, mapper/parser/chat API com LLM mockado) e revalidação manual do caso reportado (toolbar e chat)."
+  debug_session: ".planning/debug/city-filter-and-chat-ignores-registered-city.md"
 
 ## Operational Notes
 
