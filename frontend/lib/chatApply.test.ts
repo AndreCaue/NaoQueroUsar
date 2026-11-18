@@ -8,10 +8,19 @@ import {
 
 function interpretation(overrides: {
   degraded?: boolean;
+  degradationReason?: string;
   q?: string | null;
   city?: string | null;
   sort?: "recentes" | "antigas" | null;
 }): ChatInterpretation {
+  const meta: ChatInterpretation["meta"] = {};
+  if (overrides.degraded) meta.degraded = true;
+  if (overrides.degradationReason) {
+    meta.degradation_reason = overrides.degradationReason;
+    if (overrides.degradationReason === "chat_disabled") {
+      meta.degraded = true;
+    }
+  }
   return {
     understood: {},
     field_statuses: [],
@@ -21,7 +30,7 @@ function interpretation(overrides: {
       sort: overrides.sort ?? null,
     },
     limitations: [],
-    meta: overrides.degraded ? { degraded: true } : {},
+    meta,
   };
 }
 
@@ -75,6 +84,28 @@ describe("canApplyChatToBoard", () => {
     ).toBe(false);
     expect(
       canApplyChatToBoard(interpretation({ q: " ", city: null, sort: "recentes" })),
+    ).toBe(false);
+  });
+
+  it("returns false when degradation_reason is chat_disabled", () => {
+    expect(
+      canApplyChatToBoard(
+        interpretation({
+          degraded: true,
+          degradationReason: "chat_disabled",
+          q: "react",
+          city: "sao-paulo",
+          sort: "antigas",
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      canApplyChatToBoard(
+        interpretation({
+          degradationReason: "chat_disabled",
+          q: "react",
+        }),
+      ),
     ).toBe(false);
   });
 

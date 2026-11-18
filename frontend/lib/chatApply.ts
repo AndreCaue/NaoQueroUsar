@@ -13,7 +13,12 @@ export function appliedParamsToBoardFilters(applied: ChatAppliedParams): Filters
 }
 
 export function canApplyChatToBoard(interpretation: ChatInterpretation): boolean {
-  if (interpretation.meta?.degraded === true) return false;
+  if (
+    interpretation.meta?.degraded === true ||
+    interpretation.meta?.degradation_reason === "chat_disabled"
+  ) {
+    return false;
+  }
   const p = interpretation.applied_params;
   const hasQ = typeof p.q === "string" && p.q.trim().length > 0;
   const hasCity = typeof p.city === "string" && p.city.trim().length > 0;
