@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import text
 
+from app.core.config import get_settings
 from app.models.job import Job, JobStatus
 from app.services.intent.mapper import build_empty_intent
 from app.services.intent.schema import (
@@ -325,3 +326,88 @@ async def test_chat_search_partial_support_and_non_whitelist_city_signaled(clien
     combined = " ".join([guidance] + list(interp.get("limitations") or [])).lower()
     assert any(token in combined for token in ["aproxima", "limita", "manual", "whitelist", "suport"])
     assert body["results"]["items"] == [] or isinstance(body["results"]["items"], list)
+
+
+async def test_chat_search_disabled_returns_controlled_guidance_without_contacts(
+    client, monkeypatch
+):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "CHAT_SEARCH_ENABLED", False)
+
+    resp = await client.post(
+        "/api/v1/public/chat-search",
+        json={"message": "vaga dev em sp", "page": 2, "limit": 10},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+
+    interpretation = body["interpretation"]
+    assert interpretation["meta"]["degraded"] is True
+    assert interpretation["meta"]["degradation_reason"] == "chat_disabled"
+    assert (
+        interpretation["meta"]["guidance"]
+        == "A busca por chat está indisponível no momento. Use a busca manual para encontrar vagas."
+    )
+    assert interpretation["applied_params"] == {"q": None, "city": None, "sort": None}
+    assert "chat_disabled" in (interpretation.get("limitations") or [])
+    for fs in interpretation.get("field_statuses") or []:
+        assert fs["status"] == "ignorado"
+        assert fs["applied"] is None
+        assert fs.get("reason_code") == "chat_disabled"
+
+    assert body["results"] == {"items": [], "page": 2, "limit": 10, "total": 0}
+    _assert_no_contacts(body["results"]["items"])
+
+    dumped = str(body).lower()
+    assert "traceback" not in dumped
+    assert "exception" not in dumped
+    assert "groq" not in dumped
+
+
+async def test_chat_search_disabled_short_circuits_intent_and_db(
+    client, monkeypatch
+):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "CHAT_SEARCH_ENABLED", False)
+
+    async def fail_extract(*args, **kwargs):
+        raise AssertionError("extract_and_map_intent must not be called when chat is disabled")
+
+    async def fail_list(*args, **kwargs):
+        raise AssertionError("list_published must not be called when chat is disabled")
+
+    monkeypatch.setattr("app.api.v1.public.extract_and_map_intent", fail_extract)
+    monkeypatch.setattr("app.api.v1.public.list_published", fail_list)
+
+    resp = await client.post("/api/v1/public/chat-search", json={"message": "vaga"})
+    assert resp.status_code == 200
+    assert resp.json()["interpretation"]["meta"]["degradation_reason"] == "chat_disabled"
+
+
+async def test_chat_search_status_endpoint_reflects_toggle(client, monkeypatch):
+    settings = get_settings()
+
+    monkeypatch.setattr(settings, "CHAT_SEARCH_ENABLED", False)
+    disabled = await client.get("/api/v1/public/chat-search/status")
+    assert disabled.status_code == 200
+    assert disabled.json() == {"enabled": False}
+
+    monkeypatch.setattr(settings, "CHAT_SEARCH_ENABLED", True)
+    enabled = await client.get("/api/v1/public/chat-search/status")
+    assert enabled.status_code == 200
+    assert enabled.json() == {"enabled": True}
+
+
+async def test_public_jobs_remain_independent_when_chat_disabled(
+    db_session, client, monkeypatch
+):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "CHAT_SEARCH_ENABLED", False)
+    await _insert(db_session, title="Analista QA", city=SAO_PAULO, contact_email="a@example.com")
+
+    jobs = await client.get("/api/v1/public/jobs")
+    assert jobs.status_code == 200
+    body = jobs.json()
+    assert body["total"] >= 1
+    assert any(item["title"] == "Analista QA" for item in body["items"])
+    _assert_no_contacts(body["items"])

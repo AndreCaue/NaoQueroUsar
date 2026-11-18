@@ -57,6 +57,8 @@ class Settings(BaseSettings):
     CHAT_SEARCH_RATE_LIMIT: str = "20/minute"
     CHAT_SEARCH_MAX_MESSAGE_CHARS: int = 400
     CHAT_SEARCH_INTENT_TIMEOUT_SECONDS: int = 12
+    # Kill-switch operacional do chat público (QA-03/D-06). Quando false, chat-search responde desativado com guidance para busca manual.
+    CHAT_SEARCH_ENABLED: bool = True
 
     # ESCAPE HATCH TEMPORÁRIO (desvio consciente, 2026-11-12).
     # Permite subir ENV=prod com uma chave de TESTE do Cloudflare Turnstile

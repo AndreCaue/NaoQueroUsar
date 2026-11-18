@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 import uuid
 from copy import deepcopy
 
@@ -23,7 +24,7 @@ from app.schemas.job import (
 from app.services.cities import resolve_city, resolve_sort
 from app.services.intent.mapper import build_empty_intent
 from app.services.intent.parser import extract_and_map_intent
-from app.services.intent.schema import IntentContract
+from app.services.intent.schema import FieldStatus, IntentContract
 from app.services.turnstile import TurnstileVerifier, turnstile_error_detail
 
 # Mounted by router.py without an extra prefix, so these resolve to
@@ -52,6 +53,7 @@ _CHAT_GUIDANCE_APPROX = (
     "Cidades fora da lista suportada (São Paulo, Rio de Janeiro, Belo Horizonte, Remoto) "
     "não são inferidas automaticamente."
 )
+_CHAT_GUIDANCE_DISABLED = "A busca por chat está indisponível no momento. Use a busca manual para encontrar vagas."
 _APPROX_LIMITATION_CODES = {
     "unsupported_structured_filter",
     "textual_approximation_in_q",
@@ -85,6 +87,8 @@ def _chat_degraded_contract(
         limitations.append("llm_timeout")
     elif reason_code == "no_extractable_params":
         limitations.append("no_extractable_params")
+    elif reason_code == "chat_disabled":
+        limitations.append("chat_disabled")
     # de-duplicate while preserving order
     contract.limitations = list(dict.fromkeys(limitations))
 
@@ -95,11 +99,15 @@ def _chat_degraded_contract(
         "guidance": guidance,
     }
     for fs in contract.field_statuses:
-        if getattr(fs.status, "value", fs.status) in {"aplicado", "aproximado"}:
-            fs.status = "ignorado"
+        status = getattr(fs.status, "value", fs.status)
+        if status in {"aplicado", "aproximado"}:
+            fs.status = FieldStatus.IGNORADO
             fs.applied = None
-        if reason_code in {"llm_unavailable", "timeout"}:
+        if reason_code in {"llm_unavailable", "timeout", "chat_disabled"}:
             fs.reason_code = reason_code
+        if reason_code == "chat_disabled":
+            fs.status = FieldStatus.IGNORADO
+            fs.applied = None
     return contract
 
 
@@ -197,6 +205,12 @@ async def get_public_job(
     return JobPublic.model_validate(job)
 
 
+@router.get("/chat-search/status")
+async def chat_search_status() -> dict[str, bool]:
+    """Expose only operational availability of public chat-search (no secrets/PII)."""
+    return {"enabled": bool(get_settings().CHAT_SEARCH_ENABLED)}
+
+
 @router.post("/jobs/{job_id}/reveal-contact", response_model=ContactRevealResponse)
 @limiter.limit(reveal_limit)
 async def reveal_contact(
@@ -268,6 +282,20 @@ async def chat_search(
 
     if not payload.message or not payload.message.strip():
         raise HTTPException(status_code=400, detail="Mensagem inválida para busca por chat.")
+
+    if not getattr(settings, "CHAT_SEARCH_ENABLED", True):
+        disabled = _chat_degraded_contract(
+            payload.message,
+            "chat_disabled",
+            _CHAT_GUIDANCE_DISABLED,
+            limitation="chat_disabled",
+        )
+        return ChatSearchResponse(
+            interpretation=disabled,
+            results=ChatSearchResults(
+                items=[], page=payload.page, limit=payload.limit, total=0
+            ),
+        )
 
     try:
         try:
