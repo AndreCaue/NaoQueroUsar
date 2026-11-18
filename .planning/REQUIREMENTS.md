@@ -27,9 +27,9 @@ Requirements for milestone v1.3 (Chatbot Inteligente de Busca de Vagas). Each ma
 
 ### Quality & Hardening (QA)
 
-- [ ] **QA-01**: O MVP cobre os exemplos-alvo do milestone com comportamento validado e documentado (incluindo combinações e lacunas explícitas): dev pleno SP salário >= 8k; remoto frontend React preferência CLT; vagas parecidas com uma vaga (abordagem limitada/seed por texto/link conforme suportado); analista de dados Campinas ou remoto 6–10k; estágio marketing digital em SP.
-- [ ] **QA-02**: Existem testes automatizados cobrindo extração/mapeamento/normalização e API de chat-search (com LLM mockado) e validação básica do fluxo de UI/E2E conforme viável no ambiente do projeto.
-- [ ] **QA-03**: O sistema possui controles operacionais mínimos para o chat (config/feature toggle ou kill-switch, logs/métricas básicas sem PII sensível) para permitir desativação/ajuste seguro em caso de abuso, custo ou degradação, sem regredir o board público existente.
+- [x] **QA-01**: O MVP cobre os exemplos-alvo do milestone com comportamento validado e documentado (incluindo combinações e lacunas explícitas): dev pleno SP salário >= 8k; remoto frontend React preferência CLT; vagas parecidas com uma vaga (abordagem limitada/seed por texto/link conforme suportado); analista de dados Campinas ou remoto 6–10k; estágio marketing digital em SP.
+- [x] **QA-02**: Existem testes automatizados cobrindo extração/mapeamento/normalização e API de chat-search (com LLM mockado) e validação básica do fluxo de UI/E2E conforme viável no ambiente do projeto.
+- [x] **QA-03**: O sistema possui controles operacionais mínimos para o chat (config/feature toggle ou kill-switch, logs/métricas básicas sem PII sensível) para permitir desativação/ajuste seguro em caso de abuso, custo ou degradação, sem regredir o board público existente.
 
 ## v2 Requirements
 
@@ -71,9 +71,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-01 | Phase 21 | Complete |
 | UI-02 | Phase 21 | Complete |
 | UI-03 | Phase 21 | Complete |
-| QA-01 | Phase 22 | Pending |
-| QA-02 | Phase 22 | Pending |
-| QA-03 | Phase 22 | Pending |
+| QA-01 | Phase 22 | Complete |
+| QA-02 | Phase 22 | Complete |
+| QA-03 | Phase 22 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 12 total

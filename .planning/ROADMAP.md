@@ -94,4 +94,4 @@ Plans:
 | 19. Contrato de intenção e mapeamento seguro | 2/2 | Complete | 2026-11-17 |
 | 20. API pública de chat-search resiliente | 2/2 | Complete    | 2026-11-18 |
 | 21. Interface de chat e integração no board | 2/2 | Complete    | 2026-11-18 |
-| 22. Qualidade, hardening e validação operacional | 3/3 | Complete   | 2026-11-18 |
+| 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
