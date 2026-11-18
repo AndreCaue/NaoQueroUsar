@@ -758,3 +758,82 @@ export async function retrySocialPost(
   }
   return (await res.json()) as SocialRetryResponse;
 }
+
+/** --- Public chat search (Phase 21) --- */
+
+export type ChatFieldStatus = "aplicado" | "ignorado" | "aproximado";
+
+export interface ChatFieldAssessment {
+  field: string;
+  understood: unknown;
+  applied: unknown;
+  status: ChatFieldStatus;
+  reason_code: string;
+  reason: string;
+}
+
+export interface ChatAppliedParams {
+  q: string | null;
+  city: string | null;
+  sort: "recentes" | "antigas" | null;
+}
+
+export interface ChatInterpretation {
+  understood: Record<string, unknown>;
+  field_statuses: ChatFieldAssessment[];
+  applied_params: ChatAppliedParams;
+  limitations: string[];
+  meta: Record<string, unknown> & {
+    degraded?: boolean;
+    degradation_reason?: string;
+    guidance?: string;
+  };
+}
+
+export interface ChatSearchResults {
+  items: JobPublic[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface ChatSearchRequest {
+  message: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ChatSearchResponse {
+  interpretation: ChatInterpretation;
+  results: ChatSearchResults;
+}
+
+export async function chatSearch(
+  payload: ChatSearchRequest,
+): Promise<ChatSearchResponse> {
+  let res: Response;
+  try {
+    res = await fetch(`${API}/api/v1/public/chat-search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (error) {
+    const timedOut =
+      error instanceof Error &&
+      (error.name === "TimeoutError" || error.name === "AbortError");
+    throw new ApiError(
+      timedOut
+        ? "A requisição demorou demais. Verifique sua conexão e tente novamente."
+        : "Não foi possível buscar agora. Verifique sua conexão e tente novamente.",
+      0,
+    );
+  }
+
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+
+  return (await res.json()) as ChatSearchResponse;
+}
