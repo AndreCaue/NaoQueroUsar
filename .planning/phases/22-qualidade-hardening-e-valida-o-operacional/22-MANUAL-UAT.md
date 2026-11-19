@@ -36,6 +36,20 @@ Roteiro guiado para validar o fluxo crítico do chat no board público, estados 
 
 ## Tests
 
+### 0. Revalidação do caso reportado (22-04): cidade suportada no toolbar e no chat
+**Pré-condição:** `CHAT_SEARCH_ENABLED=true`; existir pelo menos uma vaga publicada na cidade suportada usada no teste (ex.: "São Paulo"/`sao-paulo`, "Rio de Janeiro"/`rio-de-janeiro`, "Belo Horizonte"/`belo-horizonte` ou "Remoto"). Se não houver dados, registrar `blocked`/limitação ambiental.
+**Passos (toolbar/busca manual):**
+1. Abrir o board público sem autenticação.
+2. No campo de busca do toolbar, digitar/enviar o nome ou alias de uma cidade suportada cadastrada (ex.: `São Paulo`, `sao paulo`, `sp`, `Rio`, `rj`, `bh`, `home office`, conforme aplicável aos dados).
+3. Confirmar que o board aplica o filtro canônico `city=<slug>` na URL/estado (ex.: `?city=sao-paulo`) e que o campo `q` não permanece indevidamente com `q=<nome-da-cidade>` como única forma de filtro para esse caso.
+4. Validar que as vagas cadastradas na cidade correspondente são retornadas quando aplicável e que a listagem continua utilizável.
+**Passos (chat):**
+5. Abrir o chat e enviar mensagem com cidade suportada cadastrada (ex.: "vagas em São Paulo" ou "vaga em sp").
+6. Validar interpretação/`applied_params`/`field_statuses`: a cidade deve aparecer aplicada/normalizada quando suportada e detectada com segurança (não marcada como ignorada por `missing`/`not_in_whitelist` indevidamente nesse cenário), com guidance/limitações coerentes.
+7. Confirmar que os resultados são coerentes com os parâmetros efetivamente aplicados, sem exposição de contatos no payload/UI do chat; se aplicável, aplicar no board canônico e/ou abrir detalhe pelo fluxo canônico.
+**expected:** Toolbar promove texto de cidade suportada para `city=<slug>` (não apenas `q=<city-name>` indevido) e retorna vagas correspondentes; chat reconhece/aplica cidade suportada cadastrada com interpretação/status corretos e resultados coerentes sem contatos. Correção automatizada aplicada em 22-04; **revalidação manual/runtime pendente**.
+**result:** [pending]
+
 ### 1. Board público e busca/listagem manual com chat habilitado (sem login)
 **Pré-condição:** `CHAT_SEARCH_ENABLED=true`, frontend recarregado.
 **Passos:**
@@ -98,10 +112,10 @@ Roteiro guiado para validar o fluxo crítico do chat no board público, estados 
 
 ## Summary
 
-total: 6
+total: 7
 passed: 0
 issues: 0
-pending: 6
+pending: 7
 skipped: 0
 blocked: 0
 

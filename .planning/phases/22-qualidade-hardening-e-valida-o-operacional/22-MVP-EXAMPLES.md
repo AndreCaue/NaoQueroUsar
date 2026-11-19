@@ -34,6 +34,8 @@
 
 > Observação: execuções DB-backed não foram afirmadas como concluídas sem ambiente. Os casos MVP de API estão implementados como testes determinísticos com `extract_and_map_intent` mockado e devem ser executados em ambiente com banco de testes migrado.
 
+**Atualização de rastreabilidade (22-04, gap closure; revalidação manual pendente):** correção determinística para reconhecimento de cidade suportada cadastrada — toolbar/manual promove texto exato (label/slug/canônico/alias, case/acento-insensível) para `city=<slug>` (`frontend/lib/cities.ts` `resolveCitySlugFromText`, `frontend/components/board/BoardToolbar.tsx`, `frontend/lib/cities.test.ts`) e mapper aplica fallback seguro em `raw_text` para SP/RJ/BH/Remoto quando `candidate.city` ausente, com salvaguarda de conflito multi-cidade (`backend/app/services/intent/mapper.py` `_detect_city_from_raw_text`, `backend/tests/test_intent_mapper.py`; regressão `backend/tests/test_intent_parser.py`). Limites MVP permanecem inalterados: **Campinas** continua fora da whitelist (`not_in_whitelist`), campos não nativos (salário/modalidade/tipo de contrato/senioridade) continuam sem filtragem estruturada/nativa garantida (apenas aproximação/sinalização conforme contrato), e "parecidas com uma vaga" permanece **seed textual limitado** em `q` sem similaridade semântica/vetorial e sem seed por link/ID. Revalidação runtime/integrada do caso reportado segue pendente em `22-HUMAN-UAT.md`/`22-MANUAL-UAT.md`.
+
 ---
 
 ## 1) `dev pleno SP salário >= 8k`
