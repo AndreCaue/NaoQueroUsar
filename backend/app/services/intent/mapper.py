@@ -31,6 +31,20 @@ _SORT_OLD_RE = re.compile(r"\b(mais\s+antigas?|antigas?|mais\s+velhas?|velhas?)\
 
 _GENERIC_Q_TERMS = {"vaga", "vagas", "emprego", "empregos", "trabalho", "trabalhos"}
 
+_RAW_TEXT_CITY_PATTERNS: tuple[tuple[str, tuple[re.Pattern[str], ...]], ...] = (
+    ("São Paulo", (re.compile(r"\bsp\b"), re.compile(r"\bsao\s+paulo\b"))),
+    ("Rio de Janeiro", (re.compile(r"\brj\b"), re.compile(r"\brio\b"), re.compile(r"\brio\s+de\s+janeiro\b"))),
+    ("Belo Horizonte", (re.compile(r"\bbh\b"), re.compile(r"\bbelo\s+horizonte\b"))),
+    (
+        "Remoto",
+        (
+            re.compile(r"\bremoto\b"),
+            re.compile(r"\bhome[\s-]?office\b"),
+            re.compile(r"\btrabalho\s+remoto\b"),
+        ),
+    ),
+)
+
 
 def _strip_accents_lower(value: str) -> str:
     normalized = unicodedata.normalize("NFD", value)
@@ -64,6 +78,25 @@ def _detect_explicit_sort(raw_text: str) -> tuple[str | None, str | None]:
     return None, None
 
 
+def _detect_city_from_raw_text(raw_text: str) -> tuple[str | None, str]:
+    """Detect unambiguous whitelist city mentions from raw text (accent-insensitive)."""
+    normalized = _strip_accents_lower(raw_text or "")
+    if not normalized.strip():
+        return None, "missing"
+
+    matches: list[str] = []
+    for canonical, patterns in _RAW_TEXT_CITY_PATTERNS:
+        if any(pattern.search(normalized) for pattern in patterns):
+            matches.append(canonical)
+
+    distinct = list(dict.fromkeys(matches))
+    if len(distinct) == 1:
+        return distinct[0], "normalized"
+    if len(distinct) > 1:
+        return None, "conflict_resolved"
+    return None, "missing"
+
+
 def _resolve_city_safe(raw_city: str | None, raw_text: str = "") -> tuple[str | None, str]:
     """Resolve city via whitelist/obvious-safe mentions. Returns (applied, reason_code)."""
     # Explicit candidate first
@@ -95,11 +128,8 @@ def _resolve_city_safe(raw_city: str | None, raw_text: str = "") -> tuple[str | 
             return resolved, "normalized"
         return None, "not_in_whitelist"
 
-    # Fallback: detect unequivocal remote mentions in raw text when candidate absent
-    text_norm = _strip_accents_lower(raw_text or "")
-    if re.search(r"\b(home[\s-]?office|trabalho\s+remoto|remoto)\b", text_norm):
-        return "Remoto", "normalized"
-    return None, "missing"
+    # Fallback: deterministic whitelist detection in raw text when candidate absent
+    return _detect_city_from_raw_text(raw_text)
 
 
 def _clean_q_terms(q: str | None) -> str | None:
@@ -279,11 +309,18 @@ def map_intent(candidate: IntentLLMOutput, raw_text: str = "") -> IntentContract
     # simple conflict heuristic: multiple known distinct city tokens in raw text
     lowered = _strip_accents_lower(raw)
     mentioned = []
-    for token, canon in (("sao paulo", "São Paulo"), ("rio de janeiro", "Rio de Janeiro"), ("belo horizonte", "Belo Horizonte"), ("campinas", "Campinas")):
+    for token, canon in (
+        ("sao paulo", "São Paulo"),
+        ("rio de janeiro", "Rio de Janeiro"),
+        ("belo horizonte", "Belo Horizonte"),
+        ("campinas", "Campinas"),
+    ):
         if token in lowered:
             mentioned.append(canon)
     distinct_whitelist = {m for m in mentioned if m in {"São Paulo", "Rio de Janeiro", "Belo Horizonte"}}
     city_conflict = len(distinct_whitelist) > 1
+
+    candidate_city_present = bool(candidate.city and str(candidate.city).strip())
 
     if city_conflict:
         applied_city = None
@@ -294,13 +331,19 @@ def map_intent(candidate: IntentLLMOutput, raw_text: str = "") -> IntentContract
         applied_city, city_reason_code = _resolve_city_safe(candidate.city, raw)
         if applied_city:
             city_status = FieldStatus.APLICADO
-            city_reason = "Cidade aplicada via whitelist segura." if applied_city != "Remoto" or _resolve_city_safe(candidate.city, raw)[1] else "Cidade remota aplicada via whitelist segura."
-            if city_reason_code == "normalized":
+            if not candidate_city_present and city_reason_code == "normalized":
+                city_reason = "Cidade detectada no texto e aplicada com segurança via whitelist."
+            elif city_reason_code == "normalized":
                 city_reason = "Cidade normalizada e aplicada via whitelist segura."
+            else:
+                city_reason = "Cidade aplicada via whitelist segura."
         else:
             if city_reason_code == "not_in_whitelist":
                 city_status = FieldStatus.IGNORADO
                 city_reason = "Cidade fora da whitelist suportada; não aplicada."
+            elif city_reason_code == "conflict_resolved":
+                city_status = FieldStatus.IGNORADO
+                city_reason = "Múltiplas cidades mencionadas geraram conflito; nenhuma cidade aplicada."
             elif city_reason_code == "missing":
                 city_status = FieldStatus.IGNORADO
                 city_reason = "Cidade não informada; nenhum filtro de cidade aplicado."

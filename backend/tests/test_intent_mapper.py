@@ -293,3 +293,47 @@ def test_mvp_estagio_marketing_digital_em_sp() -> None:
     assert fs_seniority.status in {"aproximado", "aplicado"}
     if fs_seniority.status == "aproximado":
         assert fs_seniority.reason_code == "textual_approximation_in_q"
+
+
+def test_absent_candidate_raw_text_applies_supported_city_safely() -> None:
+    c1 = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga de analista em São Paulo")
+    assert c1.applied_params.city == "São Paulo"
+    fs1 = _field(c1, "city")
+    assert fs1.status == "aplicado"
+    assert fs1.reason_code == "normalized"
+    assert fs1.understood is None
+
+    c_sp = map_intent(IntentLLMOutput.model_validate({}), raw_text="emprego em sp")
+    assert c_sp.applied_params.city == "São Paulo"
+    assert _field(c_sp, "city").status == "aplicado"
+
+    c_rj = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga no Rio de Janeiro")
+    assert c_rj.applied_params.city == "Rio de Janeiro"
+    assert _field(c_rj, "city").status == "aplicado"
+
+    c_bh = map_intent(IntentLLMOutput.model_validate({}), raw_text="oportunidade em bh")
+    assert c_bh.applied_params.city == "Belo Horizonte"
+    assert _field(c_bh, "city").status == "aplicado"
+
+    c_remoto = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga home office para dev")
+    assert c_remoto.applied_params.city == "Remoto"
+    assert _field(c_remoto, "city").status == "aplicado"
+
+
+def test_absent_candidate_raw_text_city_safeguards() -> None:
+    conflict = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga em sp ou rj")
+    assert conflict.applied_params.city is None
+    fs_conflict = _field(conflict, "city")
+    assert fs_conflict.status == "ignorado"
+    assert fs_conflict.reason_code == "conflict_resolved"
+
+    campinas = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga em campinas")
+    assert campinas.applied_params.city is None
+    assert "campinas" not in str(campinas.model_dump()).lower() or _field(campinas, "city").applied is None
+    # never produce non-whitelist city
+    assert campinas.applied_params.city != "Campinas"
+
+    # present non-whitelist candidate remains not_in_whitelist (existing MVP behavior)
+    present = map_intent(IntentLLMOutput.model_validate({"city": "Campinas"}), raw_text="vaga em campinas")
+    assert present.applied_params.city is None
+    assert _field(present, "city").reason_code == "not_in_whitelist"
