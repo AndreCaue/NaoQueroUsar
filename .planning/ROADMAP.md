@@ -105,10 +105,21 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 23-01-PLAN.md — Hardening do mapper de cidade (fallback `\brio\b`) e regressões determinísticas (CL-01)
 - [ ] 23-02-PLAN.md — Correções frontend CL-05: parse defensivo chatSearch, gating de apply sem no-op e foco/a11y viável
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 23-03-PLAN.md — Reconciliação CL-01/CL-03: debug, 21/22 verification-UAT/manual e MVP com estados finais rastreáveis
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 23-04-PLAN.md — Nyquist 19–22 e 22-SECURITY.md (CL-04, CL-05)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 23-05-PLAN.md — Reconciliação quick tasks/STATE/REQUIREMENTS e atualização do audit + gate audit-open (CL-02, CL-05)
 
 ## Progress

@@ -286,22 +286,19 @@ const handleOpenDetail = (job: JobPublic, trigger?: HTMLElement | null) => {
 | A2 | Existing backend/frontend dev dependencies (pytest, Vitest, Node/Python env) are available in the execution environment for targeted deterministic tests. | Standard Stack / Environment Availability | Targeted regressions cannot be run; plan must record infeasibility and adjust evidence claims accordingly. |
 | A3 | Runtime/browser environment and representative test data may be unavailable for all 22 manual/UAT items, so per-item accepted deferment (D-12) will likely be needed beyond the CL-01 retest. | CL-03 planning / Pitfalls | Forcing full execution claims would be dishonest; artifacts must explicitly capture residual risk and future validation conditions. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **What exact artifact/file-state changes make quick tasks disappear from `gsd-sdk query audit-open`?**
+1. **What exact artifact/file-state changes make quick tasks disappear from `gsd-sdk query audit-open`?** — **RESOLVED**
    - What we know: audit-open currently lists all 4 as `quick_tasks` with `status: "missing"` and empty metadata, while u28/uik/krt have PLAN+SUMMARY and ttk has PLAN only. [VERIFIED: audit-open JSON, quick dirs]
-   - What's unclear: whether audit-open keys off quick-task frontmatter/status, SUMMARY presence/format, an index/state file, or only planning-doc reconciliation context; D-08 requires STATE/audit/references updates regardless. [ASSUMED]
-   - Recommendation: plan an explicit "re-run audit-open and interpret categories" step; if items persist, inspect audit-open expectations/source behavior in-session and align minimally without fabricating execution evidence.
+   - Resolution (D-05..D-08, D-16): do not assume internal heuristics; execute explicit reconciliation in STATE/REQUIREMENTS/v1.3-MILESTONE-AUDIT.md (and references as needed) with evidence or justified deferral per task, then re-run `gsd-sdk query audit-open` and iteratively align permitted artifacts minimally and honestly if items persist. ttk remains PLAN-only deferred justificado (no fabricated SUMMARY/execution).
 
-2. **Can the CL-01 runtime retest (toolbar + chat, registered city) be executed in the available environment during this phase?**
+2. **Can the CL-01 runtime retest (toolbar + chat, registered city) be executed in the available environment during this phase?** — **RESOLVED**
    - What we know: D-02 requires executed and documented retest when environment permits; 22 artifacts currently show retest pending. [VERIFIED: D-02, 22-HUMAN-UAT/MANUAL-UAT]
-   - What's unclear: availability of running backend/frontend, DB data with registered-city cases, and operator/browser access now. [ASSUMED]
-   - Recommendation: plan for execution attempt + evidence capture; if infeasible, apply D-12 per-item accepted deferment with explicit reason/risk/future condition (but do not silently leave pending).
+   - Resolution (D-02, D-03, D-10, D-12): attempt runtime retest during execution and record objective evidence in debug/UAT/verification artifacts when feasible; if infeasible, record explicit per-item accepted deferral with motivo de inviabilidade (ambiente/dados/runtime/browser/infra), risco residual, e condição/ação futura. Do not leave retest pending without recorded resolution.
 
-3. **How much focus/a11y remediation is "viável" without scope/risk creep in custom chat dialog?**
+3. **How much focus/a11y remediation is "viável" without scope/risk creep in custom chat dialog?** — **RESOLVED**
    - What we know: gaps noted (initial focus/trap in chat dialog, focus restore when opening detail from chat). Native dialog exists for job detail; ChatPanel is custom. [VERIFIED: component reads, prior verification/review notes]
-   - What's unclear: whether a robust focus trap can be added cleanly without regressions in this phase. [ASSUMED]
-   - Recommendation: implement minimal, high-value fixes (e.g. initial focus on open, reliable restore target passing) and explicitly defer remaining trap/complex focus management if needed per D-14.
+   - Resolution (D-14): implement minimal, high-value, low-risk fixes (initial focus on chat dialog open and reliable trigger propagation/focus restore when opening detail from chat). If a complete focus trap or other complex focus management is not viable without scope/risk creep, record an explicit accepted deferral with justificativa, risco residual, e condição/ação futura in the reconciliation artifacts (23-02/23-03 outputs and 22 UAT/verification/audit as applicable), without unsafe partial implementation.
 
 ## Environment Availability
 
