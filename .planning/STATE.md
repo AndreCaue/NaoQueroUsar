@@ -2,35 +2,35 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: milestone_complete
-stopped_at: Milestone complete (Phase 22 was final phase)
-last_updated: 2026-11-18T11:56:13.033Z
-last_activity: 2026-11-18 -- Phase 22 execution started
+status: in_progress
+stopped_at: Phase 23 added to resolve outstanding audit/validation debt before milestone close
+last_updated: 2026-11-19T11:05:00.000Z
+last_activity: 2026-11-19 -- Phase 23 added for outstanding audit/validation debt
 progress:
-  total_phases: 4
-  completed_phases: 3
+  total_phases: 5
+  completed_phases: 4
   total_plans: 9
   completed_plans: 9
-  percent: 75
+  percent: 80
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-17)
+See: .planning/PROJECT.md (updated 2026-11-19)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Milestone complete
+**Current focus:** Phase 23 — Fechamento de débitos de auditoria e validação v1.3
 
 ## Current Position
 
-Phase: 22
+Phase: 23
 Plan: Not started
-Status: Milestone complete
-Last activity: 2026-11-18
+Status: Phase added, awaiting planning
+Last activity: 2026-11-19
 
-Progress: [██▌-------] 25%
+Progress: [████------] 80%
 
 ## Performance Metrics
 
@@ -54,6 +54,10 @@ Progress: [██▌-------] 25%
 *Historical/v1.1 metrics preserved in archives and prior history.*
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 23 added: Fechamento de débitos de auditoria e validação v1.3 (resolve pending audit-open items: 1 debug session, 4 quick tasks, Phase 21/22 UAT+verification human_needed, Nyquist gaps 19–22, non-blocking warnings; prerequisite before closing v1.3). Milestone status reverted from `milestone_complete` to `in_progress`.
 
 ### Decisions
 

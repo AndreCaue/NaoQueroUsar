@@ -4,7 +4,7 @@
 
 - ✅ **v1.1 EmpregaNoix** — Phases 7–13 (shipped 2026-11-15, audit `gaps_found` accepted) — [Archive](./milestones/v1.1-ROADMAP.md)
 - ✅ **v1.2 Integração com Facebook Pages** — Phases 14–18 (shipped 2026-11-17, audit missing / gaps+handoffs accepted) — [Archive](./milestones/v1.2-ROADMAP.md)
-- 🚧 **v1.3 Chatbot Inteligente de Busca de Vagas** — Phases 19–22 (in progress)
+- 🚧 **v1.3 Chatbot Inteligente de Busca de Vagas** — Phases 19–23 (in progress)
 
 ## Phases
 
@@ -12,6 +12,7 @@
 - [x] **Phase 20: API pública de chat-search resiliente** - Expor endpoint público protegido que combina extração e busca determinística sem expor contatos (completed 2026-11-17)
 - [x] **Phase 21: Interface de chat e integração no board** - Oferecer chat mobile-first no board com interpretação transparente e aplicação na busca canônica (completed 2026-11-18)
 - [x] **Phase 22: Qualidade, hardening e validação operacional** - Validar exemplos MVP, cobrir fluxos críticos e garantir controles operacionais mínimos (completed 2026-11-18)
+- [ ] **Phase 23: Fechamento de débitos de auditoria e validação v1.3** - Resolver débitos de auditoria, validação humana/Nyquist e hardening pendentes antes do fechamento do milestone
 
 ## Phase Details
 
@@ -87,6 +88,22 @@ Plans:
 
 **Plans**: TBD
 
+### Phase 23: Fechamento de débitos de auditoria e validação v1.3
+
+**Goal**: Resolver os débitos pendentes de auditoria, validação humana/Nyquist e hardening identificados no fechamento do v1.3, garantindo que o milestone possa ser fechado sem pendências críticas abertas e sem regredir o board público.
+**Depends on**: Phase 22
+**Requirements**: CL-01, CL-02, CL-03, CL-04, CL-05
+**Success Criteria** (what must be TRUE):
+
+  1. O debug session `city-filter-and-chat-ignores-registered-city` (diagnosed) é investigado até a causa raiz e resolvido ou formalmente deferido/fechado com decisão registrada — o filtro de cidade e o chat passam a respeitar a cidade cadastrada corretamente.
+  2. As 4 quick tasks pendentes (`261110-u28-...`, `261110-uik-...`, `261111-krt-...`, `261112-ttk-...`) têm status definido: concluídas (com evidência) ou removidas/transformadas em item explícito de deferred com justificativa — nenhuma permanece como `missing`/`incomplete` no `audit-open`.
+  3. Os gaps de verificação/UAT das fases 21 e 22 são executados e registrados: `21-VERIFICATION.md` e `22-VERIFICATION.md` saem de `human_needed`, `22-HUMAN-UAT.md` sai de `partial` e `22-MANUAL-UAT.md` sai de `draft`, com cenários executados e resultados documentados (ou deferimento aceito e registrado para itens impossíveis de executar no ambiente).
+  4. Os gaps Nyquist das fases 19–22 são endereçados: `20-VALIDATION.md` criado e `19/21/22-VALIDATION.md` evoluídos de `partial` para `nyquist_compliant` (ou desvio aceito e documentado com plano de ação).
+  5. Os avisos não-bloqueantes da auditoria são tratados quando viáveis: `canApplyChatToBoard` não habilita apply no-op para cidade não-normalizável (UI-03), robustez de foco/a11y do chat/detail, parse defensivo de JSON em `chatSearch`, e `SECURITY.md` da Phase 22 (ou `/gsd-secure-phase 22`).
+  6. Após as correções, `gsd-sdk query audit-open` não reporta itens novos nesta fase e o `v1.3-MILESTONE-AUDIT.md` é atualizado (ou substituído por novo audit) refletindo a resolução dos débitos, permitindo o fechamento do milestone v1.3.
+
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -95,3 +112,4 @@ Plans:
 | 20. API pública de chat-search resiliente | 2/2 | Complete    | 2026-11-18 |
 | 21. Interface de chat e integração no board | 2/2 | Complete    | 2026-11-18 |
 | 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
+| 23. Fechamento de débitos de auditoria e validação v1.3 | 0/TBD | Not started | - |

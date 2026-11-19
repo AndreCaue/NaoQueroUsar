@@ -55,6 +55,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 - [x] Implementar interface de chat no board público (drawer/modal mobile-first) consumindo `chat-search`, exibindo interpretação/parâmetros e resultados com acesso ao detalhe (UI, Phase 21) — concluído em 2026-11-18 (UAT humano pendente)
 - [x] Qualidade, hardening e validação operacional do chatbot (QA, Phase 22): cenários MVP, limites/custos/latência, resiliência e regressão do fluxo público sem fricção — concluído em 2026-11-18 (verificação `human_needed`; UAT/runtime manual pendente em `22-HUMAN-UAT.md` / `22-VERIFICATION.md`)
+- [ ] **Phase 23 (NEW):** Fechamento de débitos de auditoria e validação v1.3 — resolver 1 debug session (cidade cadastrada), 4 quick tasks pendentes, gaps de verificação/UAT humana (fases 21/22), gaps Nyquist (19–22) e avisos não-bloqueantes; pré-requisito para fechar o milestone v1.3 (CL-01..05)
 - [ ] (A definir) Incluir ou não itens de carry-over/hardening (PUB-01..08, handoffs v1.2, lacunas v1.1) no escopo do milestone
 
 ### Out of Scope
@@ -121,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-18 after completing Phase 22 (qualidade, hardening e validação operacional; verificação human_needed, UAT manual pendente)*
+*Last updated: 2026-11-19 after adding Phase 23 (fechamento de débitos de auditoria e validação v1.3)*

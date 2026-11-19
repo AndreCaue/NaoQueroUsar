@@ -31,6 +31,18 @@ Requirements for milestone v1.3 (Chatbot Inteligente de Busca de Vagas). Each ma
 - [x] **QA-02**: Existem testes automatizados cobrindo extração/mapeamento/normalização e API de chat-search (com LLM mockado) e validação básica do fluxo de UI/E2E conforme viável no ambiente do projeto.
 - [x] **QA-03**: O sistema possui controles operacionais mínimos para o chat (config/feature toggle ou kill-switch, logs/métricas básicas sem PII sensível) para permitir desativação/ajuste seguro em caso de abuso, custo ou degradação, sem regredir o board público existente.
 
+## v1.3 Closure Requirements (Phase 23)
+
+Requirements for the Phase 23 closure/hardening scope. These address the outstanding audit-open items and v1.3 audit debt before the milestone can be closed.
+
+### Closure & Validation (CL)
+
+- [ ] **CL-01**: O debug session `city-filter-and-chat-ignores-registered-city` é resolvido ou formalmente deferido com decisão registrada — filtro de cidade e chat respeitam a cidade cadastrada corretamente, com teste de regressão.
+- [ ] **CL-02**: As 4 quick tasks pendentes (`261110-u28-...`, `261110-uik-...`, `261111-krt-...`, `261112-ttk-...`) são concluídas com evidência ou convertidas em deferred justificado — nenhuma permanece `missing`/`incomplete` no `audit-open`.
+- [ ] **CL-03**: Os gaps de verificação/UAT das fases 21/22 são executados e registrados (`21-VERIFICATION.md`, `22-VERIFICATION.md` saem de `human_needed`; `22-HUMAN-UAT.md` de `partial`; `22-MANUAL-UAT.md` de `draft`), com resultados documentados ou deferimento aceito para itens inviáveis no ambiente.
+- [ ] **CL-04**: Os gaps Nyquist das fases 19–22 são endereçados (`20-VALIDATION.md` criado; `19/21/22-VALIDATION.md` evoluídos para `nyquist_compliant`) ou desvio aceito com plano de ação documentado.
+- [ ] **CL-05**: Avisos não-bloqueantes da auditoria tratados quando viáveis (apply no-op `canApplyChatToBoard`, foco/a11y do chat/detail, parse defensivo de `chatSearch`, `SECURITY.md` da Phase 22) e o `v1.3-MILESTONE-AUDIT.md` atualizado/refeito, permitindo o fechamento do v1.3.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -74,12 +86,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QA-01 | Phase 22 | Complete |
 | QA-02 | Phase 22 | Complete |
 | QA-03 | Phase 22 | Complete |
+| CL-01 | Phase 23 | Not started |
+| CL-02 | Phase 23 | Not started |
+| CL-03 | Phase 23 | Not started |
+| CL-04 | Phase 23 | Not started |
+| CL-05 | Phase 23 | Not started |
 
 **Coverage:**
-- v1.3 requirements: 12 total
-- Mapped to phases: 12
+- v1.3 requirements: 12 total (all Complete)
+- v1.3 closure requirements: 5 total (Phase 23, Not started)
+- Mapped to phases: 17
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-17*
-*Last updated: 2026-11-17 after initial definition*
+*Last updated: 2026-11-19 after adding Phase 23 closure requirements (CL-01..05)*
