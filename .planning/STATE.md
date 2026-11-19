@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: in_progress
-stopped_at: Phase 23 added to resolve outstanding audit/validation debt before milestone close
-last_updated: 2026-11-19T11:05:00.000Z
-last_activity: 2026-11-19 -- Phase 23 added for outstanding audit/validation debt
+status: planning
+stopped_at: Phase 23 context gathered
+last_updated: "2026-11-19T21:32:42.987Z"
+last_activity: 2026-11-19
 progress:
   total_phases: 5
   completed_phases: 4
@@ -103,6 +103,6 @@ Items acknowledged/deferred at or before v1.2 close (2026-11-17):
 
 ## Session Continuity
 
-Last session: 2026-11-18T09:19:06.067Z
-Stopped at: Phase 22 UI-SPEC approved
-Resume file: .planning/phases/22-qualidade-hardening-e-valida-o-operacional/22-UI-SPEC.md
+Last session: 2026-11-19T21:32:42.955Z
+Stopped at: Phase 23 context gathered
+Resume file: .planning/phases/23-fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3/23-CONTEXT.md
