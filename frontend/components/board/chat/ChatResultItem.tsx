@@ -5,7 +5,7 @@ import { cityLabel } from "@/lib/cities";
 
 interface ChatResultItemProps {
   job: JobPublic;
-  onOpen: (job: JobPublic) => void;
+  onOpen: (job: JobPublic, trigger?: HTMLElement | null) => void;
 }
 
 export function ChatResultItem({ job, onOpen }: ChatResultItemProps) {
@@ -15,7 +15,7 @@ export function ChatResultItem({ job, onOpen }: ChatResultItemProps) {
   return (
     <button
       type="button"
-      onClick={() => onOpen(job)}
+      onClick={(e) => onOpen(job, e.currentTarget)}
       className="w-full rounded-lg border border-line bg-surface p-3 text-left transition-colors hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft"
     >
       <div className="flex min-h-11 flex-col gap-1">

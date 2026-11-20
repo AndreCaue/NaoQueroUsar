@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 interface ChatPanelProps {
@@ -18,6 +18,8 @@ export function ChatPanel({
   children,
   composer,
 }: ChatPanelProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -29,6 +31,11 @@ export function ChatPanel({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    closeButtonRef.current?.focus();
+  }, [open]);
 
   if (!open) return null;
 
@@ -52,6 +59,7 @@ export function ChatPanel({
           </h2>
           <button
             type="button"
+            ref={closeButtonRef}
             onClick={onClose}
             className="inline-flex h-11 min-h-11 items-center justify-center rounded-lg px-3 text-sm font-semibold text-fg-muted transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft"
           >

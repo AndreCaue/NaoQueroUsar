@@ -333,7 +333,7 @@ export function ChatWidget() {
           onRetry={handleRetry}
           onLoadMore={() => void handleLoadMore()}
           onApplyToBoard={handleApplyToBoard}
-          onOpenDetail={(job) => handleOpenDetail(job, null)}
+          onOpenDetail={(job, trigger) => handleOpenDetail(job, trigger ?? null)}
           onManualSearch={handleManualSearch}
         />
         {sendError ? (

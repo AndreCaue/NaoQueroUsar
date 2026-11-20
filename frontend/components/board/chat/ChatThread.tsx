@@ -22,7 +22,7 @@ interface ChatThreadProps {
   onRetry: (message: string) => void;
   onLoadMore: () => void;
   onApplyToBoard: () => void;
-  onOpenDetail: (job: JobPublic) => void;
+  onOpenDetail: (job: JobPublic, trigger?: HTMLElement | null) => void;
   onManualSearch: () => void;
 }
 

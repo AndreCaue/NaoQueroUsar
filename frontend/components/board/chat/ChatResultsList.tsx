@@ -11,7 +11,7 @@ interface ChatResultsListProps {
   canApply: boolean;
   onLoadMore: () => void;
   onApplyToBoard: () => void;
-  onOpenDetail: (job: JobPublic) => void;
+  onOpenDetail: (job: JobPublic, trigger?: HTMLElement | null) => void;
   onManualSearch: () => void;
 }
 
