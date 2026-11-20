@@ -839,7 +839,11 @@ export async function chatSearch(
     throw new ApiError(await readError(res), res.status);
   }
 
-  return (await res.json()) as ChatSearchResponse;
+  try {
+    return (await res.json()) as ChatSearchResponse;
+  } catch {
+    throw new ApiError("Resposta inválida do servidor.", 0);
+  }
 }
 
 export async function getChatSearchStatus(

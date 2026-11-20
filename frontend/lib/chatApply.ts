@@ -19,9 +19,10 @@ export function canApplyChatToBoard(interpretation: ChatInterpretation): boolean
   ) {
     return false;
   }
-  const p = interpretation.applied_params;
-  const hasQ = typeof p.q === "string" && p.q.trim().length > 0;
-  const hasCity = typeof p.city === "string" && p.city.trim().length > 0;
-  const hasSort = p.sort === "antigas";
-  return hasQ || hasCity || hasSort;
+  const normalized = appliedParamsToBoardFilters(interpretation.applied_params);
+  return (
+    normalized.q.trim().length > 0 ||
+    normalized.city !== null ||
+    normalized.sort === "antigas"
+  );
 }

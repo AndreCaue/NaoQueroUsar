@@ -85,6 +85,7 @@ describe("canApplyChatToBoard", () => {
     expect(
       canApplyChatToBoard(interpretation({ q: " ", city: null, sort: "recentes" })),
     ).toBe(false);
+    expect(canApplyChatToBoard(interpretation({ city: "campinas" }))).toBe(false);
   });
 
   it("returns false when degradation_reason is chat_disabled", () => {
