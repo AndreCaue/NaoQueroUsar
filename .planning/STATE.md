@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: executing
-stopped_at: Phase 23 UI-SPEC approved
-last_updated: "2026-11-20T20:12:38.220Z"
-last_activity: 2026-11-20 -- Phase 23 execution started
+status: milestone-closure
+stopped_at: "Phase 23 closure reconciliation complete (23-05)"
+last_updated: "2026-11-20T21:05:00Z"
+last_activity: "2026-11-20 -- Phase 23 plans 01-05 executed; closure docs reconciled (CL-01..CL-05)"
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 0
-  percent: 0
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 
 ## Current Position
 
-Phase: 23 (fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 23
-Last activity: 2026-11-20 -- Phase 23 execution started
+Phase: 23 (fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3) — COMPLETE
+Plan: 5 of 5
+Status: Phase 23 closure reconciliation complete (plans 01-05; CL-01..CL-05 documented with evidence/accepted deferments)
+Last activity: 2026-11-20 -- Phase 23 plans 01-05 executed; STATE/REQUIREMENTS/audit reconciled for v1.3 closure
 
-Progress: [████------] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [████------] 80%
 ### Roadmap Evolution
 
 - Phase 23 added: Fechamento de débitos de auditoria e validação v1.3 (resolve pending audit-open items: 1 debug session, 4 quick tasks, Phase 21/22 UAT+verification human_needed, Nyquist gaps 19–22, non-blocking warnings; prerequisite before closing v1.3). Milestone status reverted from `milestone_complete` to `in_progress`.
+- 2026-11-20: Phase 23 executed (plans 01-05). CL-01/03 reconciled via 23-01/23-03 artifacts (debug resolved with accepted runtime retest deferral per item), CL-04/05 artifacts closed via 23-04, and CL-02/05 closure reconciliation completed in 23-05 (quick tasks dispositioned; STATE/REQUIREMENTS/v1.3-MILESTONE-AUDIT updated; audit-open gate executed).
 
 ### Decisions
 
@@ -82,11 +83,16 @@ None tracked.
 
 ### Quick Tasks Completed
 
-None yet.
+| Task | Disposition | Evidence |
+|------|-------------|----------|
+| 261110-u28-bloquear-a-expressao-jacira-chavare-ao-c | concluded (superseded behavior) | `.planning/quick/261110-u28-bloquear-a-expressao-jacira-chavare-ao-c/261110-u28-PLAN.md`, `261110-u28-SUMMARY.md` — blocking behavior original; vigente supersede por 261110-uik (remoção) |
+| 261110-uik-remover-jacira-chavare-do-texto-colado-s | concluded (vigente) | `.planning/quick/261110-uik-remover-jacira-chavare-do-texto-colado-s/261110-uik-PLAN.md`, `261110-uik-SUMMARY.md` — comportamento vigente: remoção do termo |
+| 261111-krt-atualizar-next-16-4-6-eslint-9 | concluded (historical evidence) | `.planning/quick/261111-krt-atualizar-next-16-4-6-eslint-9/261111-krt-PLAN.md`, `261111-krt-SUMMARY.md` |
+| 261112-ttk-escape-hatch-turnstile-teste-em-prod | deferred justificado (not executed) | `.planning/quick/261112-ttk-escape-hatch-turnstile-teste-em-prod/261112-ttk-PLAN.md` (PLAN-only; sem SUMMARY/evidência de execução) |
 
 ## Deferred Items
 
-Items acknowledged/deferred at or before v1.2 close (2026-11-17):
+Items acknowledged/deferred at or before v1.2 close (2026-11-17), plus Phase 23 quick-task dispositions (CL-02, D-05..D-08):
 
 | Category | Item | Status |
 |----------|------|--------|
@@ -96,13 +102,13 @@ Items acknowledged/deferred at or before v1.2 close (2026-11-17):
 | audit | v1.1-MILESTONE-AUDIT gaps carried (EXTR/PUBL/SRCH/UIUX unsatisfied in audited scope, etc.) | deferred/accepted |
 | ops | Live canonical-host smoke/provisioning on `empreganoix.vercel.app` / `empreganoix.onrender.com` | pending handoff |
 | testing | Reproducible migrated test DB for DB-backed suites (`jobs` relation) | deferred |
-| quick_task | 261110-u28-bloquear-a-expressao-jacira-chavare-ao-c | incomplete |
-| quick_task | 261110-uik-remover-jacira-chavare-do-texto-colado-s | incomplete |
-| quick_task | 261111-krt-atualizar-next-16-4-6-eslint-9 | incomplete |
-| quick_task | 261112-ttk-escape-hatch-turnstile-teste-em-prod | incomplete |
+| quick_task | 261110-u28-bloquear-a-expressao-jacira-chavare-ao-c | concluded (evidence: `.planning/quick/261110-u28-bloquear-a-expressao-jacira-chavare-ao-c/261110-u28-PLAN.md`, `261110-u28-SUMMARY.md`; comportamento de bloqueio original supersedido pelo estado vigente de 261110-uik) |
+| quick_task | 261110-uik-remover-jacira-chavare-do-texto-colado-s | concluded (evidence: `.planning/quick/261110-uik-remover-jacira-chavare-do-texto-colado-s/261110-uik-PLAN.md`, `261110-uik-SUMMARY.md`; comportamento vigente: remoção do termo) |
+| quick_task | 261111-krt-atualizar-next-16-4-6-eslint-9 | concluded (evidence: `.planning/quick/261111-krt-atualizar-next-16-4-6-eslint-9/261111-krt-PLAN.md`, `261111-krt-SUMMARY.md`) |
+| quick_task | 261112-ttk-escape-hatch-turnstile-teste-em-prod | deferred justificado (PLAN-only: `.planning/quick/261112-ttk-escape-hatch-turnstile-teste-em-prod/261112-ttk-PLAN.md`; sem SUMMARY/evidência de execução; validação segura em produção/ambiente controlado fora do escopo local) |
 
 ## Session Continuity
 
-Last session: 2026-11-19T22:32:39.645Z
-Stopped at: Phase 23 UI-SPEC approved
-Resume file: .planning/phases/23-fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3/23-UI-SPEC.md
+Last session: 2026-11-20T21:05:00Z
+Stopped at: Phase 23 closure reconciliation complete (23-05)
+Resume file: .planning/phases/23-fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3/23-05-SUMMARY.md

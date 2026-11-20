@@ -37,11 +37,11 @@ Requirements for the Phase 23 closure/hardening scope. These address the outstan
 
 ### Closure & Validation (CL)
 
-- [ ] **CL-01**: O debug session `city-filter-and-chat-ignores-registered-city` é resolvido ou formalmente deferido com decisão registrada — filtro de cidade e chat respeitam a cidade cadastrada corretamente, com teste de regressão.
-- [ ] **CL-02**: As 4 quick tasks pendentes (`261110-u28-...`, `261110-uik-...`, `261111-krt-...`, `261112-ttk-...`) são concluídas com evidência ou convertidas em deferred justificado — nenhuma permanece `missing`/`incomplete` no `audit-open`.
-- [ ] **CL-03**: Os gaps de verificação/UAT das fases 21/22 são executados e registrados (`21-VERIFICATION.md`, `22-VERIFICATION.md` saem de `human_needed`; `22-HUMAN-UAT.md` de `partial`; `22-MANUAL-UAT.md` de `draft`), com resultados documentados ou deferimento aceito para itens inviáveis no ambiente.
-- [ ] **CL-04**: Os gaps Nyquist das fases 19–22 são endereçados (`20-VALIDATION.md` criado; `19/21/22-VALIDATION.md` evoluídos para `nyquist_compliant`) ou desvio aceito com plano de ação documentado.
-- [ ] **CL-05**: Avisos não-bloqueantes da auditoria tratados quando viáveis (apply no-op `canApplyChatToBoard`, foco/a11y do chat/detail, parse defensivo de `chatSearch`, `SECURITY.md` da Phase 22) e o `v1.3-MILESTONE-AUDIT.md` atualizado/refeito, permitindo o fechamento do v1.3.
+- [x] **CL-01**: Debug `city-filter-and-chat-ignores-registered-city` resolvido com decisão/evidência registrada (22-04 + hardening 23-01, testes determinísticos) e reteste runtime do caso reportado documentado como deferimento aceito por item quando inviável no ambiente (23-03/debug/UAT).
+- [x] **CL-02**: Quick tasks reconciliadas com evidência ou deferimento justificado: u28/uik/krt concluídas com evidência (uik vigente supersede u28) e ttk como deferred justificado (PLAN-only, sem SUMMARY/evidência de execução; validação segura em produção/ambiente controlado fora do escopo local) — sem permanecerem `missing`/`incomplete` no contexto de fechamento documentado.
+- [x] **CL-03**: Gaps de verificação/UAT 21/22 reconciliados em estados finais aceitos e rastreáveis (`21-VERIFICATION` passed via UAT existente; `22-VERIFICATION/HUMAN-UAT/MANUAL-UAT` finalizados com passes preservados e deferimentos aceitos por item para runtime/UI inviável, incluindo reteste CL-01).
+- [x] **CL-04**: Gaps Nyquist 19–22 endereçados: `20-VALIDATION.md` criado; `19/20-VALIDATION.md` evoluídos para `nyquist_compliant: true` com evidência; `21/22-VALIDATION.md` mantêm `nyquist_compliant: false` com desvio aceito e plano de ação documentado.
+- [x] **CL-05**: Avisos não-bloqueantes tratados quando viáveis (`chatSearch` parse defensivo, `canApplyChatToBoard` sem no-op para cidade-only não normalizável, melhorias focadas de foco/a11y com residual de focus-trap explicitamente deferido/propagado, `22-SECURITY.md` criado) e `v1.3-MILESTONE-AUDIT.md` atualizado in-place para fechamento rastreável do milestone.
 
 ## v2 Requirements
 
@@ -86,18 +86,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QA-01 | Phase 22 | Complete |
 | QA-02 | Phase 22 | Complete |
 | QA-03 | Phase 22 | Complete |
-| CL-01 | Phase 23 | Not started |
-| CL-02 | Phase 23 | Not started |
-| CL-03 | Phase 23 | Not started |
-| CL-04 | Phase 23 | Not started |
-| CL-05 | Phase 23 | Not started |
+| CL-01 | Phase 23 | Complete |
+| CL-02 | Phase 23 | Complete |
+| CL-03 | Phase 23 | Complete |
+| CL-04 | Phase 23 | Complete |
+| CL-05 | Phase 23 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 12 total (all Complete)
-- v1.3 closure requirements: 5 total (Phase 23, Not started)
+- v1.3 closure requirements: 5 total (Phase 23, Complete with evidence/accepted deferments where applicable)
 - Mapped to phases: 17
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-17*
-*Last updated: 2026-11-19 after adding Phase 23 closure requirements (CL-01..05)*
+*Last updated: 2026-11-20 after Phase 23 closure reconciliation (CL-01..CL-05, 23-05)*
