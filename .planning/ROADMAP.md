@@ -102,13 +102,13 @@ Plans:
   5. Os avisos não-bloqueantes da auditoria são tratados quando viáveis: `canApplyChatToBoard` não habilita apply no-op para cidade não-normalizável (UI-03), robustez de foco/a11y do chat/detail, parse defensivo de JSON em `chatSearch`, e `SECURITY.md` da Phase 22 (ou `/gsd-secure-phase 22`).
   6. Após as correções, `gsd-sdk query audit-open` não reporta itens novos nesta fase e o `v1.3-MILESTONE-AUDIT.md` é atualizado (ou substituído por novo audit) refletindo a resolução dos débitos, permitindo o fechamento do milestone v1.3.
 
-**Plans:** 5 plans
+**Plans:** 2/5 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 23-01-PLAN.md — Hardening do mapper de cidade (fallback `\brio\b`) e regressões determinísticas (CL-01)
-- [ ] 23-02-PLAN.md — Correções frontend CL-05: parse defensivo chatSearch, gating de apply sem no-op e foco/a11y viável
+- [x] 23-01-PLAN.md — Hardening do mapper de cidade (fallback `\brio\b`) e regressões determinísticas (CL-01)
+- [x] 23-02-PLAN.md — Correções frontend CL-05: parse defensivo chatSearch, gating de apply sem no-op e foco/a11y viável
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -130,4 +130,4 @@ Plans:
 | 20. API pública de chat-search resiliente | 2/2 | Complete    | 2026-11-18 |
 | 21. Interface de chat e integração no board | 2/2 | Complete    | 2026-11-18 |
 | 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
-| 23. Fechamento de débitos de auditoria e validação v1.3 | 0/5 | Planned | - |
+| 23. Fechamento de débitos de auditoria e validação v1.3 | 2/5 | In Progress|  |
