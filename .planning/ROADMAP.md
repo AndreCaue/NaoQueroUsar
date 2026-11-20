@@ -12,7 +12,7 @@
 - [x] **Phase 20: API pública de chat-search resiliente** - Expor endpoint público protegido que combina extração e busca determinística sem expor contatos (completed 2026-11-17)
 - [x] **Phase 21: Interface de chat e integração no board** - Oferecer chat mobile-first no board com interpretação transparente e aplicação na busca canônica (completed 2026-11-18)
 - [x] **Phase 22: Qualidade, hardening e validação operacional** - Validar exemplos MVP, cobrir fluxos críticos e garantir controles operacionais mínimos (completed 2026-11-18)
-- [ ] **Phase 23: Fechamento de débitos de auditoria e validação v1.3** - Resolver débitos de auditoria, validação humana/Nyquist e hardening pendentes antes do fechamento do milestone
+- [x] **Phase 23: Fechamento de débitos de auditoria e validação v1.3** - Resolver débitos de auditoria, validação humana/Nyquist e hardening pendentes antes do fechamento do milestone (completed 2026-11-20)
 
 ## Phase Details
 
@@ -102,7 +102,7 @@ Plans:
   5. Os avisos não-bloqueantes da auditoria são tratados quando viáveis: `canApplyChatToBoard` não habilita apply no-op para cidade não-normalizável (UI-03), robustez de foco/a11y do chat/detail, parse defensivo de JSON em `chatSearch`, e `SECURITY.md` da Phase 22 (ou `/gsd-secure-phase 22`).
   6. Após as correções, `gsd-sdk query audit-open` não reporta itens novos nesta fase e o `v1.3-MILESTONE-AUDIT.md` é atualizado (ou substituído por novo audit) refletindo a resolução dos débitos, permitindo o fechamento do milestone v1.3.
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 **Wave 1**
@@ -120,7 +120,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 23-05-PLAN.md — Reconciliação quick tasks/STATE/REQUIREMENTS e atualização do audit + gate audit-open (CL-02, CL-05)
+- [x] 23-05-PLAN.md — Reconciliação quick tasks/STATE/REQUIREMENTS e atualização do audit + gate audit-open (CL-02, CL-05)
 
 ## Progress
 
@@ -130,4 +130,4 @@ Plans:
 | 20. API pública de chat-search resiliente | 2/2 | Complete    | 2026-11-18 |
 | 21. Interface de chat e integração no board | 2/2 | Complete    | 2026-11-18 |
 | 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
-| 23. Fechamento de débitos de auditoria e validação v1.3 | 4/5 | In Progress|  |
+| 23. Fechamento de débitos de auditoria e validação v1.3 | 5/5 | Complete   | 2026-11-20 |
