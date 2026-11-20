@@ -1,17 +1,17 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "UAT gap diagnosis (Phase 22, Test 1): toolbar não reconhece cidade cadastrada usa ?q=city-name e retorna nada; chatbot marca cidade cadastrada como ignorada."
 created: 2026-11-18T00:00:00Z
-updated: 2026-11-18T00:00:00Z
+updated: 2026-11-20T00:00:00Z
 ---
 
 ## Current Focus
 <!-- OVERWRITE on each update - reflects NOW -->
 
-hypothesis: "Both symptoms stem from gaps in mapping user-provided city text to the supported/canonical `city` filter: (A) BoardToolbar commits free-text search only as `q` and never promotes supported city names to `city`, while public `q` search matches `jobs.search_text` (title/company/activities/requirements) and excludes `jobs.city`, so `?q=<city>` returns nothing when the city name is not in searchable text. (B) Intent mapper resolves SP/RJ/BH only from LLM `candidate.city` (or detects only remote from raw text when `candidate.city` is absent), so if extraction omits/misextracts a supported city the mapper marks it missing/not_in_whitelist and the API returns ignored/degraded interpretation with no city applied."
-test: "Static code trace of toolbar/query construction, filters normalization, public jobs query, search_text composition, and intent parser/mapper/city resolution."
-expecting: "Evidence shows no q->city promotion in manual toolbar path and search_text excludes city; evidence shows mapper lacks raw-text fallback for non-remote whitelist cities when candidate.city is missing."
-next_action: "Return ROOT CAUSE FOUND with file-level evidence and fix direction (no code changes)."
+estado: **resolvido (causa/mitigação de código + testes determinísticos)** com reteste runtime do caso reportado registrado como **deferimento aceito por item** (inviável no ambiente desta execução).
+diagnóstico: concluído (causa raiz identificada em 2026-11-18).
+mitigação aplicada: 22-04 (promoção determinística de cidade suportada no toolbar + fallback raw-text SP/RJ/BH/Remoto no mapper com salvaguardas) e hardening 23-01 (remoção de `\brio\b` ambíguo, preservando detecção segura RJ via `\brj\b` e `\brio\s+de\s+janeiro\b`) com regressões determinísticas.
+next_action: "nenhum (encerrado para diagnóstico/correção automatizável); revalidação runtime/integrada do caso reportado permanece como ação futura condicionada a ambiente viável (ver Resolution e deferimento aceito)."
 
 ## Symptoms
 <!-- Written during gathering, then IMMUTABLE -->
@@ -64,10 +64,29 @@ mode: symptoms_prefilled (UAT gap diagnosis)
   found: "Extraction/admin flows constrain/normalize supported public cities to canonical accented values (ALLOWED_CITIES/resolve_city) for supported cases; admin `JobUpdate` resolves city via `resolve_city` or rejects invalid. DB/public filter compares against canonical city value (`Job.city == canonical`)."
   implication: "Primary chat issue indicated by code is intent extraction/mapping coverage (especially missing raw-text fallback for SP/RJ/BH), not routine DB storage mismatch for supported whitelist cities. A data-shape mismatch remains possible for edge/manual/legacy records but is not evidenced here."
 
+- timestamp: 2026-11-20T00:00:00Z
+  checked: "`backend/app/services/intent/mapper.py`, `backend/tests/test_intent_mapper.py`, `.planning/phases/23-fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3/23-01-SUMMARY.md`, commits `8d0c621`/`27e1a8c`"
+  found: "Hardening 23-01 removeu o padrão ambíguo `\\brio\\b` do fallback raw-text de Rio de Janeiro, mantendo detecção segura por `\\brj\\b` e `\\brio\\s+de\\s+janeiro\\b`. Regressões determinísticas cobrem falsos positivos (\"Rio Grande do Sul\", \"Rio Branco\") sem mapear para \"Rio de Janeiro\" quando não há cidade explícita, preservando casos suportados RJ."
+  implication: "Risco de falso positivo apontado em `22-REVIEW.md` (WR-04) mitigado no código com evidência automatizada; whitelist permanece restrita (sem inventar cidades)."
+
+- timestamp: 2026-11-20T00:00:00Z
+  checked: "Rastreabilidade 22-04 (`frontend/lib/cities.ts`, `frontend/components/board/BoardToolbar.tsx`, `frontend/lib/cities.test.ts`, `backend/app/services/intent/mapper.py`, `backend/tests/test_intent_mapper.py`, `backend/tests/test_intent_parser.py`) + artefatos 22 (`22-HUMAN-UAT.md`, `22-MANUAL-UAT.md`, `22-MVP-EXAMPLES.md`, `22-VERIFICATION.md`)"
+  found: "Correção do caso reportado (promoção toolbar para `city=<slug>` e fallback raw-text SP/RJ/BH/Remoto com salvaguardas) já registrada/documentada em 22-04; 23-01 complementou hardening RJ. Não foi executado reteste runtime/integrado nesta sessão (ambiente indisponível)."
+  implication: "**Reteste runtime/manual do caso reportado: deferimento aceito por item (inviável no ambiente atual).** Motivo: sem backend/frontend/DB/dados/navegador integrados disponíveis nesta execução. Risco residual: divergência operacional em ambiente real não observada diretamente. Condição/ação futura: revalidar item 0 de `22-MANUAL-UAT.md` e item 1 de `22-HUMAN-UAT.md` em ambiente integrado, registrando evidência do filtro `city=<slug>` e interpretação correta no chat."
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
-root_cause: "Toolbar: free-text input is always emitted as `q` (no supported-city detection/promotion to `city`), and public keyword search queries `jobs.search_text` (title/company/activities/requirements only, excluding `jobs.city`), so typing a registered city name yields `?q=city-name` with no matches. Chat: `map_intent/_resolve_city_safe` depends on LLM `candidate.city` for non-remote whitelist cities and only falls back to raw-text remote detection when `candidate.city` is absent, so omitted/misread supported cities are classified ignored (missing/not_in_whitelist) instead of applied."
-fix: "Not applied (diagnosis-only)."
-verification: "Not applicable (diagnosis-only)."
-files_changed: []
+root_cause: "Toolbar: free-text input is always emitted as `q` (no supported-city detection/promotion to `city`), and public keyword search queries `jobs.search_text` (title/company/activities/requirements only, excluding `jobs.city`), so typing a registered city name yields `?q=city-name` with no matches. Chat: `map_intent/_resolve_city_safe` depends on LLM `candidate.city` for non-remote whitelist cities and only falls back to raw-text remote detection when `candidate.city` is absent, so omitted/misread supported cities are classified ignored (missing/not_in_whitelist) instead of applied. Hardening adicional (23-01) fechou risco residual identificado em review: fallback raw-text com `\brio\b` podia confundir nomes com \"Rio\" fora da whitelist/RJ."
+fix: "Aplicado (22-04 + 23-01). 22-04: promoção determinística de texto de cidade suportada no toolbar para `city=<slug>` (limpando `q` em match exato seguro) e fallback determinístico server-side no mapper para detectar whitelist SP/RJ/BH/Remoto em `raw_text` quando `candidate.city` ausente, com salvaguardas de conflito/whitelist e `applied_params`/`field_statuses` coerentes. 23-01: hardening do fallback de Rio de Janeiro removendo `\brio\b` ambíguo e mantendo apenas sinais seguros (`\\brj\\b`, `\\brio\\s+de\\s+janeiro\\b`), evitando falsos positivos como \"Rio Grande do Sul\"/\"Rio Branco\" sem inventar cidades fora da whitelist."
+verification: "Testes automatizados determinísticos adicionados/atualizados e registrados em 22-04/23-01 (ex.: `frontend/lib/cities.test.ts`, `backend/tests/test_intent_mapper.py`, `backend/tests/test_intent_parser.py`; commits de referência 22-04 e `8d0c621`/`27e1a8c` de 23-01). **Reteste runtime/manual do caso reportado (toolbar e chat em ambiente integrado com dados): deferimento aceito por item (inviável no ambiente desta execução).** Motivo: ausência de stack integrada executável (backend/frontend/DB/dados/navegador) disponível para reprodução operacional nesta sessão de fechamento documental. Risco residual: comportamento ponta a ponta em runtime real pode divergir por configuração/dados/ambiente apesar da cobertura determinística. Condição/ação futura: executar `22-MANUAL-UAT.md` item 0 e `22-HUMAN-UAT.md` item 1 em ambiente com backend+frontend+dados de vagas por cidade, registrando evidência objetiva do `city=<slug>` aplicado e da interpretação do chat sem marcação indevida como ignorada."
+files_changed:
+  - frontend/lib/cities.ts
+  - frontend/components/board/BoardToolbar.tsx
+  - frontend/lib/cities.test.ts
+  - backend/app/services/intent/mapper.py
+  - backend/tests/test_intent_mapper.py
+  - backend/tests/test_intent_parser.py
+  - .planning/phases/23-fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3/23-01-SUMMARY.md (evidência)
+  - .planning/phases/22-qualidade-hardening-e-valida-o-operacional/22-MVP-EXAMPLES.md (rastreabilidade)
+  - .planning/phases/22-qualidade-hardening-e-valida-o-operacional/22-HUMAN-UAT.md / 22-MANUAL-UAT.md / 22-VERIFICATION.md (reconciliação por item)

@@ -1,17 +1,19 @@
 ---
 phase: 21-interface-de-chat-e-integracao-no-board
 verified: 2026-11-17T21:55:00Z
-status: human_needed
+status: passed
 score: 4/4 must-haves verified
-re_verification: false
+re_verification:
+  - date: 2026-11-20
+    note: "Reconciliação documental (D-09): checks humanos pendentes reconciliados com evidência existente em `.planning/phases/21-interface-de-chat-e-integracao-no-board/21-HUMAN-UAT.md` (status complete, 4/4 pass, 2026-11-17). Nenhuma nova execução runtime/UI foi realizada nesta reconciliação."
 ---
 
 # Phase 21: Interface de chat e integração no board — Verification Report
 
 **Phase Goal:** Qualquer pessoa consegue usar o chat no board público, entender o que o sistema aplicou e chegar aos detalhes das vagas sem fricção
 **Verified:** 2026-11-17T21:55:00Z
-**Status:** human_needed
-**Re-verification:** No — initial verification
+**Status:** passed (reconciliado com UAT humano existente)
+**Re-verification:** 2026-11-20 — reconciliação rastreável com `21-HUMAN-UAT.md` (4/4 pass, 2026-11-17), sem nova execução runtime nesta etapa. Verificação automatizada de código/wiring e mapeamento de testes preservados do relatório inicial.
 
 ## Goal Achievement
 
@@ -73,35 +75,18 @@ re_verification: false
 | `frontend/lib/api.ts` | 811-838 | `chatSearch` parses success JSON without guarded parse-failure mapping (review WR-03) | ℹ️ Info | Malformed 200 response would throw raw parse error instead of normalized `ApiError`; non-2xx/transport paths are handled. |
 | `frontend/components/board/chat/ChatComposer.tsx` | 29-41, 68-97 | 400-char limit enforced on submit only; no `maxLength`/live counter (review WR-04) | ℹ️ Info | UX friction only; server remains authoritative. |
 
-### Human Verification Required
+### Human Verification (reconciliado)
 
-### 1. Mobile/desktop chat panel behavior and layering
+Os checks humanos antes pendentes foram satisfeitos pela evidência registrada em `.planning/phases/21-interface-de-chat-e-integracao-no-board/21-HUMAN-UAT.md` (**status: complete, 4/4 pass, 2026-11-17**), sem nova execução runtime nesta reconciliação documental:
 
-**Test:** On mobile viewport and desktop, open chat from launcher, send a query, open a result detail, close detail, and reopen chat.
-**Expected:** Bottom-sheet-like behavior on small screens and constrained drawer/panel on desktop; chat does not obscure critical board controls when closed; chat minimizes when detail opens and reopens with preserved conversation/results/interpretation; no overlay/focus traps blocking interaction.
-**Why human:** Visual layout, responsive breakpoints, overlay layering, and focus ergonomics cannot be fully proven from static code.
-
-### 2. Loading, error, retry, and pagination flow
-
-**Test:** Send a valid query (and simulate slow/failing backend if possible), observe in-flight state, trigger retry, then use `Carregar mais vagas` on a multi-page result.
-**Expected:** "Interpretando sua busca..." shown while waiting, send/load-more controls prevent duplicate in-flight actions, failures show clear pt-BR error with `Tentar novamente`, and additional pages append correctly without losing current interpretation.
-**Why human:** Runtime/network timing and perceived behavior require live interaction.
-
-### 3. Interpretation transparency and degraded/manual fallback
-
-**Test:** Exercise responses that include aplicado/ignorado/aproximado fields, limitations/guidance, degraded/no-auto-results, and zero-results cases.
-**Expected:** "Entendi..." summary, per-field statuses/reasons, separate "Limites desta busca" guidance, "Não houve resultados automáticos." or "Nenhuma vaga encontrada" states as applicable, and `Usar busca manual` shortcut behaves usefully without exposing contacts.
-**Why human:** Requires real API response variety and judgment on clarity/fidelity of pt-BR guidance.
-
-### 4. Apply-to-board canonical navigation and canonical detail/reveal
-
-**Test:** From a non-degraded response with applicable params, click `Aplicar no board`; separately open a chat result detail and reveal contact in the dialog.
-**Expected:** Board URL updates canonically (replaces `q/city/sort`, resets `page=1`, clears `vaga`) and board remains usable; opening detail uses canonical dialog/`?vaga` behavior and contact reveal works only in detail flow (never shown in chat).
-**Why human:** End-to-end navigation, URL/runtime behavior, and canonical reveal interaction need browser verification.
+1. **Mobile/desktop chat panel behavior and layering** — UAT Test 1: `pass`.
+2. **Loading, error, retry, and pagination flow** — UAT Test 2: `pass`.
+3. **Interpretation transparency and degraded/manual fallback** — UAT Test 3: `pass`.
+4. **Apply-to-board canonical navigation and canonical detail/reveal** — UAT Test 4: `pass`.
 
 ### Gaps Summary
 
-No blocking codebase gaps found for Phase 21 must-haves. The chat UI, typed client/mapping helpers, interpretation/results rendering, canonical apply flow, and canonical detail integration are present and wired in code, with targeted automated mapping tests passing (`frontend: npm run test:chat` = 6/6). Remaining items are human-verification needs (responsive/focus/layering and live flow behavior) and non-blocking warnings noted in anti-patterns/review (notably focus management, apply-eligibility edge case for unknown cities, and minor client robustness/copy constraints).
+Nenhum gap bloqueante remanescente para os must-haves da Fase 21. Evidências automatizadas de código/wiring e testes de mapeamento (`frontend: npm run test:chat` = 6/6, relatório inicial) permanecem válidas; validação humana foi concluída conforme `21-HUMAN-UAT.md` (4/4). Observações em anti-patterns abaixo são **não-bloqueantes/históricas** para este fechamento documental (não contradizem o resultado aprovado no UAT registrado).
 
 ---
 
