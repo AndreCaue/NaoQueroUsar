@@ -337,3 +337,16 @@ def test_absent_candidate_raw_text_city_safeguards() -> None:
     present = map_intent(IntentLLMOutput.model_validate({"city": "Campinas"}), raw_text="vaga em campinas")
     assert present.applied_params.city is None
     assert _field(present, "city").reason_code == "not_in_whitelist"
+
+
+def test_absent_candidate_raw_text_rio_false_positive_safeguards() -> None:
+    rs = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga no Rio Grande do Sul")
+    assert rs.applied_params.city is None
+    fs_rs = _field(rs, "city")
+    assert fs_rs.status == "ignorado"
+    assert fs_rs.reason_code != "normalized"
+    assert fs_rs.applied != "Rio de Janeiro"
+
+    rb = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga em Rio Branco")
+    assert rb.applied_params.city is None
+    assert rb.applied_params.city != "Rio de Janeiro"
