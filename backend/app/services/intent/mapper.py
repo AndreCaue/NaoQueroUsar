@@ -33,7 +33,7 @@ _GENERIC_Q_TERMS = {"vaga", "vagas", "emprego", "empregos", "trabalho", "trabalh
 
 _RAW_TEXT_CITY_PATTERNS: tuple[tuple[str, tuple[re.Pattern[str], ...]], ...] = (
     ("São Paulo", (re.compile(r"\bsp\b"), re.compile(r"\bsao\s+paulo\b"))),
-    ("Rio de Janeiro", (re.compile(r"\brj\b"), re.compile(r"\brio\b"), re.compile(r"\brio\s+de\s+janeiro\b"))),
+    ("Rio de Janeiro", (re.compile(r"\brj\b"), re.compile(r"\brio\s+de\s+janeiro\b"))),
     ("Belo Horizonte", (re.compile(r"\bbh\b"), re.compile(r"\bbelo\s+horizonte\b"))),
     (
         "Remoto",
