@@ -13,6 +13,8 @@
 - [x] **Phase 21: Interface de chat e integração no board** - Oferecer chat mobile-first no board com interpretação transparente e aplicação na busca canônica (completed 2026-11-18)
 - [x] **Phase 22: Qualidade, hardening e validação operacional** - Validar exemplos MVP, cobrir fluxos críticos e garantir controles operacionais mínimos (completed 2026-11-18)
 - [x] **Phase 23: Fechamento de débitos de auditoria e validação v1.3** - Resolver débitos de auditoria, validação humana/Nyquist e hardening pendentes antes do fechamento do milestone (completed 2026-11-20)
+- [ ] **Phase 24: Corrigir conflito crítico de cidade e resíduos de review** - Fechar CR-01/CL-01 e resíduos de código viáveis do CL-05 sem regredir chat/board público
+- [ ] **Phase 25: Reconciliar gates de fechamento e revalidar auditoria v1.3** - Fechar CL-02/gate audit-open e atualizar verificação/auditoria para re-audit do milestone
 
 ## Phase Details
 
@@ -96,7 +98,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
 
   1. O debug session `city-filter-and-chat-ignores-registered-city` (diagnosed) é investigado até a causa raiz e resolvido ou formalmente deferido/fechado com decisão registrada — o filtro de cidade e o chat passam a respeitar a cidade cadastrada corretamente.
-  2. As 4 quick tasks pendentes (`261110-u28-...`, `261110-uik-...`, `261111-krt-...`, `261112-ttk-...`) têm status definido: concluídas (com evidência) ou removidas/transformadas em item explícito de deferred com justificativa — nenhuma permanece como `missing`/`incomplete` no `audit-open`.
+  2. As 4 quick tasks pendentes (`261110-u28`, `261110-uik`, `261111-krt`, `261112-ttk`) têm status definido e documentado (concluídas com evidência ou deferred com justificativa rastreável), com nenhuma permanecendo sem disposição documentada. Se `gsd-sdk query audit-open` ainda reportar essas 4 tasks pré-existentes como `[missing]` por heurística, o residual pode ser formalmente aceito no gate/audit de fechamento do milestone quando as disposições estiverem evidenciadas/justificadas, sem itens novos desta fase e sem fabricar evidência (`261112-ttk` permanece deferred justificado, PLAN-only).
   3. Os gaps de verificação/UAT das fases 21 e 22 são executados e registrados: `21-VERIFICATION.md` e `22-VERIFICATION.md` saem de `human_needed`, `22-HUMAN-UAT.md` sai de `partial` e `22-MANUAL-UAT.md` sai de `draft`, com cenários executados e resultados documentados (ou deferimento aceito e registrado para itens impossíveis de executar no ambiente).
   4. Os gaps Nyquist das fases 19–22 são endereçados: `20-VALIDATION.md` criado e `19/21/22-VALIDATION.md` evoluídos de `partial` para `nyquist_compliant` (ou desvio aceito e documentado com plano de ação).
   5. Os avisos não-bloqueantes da auditoria são tratados quando viáveis: `canApplyChatToBoard` não habilita apply no-op para cidade não-normalizável (UI-03), robustez de foco/a11y do chat/detail, parse defensivo de JSON em `chatSearch`, e `SECURITY.md` da Phase 22 (ou `/gsd-secure-phase 22`).
@@ -122,6 +124,36 @@ Plans:
 
 - [x] 23-05-PLAN.md — Reconciliação quick tasks/STATE/REQUIREMENTS e atualização do audit + gate audit-open (CL-02, CL-05)
 
+### Phase 24: Corrigir conflito crítico de cidade e resíduos de review
+
+**Goal**: Eliminar o bypass crítico de detecção de conflito de cidade no mapper (CR-01) e fechar resíduos de código viáveis da revisão da Phase 23, preservando o comportamento determinístico e seguro do chat/board público
+**Depends on**: Phase 23
+**Requirements**: CL-01, CL-05
+**Gap Closure:** Closes gaps from v1.3 milestone audit
+**Success Criteria** (what must be TRUE):
+
+  1. Consultas com conflito de cidade expresso por alias/abreviação/remoto (ex.: "sp ou rio de janeiro", "remoto ou são paulo") não aplicam cidade incorreta quando o candidato LLM traz cidade presente; o mapper sinaliza conflito/ignora com segurança
+  2. Detecção de influência de campos não nativos não usa substring frágil sobre `applied_q` inteiro de forma a causar falsa aproximação (WR-03), com regressão automatizada
+  3. Fechar detalhe do chat restaura foco para controle montado/estável (WR-01), sem perda de foco para `document.body` em fluxo teclado
+  4. Testes automatizados cobrindo CR-01/WR-01/WR-03 passam; contratos públicos/API/JobPublic e fluxo canônico do board permanecem sem regressão
+
+**Plans:** TBD
+
+### Phase 25: Reconciliar gates de fechamento e revalidar auditoria v1.3
+
+**Goal**: Tornar o fechamento do v1.3 rastreável e limpo, reconciliando o residual de gate CL-02 e atualizando evidências de verificação/auditoria após as correções
+**Depends on**: Phase 24
+**Requirements**: CL-02, CL-05
+**Gap Closure:** Closes gaps from v1.3 milestone audit
+**Success Criteria** (what must be TRUE):
+
+  1. CL-02 possui disposição final rastreável: quick tasks 261110-u28/uik/krt/261112-ttk permanecem evidenciadas/justificadas sem fabricar evidência; se `gsd-sdk query audit-open` ainda reportar heurística `[missing]` pré-existente, o gate/audit registra aceitação formal explícita com escopo e justificativa
+  2. Artefatos de verificação/auditoria refletem o estado pós-fix (23-VERIFICATION ou verificação das fases de gap closure, conforme aplicável) com evidência atualizada para CL-01/CL-02/CL-05
+  3. `v1.3-MILESTONE-AUDIT.md` é atualizado para refletir resolução dos débitos críticos e estado de re-audit; milestone fica pronto para `/gsd-audit-milestone`
+  4. Residual aceito D-14/WR-02 (focus trap completo) permanece explicitamente documentado como deferimento, sem ser confundido com gap aberto
+
+**Plans:** TBD
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -131,3 +163,5 @@ Plans:
 | 21. Interface de chat e integração no board | 2/2 | Complete    | 2026-11-18 |
 | 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
 | 23. Fechamento de débitos de auditoria e validação v1.3 | 5/5 | Complete   | 2026-11-20 |
+| 24. Corrigir conflito crítico de cidade e resíduos de review | 0/TBD | Not started | - |
+| 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | 0/TBD | Not started | - |
