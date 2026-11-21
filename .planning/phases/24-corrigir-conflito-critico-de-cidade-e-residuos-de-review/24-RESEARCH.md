@@ -285,17 +285,15 @@ const handleCloseDetail = () => {
 | A3 | Keeping chat panel mounted behind native `JobDetailDialog` is acceptable UX and satisfies "mounted/stable control" for WR-01. | Common Pitfalls / Code Examples | Medium - if product wanted panel hidden, may need alternative stable fallback focus target. |
 | A4 | Full focus trap (WR-02/D-14) remains out of Phase 24 and should not be implemented. | Scope / Anti-Patterns | Low - roadmap/Phase 25 explicitly defer it; if user expects it, scope conflict must be resolved before planning. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **WR-01 fix strategy: keep ChatPanel mounted or restore to stable fallback?**
-   - What we know: Current trigger is inside ChatPanel and unmounts when panel closes; native JobDetailDialog is modal and manages its own trap. [VERIFIED]
-   - What's unclear: Whether product prefers chat hidden behind detail or visible after close.
-   - Recommendation: Keep panel mounted while detail is open (simplest mounted trigger), or on close reopen chat and focus trigger; pick one and cover with deterministic/manual check. Avoid timing-fragile focus to conditionally rendered launcher.
+1. **WR-01 fix strategy: keep ChatPanel mounted or restore to stable fallback?** — **RESOLVED**
+   - Decision: Keep ChatPanel mounted while JobDetailDialog is open; do not close/unmount the chat panel on detail open. On detail close, restore focus to the original trigger if connected; otherwise focus a stable mounted fallback control in the chat (e.g., panel close button). Never focus `document.body`. No custom focus trap (WR-02/D-14 deferred). [RESOLVED by 24-CONTEXT D-07/D-08; reflected in 24-02]
+   - Evidence: `ChatWidget.tsx` unmounts trigger today; native `<dialog>.showModal()` already provides modal/focus behavior. [VERIFIED]
 
-2. **Should CR-01 treat raw-detected single city different from resolved candidate city as conflict?**
-   - What we know: Review examples are clear conflicts; `_detect_city_from_raw_text` can return a single canonical city. [VERIFIED]
-   - What's unclear: Rare cases where raw text mentions a supported city but candidate is another supported city due model extraction; safest is conflict/ignore.
-   - Recommendation: Treat any disagreement between raw-detected supported city signal and resolved candidate as `conflict_resolved`/ignored unless clearly same canonical city.
+2. **Should CR-01 treat raw-detected single city different from resolved candidate city as conflict?** — **RESOLVED**
+   - Decision: Yes. When raw-detected supported city signal conflicts with or diverges from a resolved supported candidate city, mapper returns `city=null`, `FieldStatus.IGNORADO`, `reason_code="conflict_resolved"`. Same canonical city agreement is safe to apply; candidate-absent + single safe raw-detected supported city may apply per D-03. [RESOLVED by 24-CONTEXT D-01/D-03; reflected in 24-01]
+   - Evidence: CR-01 examples and D-03 matrix in 24-CONTEXT/24-RESEARCH; `_detect_city_from_raw_text()` provides canonical raw signal. [VERIFIED]
 
 ## Environment Availability
 
