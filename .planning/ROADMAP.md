@@ -137,7 +137,11 @@ Plans:
   3. Fechar detalhe do chat restaura foco para controle montado/estável (WR-01), sem perda de foco para `document.body` em fluxo teclado
   4. Testes automatizados cobrindo CR-01/WR-01/WR-03 passam; contratos públicos/API/JobPublic e fluxo canônico do board permanecem sem regressão
 
-**Plans:** TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 24-01-PLAN.md — Mapper determinístico: CR-01 conflito de cidade canônico e WR-03 influência não nativa por token-set (CL-01, CL-05)
+- [ ] 24-02-PLAN.md — ChatWidget/ChatPanel: painel montado no detalhe e restauração de foco estável sem document.body (CL-05)
 
 ### Phase 25: Reconciliar gates de fechamento e revalidar auditoria v1.3
 
@@ -163,5 +167,5 @@ Plans:
 | 21. Interface de chat e integração no board | 2/2 | Complete    | 2026-11-18 |
 | 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
 | 23. Fechamento de débitos de auditoria e validação v1.3 | 5/5 | Complete   | 2026-11-20 |
-| 24. Corrigir conflito crítico de cidade e resíduos de review | 0/TBD | Not started | - |
+| 24. Corrigir conflito crítico de cidade e resíduos de review | 0/2 | Planned | - |
 | 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | 0/TBD | Not started | - |
