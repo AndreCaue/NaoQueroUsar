@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
 status: executing
-stopped_at: Phase 23 closure reconciliation complete (23-05)
-last_updated: "2026-11-21T00:25:26.535Z"
+stopped_at: Phase 24 UI-SPEC approved
+last_updated: "2026-11-21T21:53:05.160Z"
 last_activity: 2026-11-21 -- Phase 23 execution started
 progress:
-  total_phases: 1
+  total_phases: 3
   completed_phases: 0
   total_plans: 7
   completed_plans: 5
@@ -109,6 +109,6 @@ Items acknowledged/deferred at or before v1.2 close (2026-11-17), plus Phase 23 
 
 ## Session Continuity
 
-Last session: 2026-11-20T21:05:00Z
-Stopped at: Phase 23 closure reconciliation complete (23-05)
-Resume file: .planning/phases/23-fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3/23-05-SUMMARY.md
+Last session: 2026-11-21T21:53:05.131Z
+Stopped at: Phase 24 UI-SPEC approved
+Resume file: .planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-UI-SPEC.md
