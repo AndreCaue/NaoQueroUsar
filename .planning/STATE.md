@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: executing
-stopped_at: Phase 24 gap closure planned
-last_updated: "2026-11-22T00:35:00.000Z"
+status: ready_to_plan
+stopped_at: Phase 24 complete (3/3) — ready to discuss Phase 25
+last_updated: 2026-11-22T02:43:31.754Z
 last_activity: 2026-11-22 -- Phase 24 gap closure planned (24-03)
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 9
-  completed_plans: 5
+  completed_plans: 18
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-19)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 24 — corrigir-conflito-critico-de-cidade-e-residuos-de-review
+**Current focus:** Phase 25 — reconciliar gates de fechamento e revalidar auditoria v1 3
 
 ## Current Position
 
-Phase: 24 (corrigir-conflito-critico-de-cidade-e-residuos-de-review) — GAP CLOSURE PLANNED
-Plan: 2/3 complete (24-03 gap closure pending)
-Status: Ready to execute gap closure
-Last activity: 2026-11-22 -- Phase 24 gap closure planned (24-03)
+Phase: 25
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-11-22
 
 Progress: [██████████] 100%
 

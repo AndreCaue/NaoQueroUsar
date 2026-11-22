@@ -37,11 +37,11 @@ Requirements for the Phase 23 closure/hardening scope. These address the outstan
 
 ### Closure & Validation (CL)
 
-- [ ] **CL-01**: Debug `city-filter-and-chat-ignores-registered-city` resolvido com decisão/evidência registrada (22-04 + hardening 23-01, testes determinísticos) e reteste runtime do caso reportado documentado como deferimento aceito por item quando inviável no ambiente (23-03/debug/UAT).
+- [x] **CL-01**: Debug `city-filter-and-chat-ignores-registered-city` resolvido com decisão/evidência registrada (22-04 + hardening 23-01, testes determinísticos) e reteste runtime do caso reportado documentado como deferimento aceito por item quando inviável no ambiente (23-03/debug/UAT).
 - [ ] **CL-02**: Quick tasks reconciliadas com evidência ou deferimento justificado: u28/uik/krt concluídas com evidência (uik vigente supersede u28) e ttk como deferred justificado (PLAN-only, sem SUMMARY/evidência de execução; validação segura em produção/ambiente controlado fora do escopo local), com nenhuma permanecendo sem disposição documentada no contexto de fechamento. Se `gsd-sdk query audit-open` ainda reportar essas 4 tasks pré-existentes como `[missing]` por heurística, o residual pode ser formalmente aceito no gate/audit de fechamento do milestone quando as disposições estiverem evidenciadas/justificadas, sem itens novos desta fase e sem fabricar evidência.
 - [x] **CL-03**: Gaps de verificação/UAT 21/22 reconciliados em estados finais aceitos e rastreáveis (`21-VERIFICATION` passed via UAT existente; `22-VERIFICATION/HUMAN-UAT/MANUAL-UAT` finalizados com passes preservados e deferimentos aceitos por item para runtime/UI inviável, incluindo reteste CL-01).
 - [x] **CL-04**: Gaps Nyquist 19–22 endereçados: `20-VALIDATION.md` criado; `19/20-VALIDATION.md` evoluídos para `nyquist_compliant: true` com evidência; `21/22-VALIDATION.md` mantêm `nyquist_compliant: false` com desvio aceito e plano de ação documentado.
-- [ ] **CL-05**: Avisos não-bloqueantes tratados quando viáveis (`chatSearch` parse defensivo, `canApplyChatToBoard` sem no-op para cidade-only não normalizável, melhorias focadas de foco/a11y com residual de focus-trap explicitamente deferido/propagado, `22-SECURITY.md` criado) e `v1.3-MILESTONE-AUDIT.md` atualizado in-place para fechamento rastreável do milestone.
+- [x] **CL-05**: Avisos não-bloqueantes tratados quando viáveis (`chatSearch` parse defensivo, `canApplyChatToBoard` sem no-op para cidade-only não normalizável, melhorias focadas de foco/a11y com residual de focus-trap explicitamente deferido/propagado, `22-SECURITY.md` criado) e `v1.3-MILESTONE-AUDIT.md` atualizado in-place para fechamento rastreável do milestone.
 
 ## v2 Requirements
 
@@ -86,11 +86,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QA-01 | Phase 22 | Complete |
 | QA-02 | Phase 22 | Complete |
 | QA-03 | Phase 22 | Complete |
-| CL-01 | Phase 24 | Pending |
+| CL-01 | Phase 24 | Complete |
 | CL-02 | Phase 25 | Pending |
 | CL-03 | Phase 23 | Complete |
 | CL-04 | Phase 23 | Complete |
-| CL-05 | Phase 24 | Pending |
+| CL-05 | Phase 24 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 12 total (all Complete)

@@ -168,5 +168,5 @@ Plans:
 | 21. Interface de chat e integração no board | 2/2 | Complete    | 2026-11-18 |
 | 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
 | 23. Fechamento de débitos de auditoria e validação v1.3 | 5/5 | Complete   | 2026-11-20 |
-| 24. Corrigir conflito crítico de cidade e resíduos de review | 3/3 | Complete   | 2026-11-22 |
+| 24. Corrigir conflito crítico de cidade e resíduos de review | 3/3 | Complete    | 2026-11-22 |
 | 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | 0/TBD | Not started | - |
