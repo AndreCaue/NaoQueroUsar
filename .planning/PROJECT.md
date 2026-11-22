@@ -8,7 +8,7 @@
 
 **v1.2 delivered (with caveats):** fundação social segura (modelos/migrações/tokens criptografados/`SocialPublisher`), OAuth Meta e Integrações admin, geração/revisão/aprovação de post social (LLM/fallback, site-first), publicação assíncrona resiliente com retry/idempotência/status/retry no admin, e testes/docs/handoffs de fechamento rastreável. **Pendências aceitas:** reconciliação de rastreabilidade `PUB-01..08`, handoffs reais para `TEST-04`/`DOC-01`/`AUD-05`, verificações humanas/runtime/canônicas e débitos carry-over do v1.1.
 
-**v1.3 in progress:** Phase 19 complete (contrato INT seguro). Phase 20 complete — endpoint público `POST /api/v1/public/chat-search` entregue com interpretação+resultados `JobPublic` pagináveis (sem contatos), busca determinística equivalente a `list_published` para `applied_params`, proteções/rate limit/timeout e fallback 200 degradado seguro com sinalização de suporte parcial (`API-01/02/03`). Phase 21 complete (UI-01/02/03, bookkeeping aprovado; verificação humana pendente em `21-HUMAN-UAT.md` / `21-VERIFICATION.md`). Phase 22 complete — controles operacionais (kill-switch/status/logging sem PII), matriz MVP/UAT versionada e suíte determinística consolidada implementados; verificação automatizada `human_needed` com UAT manual pendente (`22-HUMAN-UAT.md`, `22-VERIFICATION.md`).
+**v1.3 in progress:** Phase 19 complete (contrato INT seguro). Phase 20 complete — endpoint público `POST /api/v1/public/chat-search` entregue com interpretação+resultados `JobPublic` pagináveis (sem contatos), busca determinística equivalente a `list_published` para `applied_params`, proteções/rate limit/timeout e fallback 200 degradado seguro com sinalização de suporte parcial (`API-01/02/03`). Phase 21 complete (UI-01/02/03, bookkeeping aprovado; verificação humana pendente em `21-HUMAN-UAT.md` / `21-VERIFICATION.md`). Phase 22 complete — controles operacionais (kill-switch/status/logging sem PII), matriz MVP/UAT versionada e suíte determinística consolidada implementados; verificação automatizada `human_needed` com UAT manual pendente (`22-HUMAN-UAT.md`, `22-VERIFICATION.md`). Phase 23 executed (5 plans, débitos/auditoria reconciliados com caveats). Phase 24 complete (3/3 plans, gap closure CR-01/WR-01/WR-03; verificação `human_needed`, UAT manual pendente em `24-HUMAN-UAT.md` / `24-VERIFICATION.md`).
 
 ## Current Milestone: v1.3 Chatbot Inteligente de Busca de Vagas
 
@@ -122,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-19 after adding Phase 23 (fechamento de débitos de auditoria e validação v1.3)*
+*Last updated: 2026-11-22 after Phase 24 execution (gap closure complete; human verification pending)*
