@@ -18,8 +18,8 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 
 ### Configuração por Ambiente
 
-- [ ] **ADS-01**: Espaços publicitários podem ser ocultados por flag única no `.env` (sem remover código, apenas controle de exibição)
-- [ ] **DONA-01**: Botão de Doações abre link configurado no `.env` quando configurado; comportamento seguro quando ausente/desabilitado
+- [x] **ADS-01**: Espaços publicitários podem ser ocultados por flag única no `.env` (sem remover código, apenas controle de exibição)
+- [x] **DONA-01**: Botão de Doações abre link configurado no `.env` quando configurado; comportamento seguro quando ausente/desabilitado
 
 ### UX Visual
 
@@ -50,8 +50,8 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 | CITY-01 | Phase 28 | Pending |
 | ADMN-01 | Phase 26 | Complete |
 | ADMN-02 | Phase 26 | Complete |
-| ADS-01 | Phase 27 | Pending |
-| DONA-01 | Phase 27 | Pending |
+| ADS-01 | Phase 27 | Complete |
+| DONA-01 | Phase 27 | Complete |
 | UIUX-01 | Phase 28 | Pending |
 
 **Coverage:**

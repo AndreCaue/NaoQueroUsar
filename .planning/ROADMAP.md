@@ -27,7 +27,7 @@
 **Milestone Goal:** Melhorar a experiência pública e o fluxo admin com ajustes de UX, controle por ambiente e acesso admin dedicado — sem perder a fricção zero do candidato.
 
 - [x] **Phase 26: Acesso Admin Dedicado** - Login admin em página dedicada com entrada discreta pela Política de Privacidade (completed 2026-11-22)
-- [ ] **Phase 27: Controles por Ambiente** - Anúncios e doações controlados por variáveis de ambiente
+- [x] **Phase 27: Controles por Ambiente** - Anúncios e doações controlados por variáveis de ambiente (completed 2026-11-22)
 - [ ] **Phase 28: Polimento UX da Home** - Filtro de cidades dinâmico e feedback visual de hover na home
 
 ## Phase Details
@@ -53,7 +53,10 @@
   2. Quando a flag única de anúncios no `.env` está ativada, os espaços publicitários voltam a ser exibidos normalmente.
   3. Quando o link de doação está configurado no `.env`, o botão Doações abre o link configurado.
   4. Quando o link de doação está ausente ou desabilitado, o botão Doações tem comportamento seguro e não leva a destino inválido.
-**Plans**: TBD
+**Plans:** 1/1 plans complete
+
+Plans:
+- [x] 27-01-PLAN.md — Controles por ambiente para anúncios e doações
 
 ### Phase 28: Polimento UX da Home
 **Goal**: Candidato vê apenas filtros úteis e recebe feedback visual claro nos elementos interativos da home.
@@ -79,5 +82,5 @@
 | 24. Corrigir conflito crítico de cidade e resíduos de review | v1.3 | 3/3 | Complete | 2026-11-22 |
 | 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | v1.3 | 2/2 | Complete | 2026-11-22 |
 | 26. Acesso Admin Dedicado | v1.4 | 2/2 | Complete    | 2026-11-22 |
-| 27. Controles por Ambiente | v1.4 | 0/TBD | Not started | - |
+| 27. Controles por Ambiente | v1.4 | 1/1 | Complete | 2026-11-22 |
 | 28. Polimento UX da Home | v1.4 | 0/TBD | Not started | - |

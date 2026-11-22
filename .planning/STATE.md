@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
-status: executing
-stopped_at: Phase 27 UI-SPEC approved
-last_updated: "2026-11-22T22:52:35.618Z"
-last_activity: 2026-11-22 -- Phase 27 planning complete
+status: ready_for_phase_28
+stopped_at: Phase 27 complete
+last_updated: "2026-11-22T23:01:01.000Z"
+last_activity: 2026-11-22 -- Phase 27 Plan 01 complete (controles por ambiente)
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 3
-  completed_plans: 2
-  percent: 33
+  completed_plans: 3
+  percent: 67
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-22)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 27 — controles por ambiente
+**Current focus:** Phase 28 — polimento-ux-da-home
 
 ## Current Position
 
-Phase: 27
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-11-22 -- Phase 27 planning complete
+Phase: 27 (controles-por-ambiente) — COMPLETE
+Plan: 1 of 1 complete
+Status: Ready for Phase 28
+Last activity: 2026-11-22 -- Phase 27 Plan 01 complete (controles por ambiente)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████░░░░] 67%
 
 ## Performance Metrics
 
@@ -54,6 +54,8 @@ Progress: [░░░░░░░░░░] 0%
 | 23 | 5/5 | Complete |
 | 24 | 3/3 | Complete |
 | 25 | 2/2 | Complete |
+| 26 | 2/2 | Complete |
+| 27 | 1/1 | Complete |
 
 ## Accumulated Context
 
