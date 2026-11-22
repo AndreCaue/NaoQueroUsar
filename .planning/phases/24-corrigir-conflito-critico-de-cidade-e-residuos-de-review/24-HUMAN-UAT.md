@@ -1,7 +1,7 @@
-﻿---
+---
 status: complete
 phase: 24-corrigir-conflito-critico-de-cidade-e-residuos-de-review
-source: [24-VERIFICATION.md]
+source: 24-VERIFICATION.md
 started: 2026-11-21T23:45:00Z
 updated: 2026-11-22T00:00:00Z
 reconciled: 2026-11-22
