@@ -44,19 +44,19 @@ created: 2026-11-22
 
 ## Spacing Scale
 
-Declared base scale (multiples of 4): 4, 8, 16, 24, 32, 48, 64.
+Declared base scale (multiples of 4): 4, 8, 12, 16, 24, 32, 48, 64.
 
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Icon gaps, tight inline spacing |
 | sm | 8px | Compact element spacing, small gaps |
-| md | 12px *(exception)* | Input/button vertical rhythm, compact padding (`p-3`, `gap-3`) — existing admin pattern |
+| md | 12px | Input/button vertical rhythm, compact padding (`p-3`, `gap-3`) — existing admin pattern |
 | lg | 16px | Default element spacing, card padding on mobile (`p-4`, `gap-4`, `px-4`) |
 | xl | 24px | Section spacing, desktop horizontal padding (`px-6`, `gap-6`) |
 | 2xl | 32px | Page vertical rhythm / major block spacing (`py-8`) |
 | 3xl | 48px | Major section breaks (privacy disclaimer top margin pattern) |
 
-Exceptions: `12px` (`md`, Tailwind `spacing-3`) — justified exception outside the declared base scale but multiples-of-4 compliant; retained for consistency with existing admin classes (`gap-3`, `p-3`). Touch targets remain `min-h-11` (44px) per existing `.touch-target`/button pattern — accessibility exception, not a spacing token.
+Exceptions: none in the declared spacing scale. Touch targets remain `min-h-11` (44px) per existing `.touch-target`/button pattern — accessibility exception, not a spacing token.
 
 ---
 
