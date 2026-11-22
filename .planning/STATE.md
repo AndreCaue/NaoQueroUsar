@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
-status: planning
-last_updated: "2026-11-22T05:24:39.598Z"
+status: ready
+last_updated: "2026-11-22T05:30:00.000Z"
 last_activity: 2026-11-22
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-22)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 26 — Acesso Admin Dedicado
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 26 of 28 (Acesso Admin Dedicado)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-11-22 — Milestone v1.4 started
+Status: Ready to plan
+Last activity: 2026-11-22 — Roadmap created for v1.4 (3 phases, 6/6 requirements mapped)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -62,6 +64,7 @@ Recent decisions affecting next work:
 - v1.3 shipped with audit `tech_debt` (no critical blockers). Accepted residuals: CL-02 audit-open heuristic for 4 known quick tasks; D-14/WR-02 focus trap; runtime/browser deferments by item; Nyquist partial in 21/22/23/25.
 - LLM extracts only parameters; deterministic search reuses `list_published`/`JobPublic`; chat never exposes contacts.
 - Non-native chat fields remain limited/approximate and explicitly signaled.
+- v1.4 roadmap: 3 phases (26-28), coarse granularity; ADMN-02 depends on ADMN-01 within Phase 26.
 
 ### Pending Todos
 
@@ -85,5 +88,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-11-22
-Stopped at: v1.3 milestone completed
+Stopped at: v1.4 roadmap created
 Resume file: None

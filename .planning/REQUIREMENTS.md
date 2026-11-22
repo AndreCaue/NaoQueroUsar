@@ -47,17 +47,17 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CITY-01 | Pending | Pending |
-| ADMN-01 | Pending | Pending |
-| ADMN-02 | Pending | Pending |
-| ADS-01 | Pending | Pending |
-| DONA-01 | Pending | Pending |
-| UIUX-01 | Pending | Pending |
+| CITY-01 | Phase 28 | Pending |
+| ADMN-01 | Phase 26 | Pending |
+| ADMN-02 | Phase 26 | Pending |
+| ADS-01 | Phase 27 | Pending |
+| DONA-01 | Phase 27 | Pending |
+| UIUX-01 | Phase 28 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 6 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 6 ⚠
+- Mapped to phases: 6
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-22*
