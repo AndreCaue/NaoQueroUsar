@@ -2,28 +2,27 @@
 
 ## Current State
 
-**Latest shipped milestone:** v1.2 Integração com Facebook Pages — **shipped 2026-11-17** (archived with **known gaps/handoffs accepted**; no v1.2 milestone audit).  
-**Archives:** `.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`  
-**Previous milestone:** v1.1 EmpregaNoix — shipped 2026-11-15 (`.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`)
+**Latest shipped milestone:** v1.3 Chatbot Inteligente de Busca de Vagas — **shipped 2026-11-22** (audit `tech_debt`, 17/17 requirements satisfied, no critical blockers; accepted residuals documented).
+**Archives:** `.planning/milestones/v1.3-ROADMAP.md`, `.planning/milestones/v1.3-REQUIREMENTS.md`, `.planning/milestones/v1.3-MILESTONE-AUDIT.md`
 
-**v1.2 delivered (with caveats):** fundação social segura (modelos/migrações/tokens criptografados/`SocialPublisher`), OAuth Meta e Integrações admin, geração/revisão/aprovação de post social (LLM/fallback, site-first), publicação assíncrona resiliente com retry/idempotência/status/retry no admin, e testes/docs/handoffs de fechamento rastreável. **Pendências aceitas:** reconciliação de rastreabilidade `PUB-01..08`, handoffs reais para `TEST-04`/`DOC-01`/`AUD-05`, verificações humanas/runtime/canônicas e débitos carry-over do v1.1.
+**Previous milestones:**
+- v1.2 Integração com Facebook Pages — shipped 2026-11-17 (`.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`)
+- v1.1 EmpregaNoix — shipped 2026-11-15 (`.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`)
 
-**v1.3 closure reconciled (Phase 25 complete, 2026-11-22):** Phases 19-25 complete. Phase 25 reconciliou estados finais rastreáveis de 23/24 verification/UAT, registrou aceite formal CL-02 (escopo limitado aos 4 quick tasks conhecidos, sem novos [missing]), e atualizou 1.3-MILESTONE-AUDIT.md para status: passed com residuals aceitos. gsd-sdk query audit-open pós-normalização: 0 UAT gaps, 0 verification gaps, 4 quick tasks [missing] CL-02 conhecidos. Residuals aceitos: D-14/WR-02 focus trap completo (deferido, não gap aberto), deferimentos runtime/browser por item, desvios Nyquist 21/22 aceitos. **Pronto para /gsd-audit-milestone.**
+**v1.3 delivered:** Chatbot público NL→busca em pt-BR no board, sem login/fricção. Extração de intenção estrita + mapeamento determinístico seguro para busca existente (`q`, cidade whitelist SP/RJ/BH/Remoto, `sort`), endpoint público `POST /api/v1/public/chat-search` com `JobPublic` (sem contatos), proteções/fallback controlado, UI chat drawer/modal com interpretação transparente e apply-to-board canônico, testes/hardening operacional (kill-switch, logs sem PII), e fechamento de auditoria com residuals aceitos.
 
-## Current Milestone: v1.3 Chatbot Inteligente de Busca de Vagas
+**Known accepted residuals (v1.3):** CL-02 audit-open heuristic `[missing]` limitado aos 4 quick tasks conhecidos (u28/uik/krt/ttk, ttk PLAN-only deferred sem execução fabricada); D-14/WR-02 focus trap completo do chat; deferimentos runtime/browser por item; Nyquist parcial/desvio aceito em 21/22/23/25; dívida de processo `23-06/23-07` PLANs sem SUMMARYs.
 
-**Goal:** Permitir que qualquer pessoa encontre vagas descrevendo o que procura em linguagem natural, com resposta rápida e sem fricção — reaproveitando a busca/filtros existentes e mantendo baixo custo operacional.
+## Next Milestone Goals
 
-**Target features:**
-- Extração de intenção/parâmetros em linguagem natural para JSON estruturado e validado (cargo/senioridade, cidade whitelist, modalidade, faixa salarial, tipo de contrato, palavras-chave, ordenação), sem inventar dados
-- Aplicação dos parâmetros na busca pública existente (`GET /api/v1/public/jobs` / `crud.list_published`) com normalização segura; estratégia incremental para campos não nativos hoje (ex.: salário/modalidade/contrato via mapeamento textual/pós-filtro ou extensão controlada de filtros)
-- Endpoint público de chat-search com proteção básica (rate limit/timeout) e respostas com interpretação + resultados (`JobPublic`, sem expor contatos no payload público)
-- Interface de chat simples no frontend público (drawer/modal mobile-first) exibindo parâmetros entendidos e lista de vagas (título, empresa, local, salário quando disponível, acesso ao detalhe/link), suportando combinações de filtros
-- Cobertura dos exemplos de uso do MVP definidos para o milestone (com lacunas explícitas documentadas quando um parâmetro não for totalmente suportado pelo backend atual)
+**Status:** Not defined yet.
 
-**Carry-over/prioridades paralelas (se decidido em requisitos):** reconciliação `PUB-01..08`, handoffs `TEST-04/DOC-01/AUD-05`, lacunas v1.1 (EXTR/PUBL/SRCH/UIUX) e débitos operacionais/testes podem ser incluídos conforme escopo aprovado.
+Use `/gsd-new-milestone` to define the next milestone (questioning → research → requirements → roadmap).
 
-**Constraints mantidas:** acesso público sem login/fricção, operação admin única, falhas sociais nunca bloqueiam publicação do site. LLM não recebe centenas de vagas; apenas extrai parâmetros. Preferência por soluções gratuitas/baixo custo e boa performance.
+**Candidate carry-over (out of v1.3 scope, decide in next milestone scoping):**
+- Reconciliação `PUB-01..08` e handoffs `TEST-04/DOC-01/AUD-05` (v1.2)
+- Lacunas v1.1 aceitas (EXTR/PUBL/SRCH/UIUX) e débitos operacionais/testes
+- Residuals v1.3 aceitos: D-14/WR-02 focus trap, deferimentos runtime/browser, Nyquist 21/22/23/25, CL-02 heuristic residual
 
 ## What This Is
 
@@ -39,28 +38,22 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Validated
 
-<!-- Shipped and confirmed valuable (high-confidence, with noted caveats where applicable). -->
-
-- [x] Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1: Backend Foundation, Data & Admin Auth (ADMN-01/02/03)
+- [x] Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1 (ADMN-01/02/03)
 - [x] Fundação social de integração Facebook (modelos/migração `social_*`, crypto Fernet de tokens, contrato `SocialPublisher`/stub Facebook, config/env `.env.example`) — Validated in Phase 14 (SOC-01..SOC-06)
 - [x] OAuth Meta e Integrações no admin (conectar/desconectar/status, `state` anti-CSRF, troca/validação de tokens, seleção de página única, alertas de reconexão) — Validated in Phase 15 (META-01..META-06)
 - [x] Geração, revisão e aprovação do post social (draft LLM/fallback, edição/regeneração/preview, agendamento BRT, approve site-first com registro social best-effort/imutável, política/link público) — Validated in Phase 16 (POST-01..POST-06; human/UAT items noted)
 - [x] Pipeline assíncrono de publicação social com status/retry no admin (worker/cron, claim/lock, retry/backoff, idempotência, visibilidade/ações operacionais) — Implemented in Phase 17 (UI-01..UI-02 complete; `PUB-01..08` traceability reconciliation pending in archive)
 - [x] Contrato de intenção pt-BR + mapeamento determinístico seguro para busca pública (`q`, cidade whitelist, sort explícito), classificação auditável por campo e seam Groq isolado com fallback seguro — Validated in Phase 19 (INT-01/02/03)
 - [x] Endpoint público de chat-search resiliente (`POST /api/v1/public/chat-search`) com interpretação transparente, busca determinística equivalente (`list_published`/`JobPublic`, sem contatos), proteções (rate limit/validação/timeout) e fallback 200 degradado seguro com sinalização de suporte parcial — Validated in Phase 20 (API-01/02/03)
-- [~] Cobertura automatizada/docs/fechamento rastreável de gaps (v1.2 carry-over v1.1) — Phase 18 complete with **partial+handoff** (`TEST-04`, `DOC-01`, `AUD-05`, runtime/canonical/human evidence pending)
-- [~] v1.1 scope (Phases 7–13) — **accepted gaps/caveats** remain (see v1.1/v1.2 archives and audit artifacts); not fully validated.
+- [x] Interface de chat no board público (drawer/modal mobile-first), sem login, com interpretação/parâmetros/limitações, resultados públicos com detalhe/reveal canônico e apply-to-board canônico — Validated in Phase 21 (UI-01/02/03), UAT reconciliado
+- [x] Qualidade/hardening/validação operacional do chatbot: exemplos MVP validados/documentados, testes automatizados com LLM mockado + UI viável, kill-switch/status/logging sem PII sensível, 22-SECURITY.md — Validated in Phase 22 (QA-01/02/03) com deferimentos runtime/browser aceitos por item
+- [x] Fechamento de auditoria v1.3: CL-01..CL-05 reconciliados com evidência/aceite formal; CR-01/WR-03/WR-01 viável fechados; audit `tech_debt` sem blockers críticos — Validated in Phases 23-25 (CL-01..05)
 
 ### Active
 
-- [x] Implementar interface de chat no board público (drawer/modal mobile-first) consumindo `chat-search`, exibindo interpretação/parâmetros e resultados com acesso ao detalhe (UI, Phase 21) — concluído em 2026-11-18 (UAT humano pendente)
-- [x] Qualidade, hardening e validação operacional do chatbot (QA, Phase 22): cenários MVP, limites/custos/latência, resiliência e regressão do fluxo público sem fricção — concluído em 2026-11-18 (verificação `human_needed`; UAT/runtime manual pendente em `22-HUMAN-UAT.md` / `22-VERIFICATION.md`)
-- [x] **Phases 23-25 (closure):** Fechamento/reconciliação de débitos de auditoria e validação v1.3 — CL-01/03/04/05 reconciliados com evidência, CL-02 formalmente aceito com escopo limitado aos 4 quick tasks conhecidos (sem novos `[missing]`), 23/24 verification+UAT reconciliados, `v1.3-MILESTONE-AUDIT.md` passado com residuals aceitos (D-14/WR-02 deferido, runtime/browser por item, Nyquist 21/22 desvio aceito).
-- [ ] (A definir) Incluir ou não itens de carry-over/hardening (PUB-01..08, handoffs v1.2, lacunas v1.1) no escopo do milestone
+- [ ] (A definir no próximo milestone) Selecionar e incluir carry-over/hardening: PUB-01..08, handoffs v1.2 (TEST-04/DOC-01/AUD-05), lacunas v1.1 (EXTR/PUBL/SRCH/UIUX), residuals v1.3 aceitos (D-14/WR-02, Nyquist 21/22/23/25, runtime/browser deferments)
 
 ### Out of Scope
-
-<!-- Explicit boundaries. Includes reasoning to prevent re-adding. -->
 
 - Instagram, geração de imagem, sincronização de edição/remoção do post, múltiplas Páginas, métricas/insights de engajamento — fora do milestone v1.2 (arquitetura deve prever extensão)
 - Login/cadastro de usuário comum — secundário e opcional, não entra no MVP (o diferencial é justamente não exigir conta)
@@ -69,6 +62,11 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - Múltiplos administradores / papéis de usuário — apenas o master posta/aprova
 - Monetização ativa (doações reais e ADS contratados) — baixa prioridade; apenas o botão e os placeholders no MVP
 - Submissão pública de vagas por terceiros — não no MVP
+- LLM ler/rankear centenas de vagas (corpus no prompt) — custo/latência/alucinação; LLM apenas extrai parâmetros
+- Memória de conversa longa/histórico persistente avançado — fora do MVP v1.3
+- Recomendação personalizada baseada em perfil do usuário — requer identidade/dados adicionais
+- Aplicação automática em vagas / integração LinkedIn/WhatsApp — fora do MVP
+- Expor contatos no payload do chat — viola fluxo atual de revelação
 
 ## Context
 
@@ -77,14 +75,14 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - **Custo:** operar próximo de zero usando tiers gratuitos (Neon Postgres, Groq, Vercel, Cloudflare Turnstile).
 - **Público:** candidatos brasileiros (foco inicial em SP, RJ, BH e Remoto), majoritariamente mobile.
 - **Motivação central:** a principal frustração com sites de emprego atuais é a burocracia de cadastro/login para sequer ver uma vaga.
-- **Riscos conhecidos / estado atual:** revisão manual do master como gate de qualidade; mitigação de scraping via ocultação + Turnstile; **pendências operacionais/evidências** registradas no audit v1.1 (smoke canônico/execução real, DB de testes, verificações humanas/browser, requisitos EXTR/PUBL/SRCH/UIUX não fechados no escopo auditado).
+- **Riscos conhecidos / estado atual:** revisão manual do master como gate de qualidade; mitigação de scraping via ocultação + Turnstile; pendências operacionais/evidências carry-over (v1.1/v1.2) e residuals v1.3 aceitos documentados nos archives/audits.
 
 ## Constraints
 
 - **Tech stack — Frontend:** Next.js 16 (App Router, `16.4.6`) + Tailwind CSS + dark mode — decisão fixada pelo usuário (major subida de 15 → 16 em 2026-11-11 por exigência de segurança do build Vercel)
 - **Tech stack — Backend:** FastAPI (Python) — decisão fixada pelo usuário
 - **Banco:** Neon (Postgres gratuito) — decisão fixada pelo usuário
-- **LLM de extração:** Groq, modelo gratuito — `openai/gpt-oss-20b` (padrão) com `openai/gpt-oss-120b` como fallback, via env `GROQ_MODEL` — *corrigido pós-pesquisa: `llama-3.1-8b-instant`/`llama-3.3-70b` foram aposentados em 2026-08-16*
+- **LLM de extração:** Groq, modelo gratuito — `openai/gpt-oss-20b` (padrão) com `openai/gpt-oss-120b` como fallback, via env `GROQ_MODEL`
 - **Anti-spam:** Cloudflare Turnstile (gratuito) — decisão fixada pelo usuário
 - **Deploy:** Vercel (frontend) + local inicialmente; depois Railway/Render (backend) — decisão fixada pelo usuário
 - **Idioma/Locale:** Português (Brasil), datas e textos em pt-BR
@@ -101,8 +99,11 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 | Repo git dedicado no diretório do projeto | O diretório está dentro do repo da home; isolamento evita poluir histórico | ✓ Good |
 | Contato revelado no clique (client-side) | Reduz scraping com fricção mínima ao usuário | ⚠️ Revisit (v1.1 endureceu reveal server-side/Turnstile; evidências runtime/browser ainda caveatadas) |
 | Servir contato via endpoint dedicado (não no payload público) | Ocultação client-side sozinha não protege contra scraping; exigido Turnstile server-side no reveal | ✓ Good (direção implementada/reconciliada; validar em runtime canônico) |
-| Substituir Llama aposentados por Groq `gpt-oss` | `llama-3.1-8b-instant`/`llama-3.3-70b` desativados em 2026-08-16; `openai/gpt-oss-*` suporta structured outputs estritos | ✓ Good (configuração atualizada; fallback/aceitação detalhada pendente no audit) |
+| Substituir Llama aposentados por Groq `gpt-oss` | `llama-3.1-8b-instant`/`llama-3.3-70b` desativados em 2026-08-16; `openai/gpt-oss-*` suporta structured outputs estritos | ✓ Good |
 | Usar `bcrypt` direto (sem passlib) para hash de senha | `passlib` 1.7.4 é incompatível com o `bcrypt` 5.0.0 travado; a decisão de auth permite bcrypt diretamente | ✓ Good |
+| Chat NL usa LLM só para extração de parâmetros; busca determinística reutiliza `list_published`/`JobPublic` | Evita custo/latência/alucinação de enviar corpus ao LLM; preserva contrato público sem contatos | ✓ Good (v1.3) |
+| Campos não nativos no chat tratados como limitado/aproximado e sinalizado | Evita afirmar filtragem inexistente e mantém honestidade de produto | ✓ Good (v1.3) |
+| Residuals de fechamento v1.3 aceitos explicitamente (CL-02 heuristic, D-14/WR-02, deferimentos runtime/Nyquist parcial) | Fecha milestone com rastreabilidade sem fabricar evidência | ⚠️ Revisit (acompanhar em milestone futuro se necessário) |
 
 ## Evolution
 
@@ -122,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-22 after Phase 25 execution (v1.3 reconciliation complete; closure-ready for /gsd-audit-milestone with accepted residuals)*
+*Last updated: 2026-11-22 after v1.3 milestone completion*

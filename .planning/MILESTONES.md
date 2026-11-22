@@ -1,5 +1,29 @@
 ﻿# Milestones
 
+## v1.3 Chatbot Inteligente de Busca de Vagas (Shipped: 2026-11-22)
+
+**Phases:** 19–25 (7 phases) | **Plans:** 19 completed | **Summaries:** 20
+**Git range:** `v1.2..HEAD` (159 commits, 313 files changed, +28139/-31792)
+**Audit:** `.planning/milestones/v1.3-MILESTONE-AUDIT.md` — **tech_debt** (17/17 requirements satisfied, 7/7 phases, no critical blockers; accepted residuals documented)
+
+**Delivered:** Chatbot público de busca de vagas em linguagem natural (pt-BR) no board, sem login/fricção: extração de intenção estruturada e mapeamento determinístico seguro para busca existente, endpoint público `chat-search` resiliente com fallback/guardrails, UI de chat integrada ao fluxo canônico com interpretação transparente, e fechamento/hardening de auditoria com residuals explicitamente aceitos.
+
+**Key accomplishments:**
+1. Contrato de intenção pt-BR estrito + mapper determinístico server-authoritative (`q`, cidade whitelist SP/RJ/BH/Remoto, `sort`), com classificação aplicado/ignorado/aproximado e seam Groq isolado com fallback seguro — Phases 19, 24.
+2. Endpoint público `POST /api/v1/public/chat-search` reutilizando `list_published`/`JobPublic` (sem contatos), com proteções (rate limit/tamanho/timeout), erros pt-BR seguros e fallback degradado controlado — Phase 20.
+3. Chat drawer/modal mobile-first no board público, sem login, com interpretação transparente, resultados públicos, detalhe/reveal canônico preservado e apply-to-board via URL/filtros existentes — Phase 21.
+4. Qualidade/hardening operacional: exemplos MVP validados/documentados, testes automatizados com LLM mockado, kill-switch/status/logging sem PII sensível e 22-SECURITY.md — Phase 22.
+5. Fechamento de auditoria v1.3: reconciliação CL-01..CL-05, correções CR-01/WR-03/WR-01 viável, Nyquist/audit artifacts reconciliados e aceite formal CL-02 com residuals rastreáveis — Phases 23-25.
+
+**Known gaps / deferred at close (accepted):**
+- CL-02: `gsd-sdk query audit-open` pode reportar 4 quick tasks `[missing]` por heurística (u28/uik/krt/ttk) — aceite formal limitado a esses slugs, com evidência/justificativa; `261112-ttk` permanece PLAN-only deferred sem evidência de execução fabricada. Qualquer `[missing]` novo/inesperado bloqueia.
+- D-14/WR-02: focus trap completo (Tab/Shift+Tab containment) no diálogo custom do chat — residual aceito explícito, não gap crítico aberto.
+- Deferimentos runtime/browser/ambiente por item em UAT/verificação (sem execução fabricada); Nyquist parcial/desvio aceito em fases 21/22/23/25.
+- Processo: `23-06-PLAN.md` e `23-07-PLAN.md` existem sem SUMMARYs (rascunhos stale de gap closure supersedidos pelas Phases 24/25) — dívida de processo documental.
+- Carry-over fora do escopo v1.3: v1.2/v1.1 (PUB-01..08, TEST-04/DOC-01/AUD-05, EXTR/PUBL/SRCH/UIUX, smoke canônico/live, DB-backed test reproducibility).
+
+**Archives:** [v1.3-ROADMAP.md](./milestones/v1.3-ROADMAP.md), [v1.3-REQUIREMENTS.md](./milestones/v1.3-REQUIREMENTS.md), [v1.3-MILESTONE-AUDIT.md](./milestones/v1.3-MILESTONE-AUDIT.md)
+
 ## v1.2 Integração com Facebook Pages (Shipped: 2026-11-17)
 
 **Phases:** 14–18 (5 phases) | **Plans:** 16 | **Summaries:** 16  
@@ -46,4 +70,3 @@
 - Canonical-host live smoke/provisioning execution pending (handoff); test DB reproducibility issues noted in audit.
 
 **Archives:** [v1.1-ROADMAP.md](./milestones/v1.1-ROADMAP.md), [v1.1-REQUIREMENTS.md](./milestones/v1.1-REQUIREMENTS.md), [v1.1-MILESTONE-AUDIT.md](./milestones/v1.1-MILESTONE-AUDIT.md)
-
