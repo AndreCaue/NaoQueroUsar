@@ -13,13 +13,19 @@
 
 **Known accepted residuals (v1.3):** CL-02 audit-open heuristic `[missing]` limitado aos 4 quick tasks conhecidos (u28/uik/krt/ttk, ttk PLAN-only deferred sem execução fabricada); D-14/WR-02 focus trap completo do chat; deferimentos runtime/browser por item; Nyquist parcial/desvio aceito em 21/22/23/25; dívida de processo `23-06/23-07` PLANs sem SUMMARYs.
 
-## Next Milestone Goals
+## Current Milestone: v1.4 Polimento UX e Admin
 
-**Status:** Not defined yet.
+**Goal:** Melhorar a experiência pública e o fluxo admin com ajustes de UX, controle por ambiente e acesso admin dedicado — sem perder a fricção zero do candidato.
 
-Use `/gsd-new-milestone` to define the next milestone (questioning → research → requirements → roadmap).
+**Target features:**
+- **Filtros de cidade na home:** exibir somente cidades com vagas publicadas/ativas no momento
+- **Login admin dedicado:** separar login da página de paste; reservar página dedicada para login admin
+- **Anúncios controlados por env:** remover temporariamente espaços publicitários via flag única no `.env`
+- **Hover/feedback visual:** adicionar hover em dropdown recentes/antigos, cards e filtros de cidades
+- **Entrada admin discreta:** criar link discreto na página de Política de Privacidade apontando para a nova página de login admin
+- **Doação funcional por env:** ajustar botão de Doações para usar link configurado no `.env` (abrir quando configurado)
 
-**Candidate carry-over (out of v1.3 scope, decide in next milestone scoping):**
+**Candidate carry-over (out of v1.4 scope unless selected during requirements):**
 - Reconciliação `PUB-01..08` e handoffs `TEST-04/DOC-01/AUD-05` (v1.2)
 - Lacunas v1.1 aceitas (EXTR/PUBL/SRCH/UIUX) e débitos operacionais/testes
 - Residuals v1.3 aceitos: D-14/WR-02 focus trap, deferimentos runtime/browser, Nyquist 21/22/23/25, CL-02 heuristic residual
@@ -51,7 +57,12 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Active
 
-- [ ] (A definir no próximo milestone) Selecionar e incluir carry-over/hardening: PUB-01..08, handoffs v1.2 (TEST-04/DOC-01/AUD-05), lacunas v1.1 (EXTR/PUBL/SRCH/UIUX), residuals v1.3 aceitos (D-14/WR-02, Nyquist 21/22/23/25, runtime/browser deferments)
+- [ ] **CITY-01**: Filtro de cidades na home mostra apenas cidades com vagas publicadas/ativas
+- [ ] **ADMN-01**: Login admin em página dedicada, separado da página de paste
+- [ ] **ADS-01**: Espaços publicitários podem ser ocultados por flag única no `.env`
+- [ ] **UIUX-01**: Hover/feedback visual em dropdown recentes/antigos, cards e filtros de cidades
+- [ ] **ADMN-02**: Link discreto para login admin na página de Política de Privacidade
+- [ ] **DONA-01**: Botão de Doações funcional via link configurado no `.env`
 
 ### Out of Scope
 
@@ -123,4 +134,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-22 after v1.3 milestone completion*
+*Last updated: 2026-11-22 after v1.4 milestone start*

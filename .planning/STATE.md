@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Chatbot Inteligente de Busca de Vagas
-status: shipped
-stopped_at: v1.3 milestone archived and tagged
-last_updated: 2026-11-22T00:00:00Z
-last_activity: 2026-11-22 -- v1.3 milestone completed (archived, requirements retired, tag created)
+milestone: v1.4
+milestone_name: Polimento UX e Admin
+status: planning
+last_updated: "2026-11-22T05:24:39.598Z"
+last_activity: 2026-11-22
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-11-22)
 
 ## Current Position
 
-Phase: Milestone v1.3 complete
-Plan: N/A
-Status: Shipped
-Last activity: 2026-11-22 — v1.3 milestone completed
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-11-22 — Milestone v1.4 started
 
 ## Performance Metrics
 
