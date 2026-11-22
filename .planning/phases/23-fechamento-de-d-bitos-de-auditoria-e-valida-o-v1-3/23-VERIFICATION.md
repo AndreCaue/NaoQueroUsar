@@ -1,51 +1,80 @@
 ---
 phase: 23-fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3
 verified: 2026-11-20T21:30:00Z
-status: gaps_found
-score: 4/6 success criteria verified
+reverified: 2026-11-22T00:00:00Z
+last_reconciled: 2026-11-22
+status: gaps_closed_with_accepted_residuals
+score: 6/6 success criteria verified with accepted residuals
 requirements_coverage:
-  CL-01: partial
-  CL-02: partial
+  CL-01: satisfied
+  CL-02: satisfied_with_formal_acceptance
   CL-03: passed
   CL-04: passed
-  CL-05: partial
-gaps:
+  CL-05: satisfied_with_accepted_residuals
+gaps_original:
   - truth: "O debug session de cidade/chat é resolvido ou formalmente fechado com decisão registrada e o filtro de cidade/chat passa a respeitar a cidade cadastrada corretamente, sem pendências críticas abertas."
     status: failed
-    reason: "23-REVIEW.md (phase artifact, status issues_found) reports CR-01 as a current critical defect in `backend/app/services/intent/mapper.py`; the defect is still present in the codebase. While 23-01 fixed the targeted `\\brio\\b` false positives (Rio Grande do Sul/Rio Branco) and the debug session was formally resolved with an accepted runtime-retest deferral, the mapper can still apply an incorrect city when a candidate city is present but raw text contains conflicting alias/abbreviation/remote mentions not covered by the pre-check."
+    reason: "23-REVIEW.md (phase artifact, status issues_found) reported CR-01 as a critical defect in `backend/app/services/intent/mapper.py`; defect was present at 2026-11-20 verification. Closed by Phase 24 (see reconciliation)."
     artifacts:
       - path: "backend/app/services/intent/mapper.py"
-        issue: "City conflict pre-check (map_intent, ~lines 309-364) only inspects full-name tokens (`sao paulo`, `rio de janeiro`, `belo horizonte`, `campinas`) and does not consult raw-text alias/abbrev/remoto conflict detection (`_detect_city_from_raw_text`) when `candidate.city` is present; `_resolve_city_safe` applies the candidate without honoring raw-text conflicts. Example risk from review: raw `\"vaga em sp ou rio de janeiro\"` with candidate `city=\"SP\"` can apply `São Paulo`; raw `\"vaga remoto ou são paulo\"` with candidate `city=\"Remoto\"` can apply `Remoto` despite conflicting text."
+        issue: "Historical CR-01: candidate-present raw-text conflict bypass."
       - path: "backend/tests/test_intent_mapper.py"
-        issue: "No regression coverage found for candidate-present raw-text conflicts involving aliases/abbreviations/remoto (e.g. `sp` vs `rio de janeiro`, `remoto` vs `sao paulo`) as described in CR-01."
+        issue: "Historical: missing CR-01 regression coverage."
       - path: ".planning/phases/23-fechamento-de-d-bitos-de-auditoria-e-valida-o-v1-3/23-REVIEW.md"
-        issue: "Current review evidence records CR-01 (critical) and status `issues_found`."
+        issue: "Historical review evidence recorded CR-01 (critical), status issues_found."
     missing:
-      - "Make city conflict detection honor raw-text alias/abbreviation/remoto conflicts even when `candidate.city` is present (fold `_detect_city_from_raw_text` conflict into pre-check/resolution path) so conflicting inputs do not apply a wrong city."
-      - "Add deterministic mapper regressions for CR-01 scenarios (candidate present + conflicting raw-text aliases/abbreviations/remoto)."
-      - "Re-run intent mapper/chat-related deterministic tests and update phase/review evidence to reflect CR-01 resolved or formally dispositioned."
+      - "Closed by Phase 24: raw-text alias/abbreviation/remoto conflicts honored with candidate present; deterministic regressions added; evidence updated."
   - truth: "As 4 quick tasks pendentes têm status definido e nenhuma permanece como `missing`/`incomplete` no `audit-open` (ou no contexto de fechamento documentado com justificativa rastreável quando heurística divergir)."
     status: partial
-    reason: "STATE.md, REQUIREMENTS.md, and v1.3-MILESTONE-AUDIT.md document dispositions for all 4 quick tasks (u28/uik/krt concluded with cited evidence; ttk deferred justificado, PLAN-only). However, `gsd-sdk query audit-open` executed during verification still reports all 4 as `[missing]` (heuristic residual). Closure is documented, but the command-level gate is not clean."
+    reason: "Dispositions documented; audit-open heuristic residual remained for 4 known quick tasks. Formal acceptance scope handled in Phase 25 (D-01/D-03/D-04)."
     artifacts:
       - path: ".planning/STATE.md"
-        issue: "Documents dispositions/evidence; does not eliminate heuristic `audit-open` missing classification."
+        issue: "Documented dispositions/evidence; heuristic audit-open classification may remain."
       - path: ".planning/REQUIREMENTS.md"
-        issue: "Marks CL-02 complete with documented evidence/deferment; heuristic still reports missing."
+        issue: "CL-02 marked complete with evidence/deferment; formal acceptance scope recorded in Phase 25 closure artifacts."
       - path: ".planning/v1.3-MILESTONE-AUDIT.md"
-        issue: "Records audit-open heuristic residual honestly; gate outcome not fully green."
+        issue: "Audit records heuristic residual honestly; formal acceptance scoped to 4 known slugs with no-new-missing condition."
     missing:
-      - "Resolve or formally accept/document the remaining `audit-open` heuristic residual so the closure gate is unambiguous (without fabricating execution evidence for ttk)."
+      - "Formal acceptance scoped to 4 known quick-task slugs (u28/uik/krt/ttk) with evidence/disposition and no-new-missing condition; recorded in audit/REQUIREMENTS/STATE per D-03."
+gaps_closed:
+  - id: CR-01
+    closed_by: "Phase 24 (24-01/24-03)"
+    evidence:
+      - ".planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-VERIFICATION.md"
+      - ".planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-REVIEW.md"
+      - ".planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-03-SUMMARY.md"
+    summary: "Mapper uses `_detect_city_from_raw_text(raw)` as canonical raw signal; candidate-present raw conflicts (alias/abbreviation/remoto), raw-vs-candidate supported divergence, and non-whitelist-vs-supported conflicts return conflict_resolved without applying wrong city; same-canonical safe apply preserved; deterministic regressions added."
+  - id: WR-01
+    closed_by: "Phase 24 (24-02/24-03), with runtime/browser checks as deferred accepted by item"
+    evidence:
+      - ".planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-VERIFICATION.md"
+      - ".planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-HUMAN-UAT.md"
+    summary: "Code-scope fix: ChatPanel remains mounted during detail (`dismissible={!selectedJob}`), detail close restores focus to connected trigger or `#chat-panel-close` via `getChatDetailCloseFocusTarget`; browser/keyboard validation is deferimento aceito por item (no browser execution fabricated)."
+  - id: WR-03
+    closed_by: "Phase 24 (24-01)"
+    evidence:
+      - ".planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-VERIFICATION.md"
+    summary: "Non-native influence detection uses normalized token-set membership of `applied_q`, not whole-string substring; regression covers false positive (vagabundo/vaga) and positive control (pleno)."
+accepted_residuals:
+  - id: D-14/WR-02
+    status: deferred_accepted
+    detail: "Focus trap completo no diálogo custom do chat (Tab/Shift+Tab containment) permanece residual aceito explícito; não é gap crítico aberto. Risco residual: foco pode sair do diálogo em navegação por teclado. Ação futura: implementar focus-trap/contenção dedicada com validação manual de teclado/a11y."
+  - id: CL-02-audit-open-heuristic
+    status: formal_acceptance_scoped
+    detail: "Os 4 quick tasks conhecidos (u28/uik/krt/ttk) podem permanecer como `[missing]` por heurística do audit-open somente quando suas disposições estiverem evidenciadas/justificadas e nenhum `[missing]` novo/inesperado aparecer. ttk permanece PLAN-only/deferred justificado sem fabricação de evidência. Formalização registrada em audit/REQUIREMENTS/STATE per D-03."
+  - id: runtime-ui-deferments
+    status: deferred_accepted
+    detail: "Retestes runtime/browser/UI não executados nesta reconciliação permanecem como deferimento aceito por item com motivo, risco residual e ação futura, conforme 22/24 artifacts; nenhuma execução manual fabricada."
 deferred:
   - truth: "Reteste runtime/integrado do caso reportado de cidade/chat (toolbar e chat em ambiente com dados/browser) confirma comportamento correto ponta a ponta."
     addressed_in: "Fora desta execução (condição futura documentada)"
-    evidence: "Debug session `status: resolved` com hardening 22-04/23-01 e testes determinísticos; reteste runtime registrado como deferimento aceito por item em `.planning/debug/city-filter-and-chat-ignores-registered-city.md`, `22-HUMAN-UAT.md`, `22-MANUAL-UAT.md`, `22-VERIFICATION.md`, `22-MVP-EXAMPLES.md` e `v1.3-MILESTONE-AUDIT.md` (motivo: ambiente integrado indisponível; risco residual e ação futura documentados)."
+    evidence: "Debug session `status: resolved` com hardening 22-04/23-01 e testes determinísticos; fechamento de CR-01 por Phase 24; reteste runtime registrado como deferimento aceito por item em `.planning/debug/city-filter-and-chat-ignores-registered-city.md`, `22-HUMAN-UAT.md`, `22-MANUAL-UAT.md`, `22-VERIFICATION.md`, `22-MVP-EXAMPLES.md`, `24-HUMAN-UAT.md`, `24-VERIFICATION.md` e `v1.3-MILESTONE-AUDIT.md`."
   - truth: "Checks manuais/runtime/UI adicionais da Fase 22 (itens aceitos por item em 22-HUMAN-UAT/22-MANUAL-UAT) executados em ambiente integrado."
     addressed_in: "Fora desta execução (condição futura documentada)"
     evidence: "`22-VERIFICATION.md` = accepted_with_deferred_runtime_checks; `22-HUMAN-UAT.md`/`22-MANUAL-UAT.md` preservam passes históricos e registram deferimentos aceitos por item com motivo, risco residual e condição/ação futura."
   - truth: "Focus-trap completo (Tab/Shift+Tab containment) no diálogo custom do chat."
-    addressed_in: "Fora desta execução (deferimento residual D-14)"
-    evidence: "23-02 implementou melhorias viáveis (foco inicial ao abrir, restauração de foco ao fechar detalhe vindo de resultado do chat); focus-trap completo explicitamente deferido com justificativa/risco residual/ação futura em `23-02-SUMMARY.md` e propagado em artefatos 22/`v1.3-MILESTONE-AUDIT.md`."
+    addressed_in: "Fora desta execução (deferimento residual D-14/WR-02)"
+    evidence: "23-02 implementou melhorias viáveis (foco inicial ao abrir, restauração de foco ao fechar detalhe vindo de resultado do chat); 24-02 preservou montagem/fallback de foco para WR-01. D-14/WR-02 focus trap completo permanece explicitamente deferido com justificativa/risco residual/ação futura em `23-02-SUMMARY.md`, `24-REVIEW.md`, `24-VERIFICATION.md` e artefatos de fechamento."
   - truth: "Nyquist 21/22 integralmente compliant (além de desvio aceito documentado)."
     addressed_in: "Plano de ação documentado (CL-04/D-13)"
     evidence: "`21-VALIDATION.md` e `22-VALIDATION.md` mantêm `nyquist_compliant: false` com 'Desvio aceito e plano de ação' explícito; `19-VALIDATION.md` e `20-VALIDATION.md` são `nyquist_compliant: true`."
@@ -58,8 +87,45 @@ deferred:
 
 **Phase Goal:** Resolver os débitos pendentes de auditoria, validação humana/Nyquist e hardening identificados no fechamento do v1.3, garantindo que o milestone possa ser fechado sem pendências críticas abertas e sem regredir o board público.  
 **Verified:** 2026-11-20T21:30:00Z  
-**Status:** gaps_found  
-**Re-verification:** No — initial verification
+**Re-verified / Reconciled:** 2026-11-22T00:00:00Z  
+**Status:** gaps_closed_with_accepted_residuals  
+**Re-verification:** Yes — in-place reconciliation after Phase 24 gap closure (D-05/D-06/D-08)
+
+## Re-verification / Reconciliation (2026-11-22)
+
+Esta seção atualiza o estado de fechamento da Phase 23 **sem apagar o histórico original** abaixo. O review point-in-time `23-REVIEW.md` permanece histórico (`status: issues_found`, CR-01/WR-01/WR-03 registrados) e não foi reescrito (D-08); sua resolução é cross-referenciada aqui e nos artefatos da Phase 24.
+
+### Evidência Phase 24 considerada
+
+- `.planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-VERIFICATION.md` — `status: accepted_with_deferred_runtime_checks`, **8/8 must-haves verified**. Fecha CR-01/WR-01 (escopo de código viável)/WR-03 com evidência determinística; 2 checks runtime/browser WR-01 permanecem como deferimentos aceitos por item (sem execução browser fabricada).
+- `.planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-REVIEW.md` — revisão pós-gap-closure; achados não-críticos remanescentes registrados como warnings/info fora dos must-haves da Phase 24.
+- `.planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-03-SUMMARY.md` e planos 24-01..03 — evidência de execução/fechamento de gaps anteriores da Phase 24.
+- `.planning/phases/24-corrigir-conflito-critico-de-cidade-e-residuos-de-review/24-HUMAN-UAT.md` — reconciliado para `status: complete` com 2 cenários WR-01 como `deferred_accepted` por item (D-09/D-10).
+
+### Disposição reconciliada dos achados críticos/resíduos
+
+| Item | Disposição 2026-11-22 | Evidência | Residual |
+|------|------------------------|-----------|----------|
+| CR-01 (city conflict bypass) | **Fechado em código por Phase 24** | `24-VERIFICATION.md` truths 1-4; mapper usa `_detect_city_from_raw_text(raw)` como sinal canônico; conflitos alias/abreviação/remoto com candidato presente, divergência raw-vs-candidato suportado e conflitos não-whitelist-vs-suportado tratados como `conflict_resolved`; mesma cidade canônica segura; regressões determinísticas (33 testes intent pass). | Reteste runtime integrado/browser permanece deferimento aceito por item (sem execução fabricada). |
+| WR-01 (focus restore/chat detail) | **Fechado no escopo viável de código por Phase 24** | `24-VERIFICATION.md` truths 6-7; ChatPanel montado durante detalhe (`dismissible={!selectedJob}`); foco retorna a trigger conectado ou `#chat-panel-close` via `getChatDetailCloseFocusTarget`; sem `document.body.focus()`. | 2 checks keyboard/browser em `24-HUMAN-UAT.md`/`24-VERIFICATION.md` são deferimento aceito por item (ambiente browser indisponível). |
+| WR-03 (non-native influence substring) | **Fechado por Phase 24** | `24-VERIFICATION.md` truth 5; token-set normalizado de `applied_q`; regressão falso positivo/positivo. | Nenhum residual crítico aberto. |
+| D-14/WR-02 (focus trap completo) | **Residual aceito explícito / deferido** | 23-02/23-REVIEW/24-REVIEW/24-VERIFICATION registram ausência de focus trap completo. | Não é gap crítico aberto. Risco residual: foco pode sair do diálogo custom; ação futura: focus-trap/contenção dedicada + validação manual teclado/a11y. |
+| CL-02 (audit-open quick tasks heuristic) | **Satisfeito com aceite formal escopo-limite (D-01/D-03/D-04, formalização 25-02/audit)** | `STATE.md`, `REQUIREMENTS.md`, `v1.3-MILESTONE-AUDIT.md`, quick task PLAN/SUMMARY (u28/uik/krt) e PLAN-only ttk. | Aceite formal limitado aos 4 slugs conhecidos (u28, uik, krt, ttk) somente se disposições evidenciadas/justificadas e nenhum `[missing]` novo/inesperado; ttk permanece PLAN-only sem evidência fabricada. |
+
+### Atualização de status por critério (reconciliado)
+
+| # | Critério | Status reconciliado 2026-11-22 | Nota |
+|---|----------|--------------------------------|------|
+| 1 | Debug cidade/chat resolvido; filtro respeita cidade cadastrada | ✓ SATISFIED (code/evidence) with accepted runtime residual | CR-01 fechado por Phase 24 com testes determinísticos; reteste runtime integrado permanece deferimento aceito por item. |
+| 2 | 4 quick tasks com status definido / gate audit-open reconciliado | ✓ SATISFIED with formal acceptance (scoped) | Disposições evidenciadas/justificadas; heurística audit-open aceita formalmente apenas para os 4 slugs conhecidos, sem novos missing (D-01/D-03/D-04). |
+| 3 | Gaps de verificação/UAT fases 21/22 reconciliados | ✓ VERIFIED | Sem alteração material; evidência 23-03 preservada. |
+| 4 | Nyquist 19–22 endereçado | ✓ VERIFIED | 20 criado; 19/20 compliant; 21/22 desvio aceito com plano (D-13). |
+| 5 | Avisos não-bloqueantes tratados quando viáveis | ✓ VERIFIED with accepted residuals | Correções viáveis em 23-02/24-01/24-02; D-14/WR-02 focus trap completo permanece residual aceito explícito; runtime/browser checks por item como deferred_accepted. |
+| 6 | Audit-open sem itens novos desta fase / audit atualizado para fechamento | ✓ VERIFIED with scoped formal acceptance | 23-VERIFICATION/24-VERIFICATION/24-HUMAN-UAT reconciliados; qualquer `[missing]` remanescente limitado aos 4 quick tasks conhecidos deve ter aceite formal escopo-limite no audit/REQUIREMENTS/STATE (25-02). Nenhum novo missing aceito por padrão. |
+
+## Original Verification (2026-11-20T21:30:00Z) — preserved history
+
+> **Historical snapshot:** The content below is preserved from the original 2026-11-20 verification for audit trail. Findings marked failed/partial below were re-evaluated in the reconciliation section above using Phase 24 evidence.
 
 ## Goal Achievement
 
@@ -74,7 +140,7 @@ deferred:
 | 5 | Avisos não-bloqueantes tratados quando viáveis: `canApplyChatToBoard` sem apply no-op para cidade não-normalizável, foco/a11y viável, parse defensivo de JSON em `chatSearch`, e `22-SECURITY.md` (ou equivalente). | ✓ VERIFIED (com residual deferido documentado) | `frontend/lib/api.ts`: `chatSearch` faz parse defensivo de 200 com `ApiError("Resposta inválida do servidor.", 0)`. `frontend/lib/chatApply.ts`: gating por filtros normalizados (`normalized.city !== null` etc.), evitando no-op para cidade-only não-normalizável; `frontend/lib/chatApply.test.ts` cobre `campinas -> false`. Chat: foco inicial no diálogo (`ChatPanel` close button ref/focus) e propagação/restauração de foco ao fechar detalhe vindo de resultado (`ChatResultItem`/`ChatResultsList`/`ChatThread`/`ChatWidget`). `22-SECURITY.md` criado (`status: verified`, `threats_open: 0`). **Residual explícito/deferido:** focus-trap completo do diálogo custom (D-14) e avisos adicionais de review WR-01/WR-02/WR-03 permanecem não resolvidos no código (ver Anti-Patterns/Gaps). |
 | 6 | Após correções, `audit-open` não reporta itens novos desta fase e `v1.3-MILESTONE-AUDIT.md` atualizado refletindo resolução dos débitos para fechamento do v1.3. | ✓ VERIFIED (com resíduo heurístico pré-existente documentado) | `v1.3-MILESTONE-AUDIT.md` atualizado in-place para `status: passed` (closure-ready) refletindo CL-01..CL-05, resoluções, deferimentos/deviations aceitos e gate audit-open. `gsd-sdk query audit-open` não indica novos itens introduzidos pela fase 23, mas mantém 4 quick tasks pré-existentes como `[missing]` por heurística — residual explicitamente documentado em 23-05/audit. |
 
-**Score:** 4/6 truths verified (2 partial/failed due to open critical review finding and heuristic gate residual)
+**Score (original 2026-11-20):** 4/6 success criteria verified (2 partial/failed due to open critical review finding and heuristic gate residual)
 
 ## Required Artifacts (spot-checked against phase must_haves)
 
@@ -183,4 +249,5 @@ Itens de runtime/UI/Nyquist/focus-trap integral foram tratados como **deferiment
 ---
 
 _Verified: 2026-11-20T21:30:00Z_  
-_Verifier: Claude (gsd-verifier)_
+_Reconciled: 2026-11-22T00:00:00Z_  
+_Verifier: Claude (gsd-verifier); reconciled by OpenCode (gsd-executor, Phase 25)_
