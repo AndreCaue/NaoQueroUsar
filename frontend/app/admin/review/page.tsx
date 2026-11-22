@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { Suspense } from "react";
 
 import { ReviewQueue } from "@/app/admin/review/ReviewQueue";
 
@@ -11,7 +13,9 @@ export default function Page() {
       <p className="mt-1 text-[14px] text-fg-muted">
         Confira o texto-fonte ao lado e aprove para publicar.
       </p>
-      <ReviewQueue />
+      <Suspense fallback={<p className="text-fg-muted">Carregando...</p>}>
+        <ReviewQueue />
+      </Suspense>
     </div>
   );
 }

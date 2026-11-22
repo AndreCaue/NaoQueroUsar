@@ -1,13 +1,14 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { useAdminGuard } from "@/components/admin/AdminGuard";
 
 const cardClass =
   "group rounded-[12px] border border-line bg-surface p-6 transition-colors hover:border-accent focus-visible:border-accent";
 
-export default function AdminPage() {
+function AdminDashboardContent() {
   useAdminGuard();
 
   return (
@@ -61,5 +62,13 @@ export default function AdminPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<p className="text-fg-muted">Carregando...</p>}>
+      <AdminDashboardContent />
+    </Suspense>
   );
 }
