@@ -15,6 +15,7 @@ import {
   type JobAdmin,
   type SocialPostStatusItem,
 } from "@/lib/api";
+import { buildAdminLoginHref } from "@/lib/adminReturnTo";
 import { TOKEN_KEY } from "@/lib/auth";
 import type { CitySlug } from "@/lib/cities";
 
@@ -31,7 +32,9 @@ function handleAuthError(err: unknown): boolean {
     } catch {
       // ignore storage errors
     }
-    window.location.replace("/admin/paste");
+    window.location.replace(
+      buildAdminLoginHref(`${window.location.pathname}${window.location.search}`),
+    );
     return true;
   }
   return false;

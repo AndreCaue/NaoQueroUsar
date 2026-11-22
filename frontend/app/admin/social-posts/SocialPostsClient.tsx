@@ -11,6 +11,7 @@ import {
   retrySocialPost,
   type SocialPostStatusItem,
 } from "@/lib/api";
+import { buildAdminLoginHref } from "@/lib/adminReturnTo";
 import { TOKEN_KEY } from "@/lib/auth";
 
 function formatBrtDateTime(value: string | null | undefined): string | null {
@@ -57,7 +58,9 @@ export function SocialPostsClient() {
       } catch {
         // ignore
       }
-      window.location.replace("/admin/paste");
+      window.location.replace(
+        buildAdminLoginHref(`${window.location.pathname}${window.location.search}`),
+      );
       return true;
     }
     return false;

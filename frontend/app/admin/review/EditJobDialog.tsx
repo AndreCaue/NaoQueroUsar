@@ -25,6 +25,7 @@ import {
   type SocialPostStatusItem,
   type SocialPublishMode,
 } from "@/lib/api";
+import { buildAdminLoginHref } from "@/lib/adminReturnTo";
 import { TOKEN_KEY } from "@/lib/auth";
 import { CITY_OPTIONS, type CitySlug } from "@/lib/cities";
 
@@ -335,7 +336,9 @@ export function EditJobDialog({
     } catch {
       // ignore
     }
-    window.location.replace("/admin/paste");
+    window.location.replace(
+      buildAdminLoginHref(`${window.location.pathname}${window.location.search}`),
+    );
   };
 
   const loadSocialStatus = async (jobId: string, authToken: string) => {
