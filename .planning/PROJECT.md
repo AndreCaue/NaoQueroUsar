@@ -17,6 +17,8 @@
 
 **Goal:** Melhorar a experiência pública e o fluxo admin com ajustes de UX, controle por ambiente e acesso admin dedicado — sem perder a fricção zero do candidato.
 
+**Status:** Phase 26 (Acesso Admin Dedicado) complete 2026-11-22 — automated checks passed, human smoke pending in `.planning/phases/26-acesso-admin-dedicado/26-HUMAN-UAT.md`. Next: Phase 27 (Controles por Ambiente).
+
 **Target features:**
 - **Filtros de cidade na home:** exibir somente cidades com vagas publicadas/ativas no momento
 - **Login admin dedicado:** separar login da página de paste; reservar página dedicada para login admin
@@ -54,14 +56,14 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - [x] Interface de chat no board público (drawer/modal mobile-first), sem login, com interpretação/parâmetros/limitações, resultados públicos com detalhe/reveal canônico e apply-to-board canônico — Validated in Phase 21 (UI-01/02/03), UAT reconciliado
 - [x] Qualidade/hardening/validação operacional do chatbot: exemplos MVP validados/documentados, testes automatizados com LLM mockado + UI viável, kill-switch/status/logging sem PII sensível, 22-SECURITY.md — Validated in Phase 22 (QA-01/02/03) com deferimentos runtime/browser aceitos por item
 - [x] Fechamento de auditoria v1.3: CL-01..CL-05 reconciliados com evidência/aceite formal; CR-01/WR-03/WR-01 viável fechados; audit `tech_debt` sem blockers críticos — Validated in Phases 23-25 (CL-01..05)
+- [x] Login admin dedicado em `/admin/login`, separado do paste/revisão, com redirect seguro `next`, guard/logout/401 alinhados para `/admin/login` — Validated in Phase 26 (ADMN-01; human smoke recorded in 26-HUMAN-UAT.md)
+- [x] Entrada admin discreta na Política de Privacidade apontando para `/admin/login` — Validated in Phase 26 (ADMN-02; human smoke recorded in 26-HUMAN-UAT.md)
 
 ### Active
 
 - [ ] **CITY-01**: Filtro de cidades na home mostra apenas cidades com vagas publicadas/ativas
-- [ ] **ADMN-01**: Login admin em página dedicada, separado da página de paste
 - [ ] **ADS-01**: Espaços publicitários podem ser ocultados por flag única no `.env`
 - [ ] **UIUX-01**: Hover/feedback visual em dropdown recentes/antigos, cards e filtros de cidades
-- [ ] **ADMN-02**: Link discreto para login admin na página de Política de Privacidade
 - [ ] **DONA-01**: Botão de Doações funcional via link configurado no `.env`
 
 ### Out of Scope
@@ -134,4 +136,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-22 after v1.4 milestone start*
+*Last updated: 2026-11-22 after Phase 26 execution (human verification pending)*
