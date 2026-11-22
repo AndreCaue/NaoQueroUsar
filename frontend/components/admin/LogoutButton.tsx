@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { TOKEN_KEY } from "@/lib/auth";
 
 /**
  * Logs out by clearing the stored JWT and hard-navigating to the login page.
- * A full reload is intentional: components such as ExtractForm keep the token
- * in memory, so a client-side route change would leave the session alive.
+ * A full reload is intentional: components keep the token in memory, so a
+ * client-side route change would leave the session alive.
  */
 export function LogoutButton() {
   const handleLogout = () => {
@@ -14,7 +14,7 @@ export function LogoutButton() {
     } catch {
       // ignore storage errors
     }
-    window.location.replace("/admin/paste");
+    window.location.replace("/admin/login");
   };
 
   return (
