@@ -283,17 +283,17 @@ gsd-sdk query audit-open
 | A3 | Phase 25 can mark CL-05 complete in REQUIREMENTS traceability once audit/verification reconciliation is updated, because viable code fixes already landed in 23/24 and remaining focus trap is explicitly deferred residual. | Requirements coverage | Traceability reviewers may want narrower wording; mitigate by citing evidence and residual separation clearly. |
 | A4 | No code/runtime changes are needed; all required evidence already exists in repo artifacts and command outputs. | Scope | If planner finds missing evidence references, may need small additional doc lookups, but must not fabricate execution. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Will `audit-open` drop 23/24 verification/UAT items after status reconciliation?**
-   - What we know: Current baseline reports them as `gaps_found`/`human_needed`/`unknown`. D-11 expects reconciliation to remove them. [VERIFIED: audit-open output, D-11]
-   - What's unclear: Exact scanner heuristics/fields used by `gsd-sdk query audit-open`. [ASSUMED]
-   - Recommendation: Plan an explicit post-edit `gsd-sdk query audit-open` check. If unexpected residual remains, add scoped documentation and do **not** classify under CL-02 unless it is one of the 4 known quick slugs.
+1. **RESOLVED: Will `audit-open` drop 23/24 verification/UAT items after status reconciliation?**
+   - What we knew: Current baseline reports them as `gaps_found`/`human_needed`/`unknown`. D-11 expects reconciliation to remove them. [VERIFIED: audit-open output, D-11]
+   - What was unclear: Exact scanner heuristics/fields used by `gsd-sdk query audit-open`. [ASSUMED]
+   - Resolution: Plans reconcile 24-HUMAN-UAT/24-VERIFICATION/23-VERIFICATION to the 22-HUMAN-UAT / 22-VERIFICATION accepted-deferment patterns, then run `gsd-sdk query audit-open` after edits. If any non-CL-02 residual remains unexpectedly, it is treated as a blocking reconciliation gap or explicitly documented outside CL-02 scope; **never** blanket-accepted under CL-02 unless it is one of the 4 known quick slugs (D-01/D-02/D-11).
 
-2. **What exact frontmatter fields does audit-open use for UAT/verification?**
-   - What we know: 24-HUMAN-UAT currently `partial` with `result: [pending]`; 24-VERIFICATION currently `human_needed` with `human_verification` section. [VERIFIED: files]
-   - What's unclear: Minimal field set for "closed/accepted".
-   - Recommendation: Mirror 22-HUMAN-UAT (`status: complete`, per-item deferred accepted) and 22-VERIFICATION (`status: accepted_with_deferred_runtime_checks`, reconciliation/resolution sections) as closely as possible.
+2. **RESOLVED: What exact frontmatter fields does audit-open use for UAT/verification?**
+   - What we knew: 24-HUMAN-UAT currently `partial` with `result: [pending]`; 24-VERIFICATION currently `human_needed` with `human_verification` section. [VERIFIED: files]
+   - What was unclear: Minimal field set for "closed/accepted".
+   - Resolution: Do not guess scanner internals. Mirror 22-HUMAN-UAT (`status: complete`, per-item deferred accepted, no pending scenarios) and 22-VERIFICATION (`status: accepted_with_deferred_runtime_checks` or clearly equivalent qualified name, reconciliation/resolution sections, preserved truths/evidence) as closely as possible, then verify with post-edit `gsd-sdk query audit-open`. Any unexpected field-sensitivity is handled by the same D-11 guard: reconcile/document explicitly, no CL-02 blanket acceptance.
 
 ## Environment Availability
 
