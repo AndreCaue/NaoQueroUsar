@@ -13,7 +13,7 @@
 - [x] **Phase 21: Interface de chat e integração no board** - Oferecer chat mobile-first no board com interpretação transparente e aplicação na busca canônica (completed 2026-11-18)
 - [x] **Phase 22: Qualidade, hardening e validação operacional** - Validar exemplos MVP, cobrir fluxos críticos e garantir controles operacionais mínimos (completed 2026-11-18)
 - [x] **Phase 23: Fechamento de débitos de auditoria e validação v1.3** - Resolver débitos de auditoria, validação humana/Nyquist e hardening pendentes antes do fechamento do milestone (completed 2026-11-20)
-- [ ] **Phase 24: Corrigir conflito crítico de cidade e resíduos de review** - Fechar CR-01/CL-01 e resíduos de código viáveis do CL-05 sem regredir chat/board público (gap closure planned)
+- [x] **Phase 24: Corrigir conflito crítico de cidade e resíduos de review** - Fechar CR-01/CL-01 e resíduos de código viáveis do CL-05 sem regredir chat/board público (gap closure planned) (completed 2026-11-22)
 - [ ] **Phase 25: Reconciliar gates de fechamento e revalidar auditoria v1.3** - Fechar CL-02/gate audit-open e atualizar verificação/auditoria para re-audit do milestone
 
 ## Phase Details
@@ -137,12 +137,12 @@ Plans:
   3. Fechar detalhe do chat restaura foco para controle montado/estável (WR-01), sem perda de foco para `document.body` em fluxo teclado
   4. Testes automatizados cobrindo CR-01/WR-01/WR-03 passam; contratos públicos/API/JobPublic e fluxo canônico do board permanecem sem regressão
 
-**Plans:** 2/3 plans complete
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 24-01-PLAN.md — Mapper determinístico: CR-01 conflito de cidade canônico e WR-03 influência não nativa por token-set (CL-01, CL-05)
 - [x] 24-02-PLAN.md — ChatWidget/ChatPanel: painel montado no detalhe e restauração de foco estável sem document.body (CL-05)
-- [ ] 24-03-PLAN.md — Gap closure: '/' não-cidade no mapper D-03 e guarda dismissible do botão fechar chat para fallback D-08 (CL-01, CL-05)
+- [x] 24-03-PLAN.md — Gap closure: '/' não-cidade no mapper D-03 e guarda dismissible do botão fechar chat para fallback D-08 (CL-01, CL-05)
 
 ### Phase 25: Reconciliar gates de fechamento e revalidar auditoria v1.3
 
@@ -168,5 +168,5 @@ Plans:
 | 21. Interface de chat e integração no board | 2/2 | Complete    | 2026-11-18 |
 | 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
 | 23. Fechamento de débitos de auditoria e validação v1.3 | 5/5 | Complete   | 2026-11-20 |
-| 24. Corrigir conflito crítico de cidade e resíduos de review | 2/3 | Gap closure | - |
+| 24. Corrigir conflito crítico de cidade e resíduos de review | 3/3 | Complete   | 2026-11-22 |
 | 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | 0/TBD | Not started | - |
