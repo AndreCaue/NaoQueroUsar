@@ -140,6 +140,7 @@ Plans:
 **Plans:** 3/3 plans complete
 
 Plans:
+
 - [x] 24-01-PLAN.md — Mapper determinístico: CR-01 conflito de cidade canônico e WR-03 influência não nativa por token-set (CL-01, CL-05)
 - [x] 24-02-PLAN.md — ChatWidget/ChatPanel: painel montado no detalhe e restauração de foco estável sem document.body (CL-05)
 - [x] 24-03-PLAN.md — Gap closure: '/' não-cidade no mapper D-03 e guarda dismissible do botão fechar chat para fallback D-08 (CL-01, CL-05)
@@ -160,7 +161,12 @@ Plans:
 **Plans:** 2/2 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 25-01-PLAN.md — Reconciliar 23/24 verification e 24-HUMAN-UAT para estados finais aceitos com deferimentos por item (CL-05)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 25-02-PLAN.md — Registrar aceite formal CL-02 e atualizar audit/REQUIREMENTS/STATE/ROADMAP para re-audit (CL-02, CL-05)
 
 ## Progress
