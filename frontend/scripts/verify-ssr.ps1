@@ -78,7 +78,11 @@ foreach ($cssUrl in $adminCssUrls) {
         Assert (-not ($css -match "--color-canvas")) "Admin stylesheet leaks --color-canvas: $cssUrl"
     } catch { }
 }
-Write-Output "PASS - admin HTML renders its own form and no public theme"
+Write-Output "PASS - admin paste HTML renders its own heading and no public theme"
+
+$login = Get-Html "$BaseUrl/admin/login"
+Assert ($login -match "Acesso administrativo|Entrar|Carregando") "Admin login page missing expected marker"
+Write-Output "PASS - admin login route responds"
 
 # 3. Empty search state
 $empty = Get-Html "$BaseUrl/?q=zzzzzzzz"

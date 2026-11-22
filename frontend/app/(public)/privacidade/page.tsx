@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Política de Privacidade — EmpregaNoix",
@@ -198,6 +199,14 @@ export default function PrivacidadePage() {
             responsabilizamos por interações entre candidatos e empresas.
           </p>
         </div>
+        <p className="mt-3 text-xs text-fg-muted/80">
+          <Link
+            href="/admin/login"
+            className="transition-colors hover:text-fg-muted"
+          >
+            Acesso administrativo
+          </Link>
+        </p>
       </div>
     </article>
   );
