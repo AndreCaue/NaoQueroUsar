@@ -312,7 +312,15 @@ def map_intent(candidate: IntentLLMOutput, raw_text: str = "") -> IntentContract
     resolved_candidate_city, resolved_candidate_reason = _resolve_city_safe(candidate.city, raw)
 
     has_supported_raw_signal = raw_city_reason in {"normalized", "conflict_resolved"} or raw_detected_city is not None
-    has_conflict_sep = bool(re.search(r"\b(ou|or|vs)\b|/", normalized_raw))
+    has_nl_conflict_sep = bool(re.search(r"\b(ou|or|vs)\b", normalized_raw))
+    supported_city_sep_pattern = r"sp|rj|bh|remoto|sao\s+paulo|rio\s+de\s+janeiro|belo\s+horizonte|home\s*-?\s*office|trabalho\s+remoto"
+    has_slash_city_alt = bool(
+        re.search(
+            rf"(\b(?:{supported_city_sep_pattern})\b\s*/|/\s*\b(?:{supported_city_sep_pattern})\b)",
+            normalized_raw,
+        )
+    )
+    has_conflict_sep = has_nl_conflict_sep or has_slash_city_alt
 
     def _segment_has_supported_city(segment: str) -> bool:
         return any(pattern.search(segment) for _, patterns in _RAW_TEXT_CITY_PATTERNS for pattern in patterns)
@@ -324,7 +332,8 @@ def map_intent(candidate: IntentLLMOutput, raw_text: str = "") -> IntentContract
             if cand_norm and cand_norm in normalized_raw:
                 non_whitelist_raw_conflict = True
         if not non_whitelist_raw_conflict:
-            segments = [s.strip() for s in re.split(r"\b(?:ou|or|vs)\b|/", normalized_raw) if s.strip()]
+            split_pattern = r"\b(?:ou|or|vs)\b|/" if has_slash_city_alt else r"\b(?:ou|or|vs)\b"
+            segments = [s.strip() for s in re.split(split_pattern, normalized_raw) if s.strip()]
             supported_flags = [_segment_has_supported_city(seg) for seg in segments]
             if any(supported_flags) and not all(supported_flags):
                 generic = {

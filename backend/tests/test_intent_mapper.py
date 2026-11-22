@@ -457,3 +457,23 @@ def test_non_native_influence_uses_token_set_not_substring_wr03() -> None:
     fs_pos = _field(contract_pos, "seniority")
     assert fs_pos.status == "aproximado"
     assert fs_pos.reason_code == "textual_approximation_in_q"
+
+
+def test_slash_non_city_terms_do_not_trigger_city_conflict_cr01() -> None:
+    c1 = map_intent(IntentLLMOutput.model_validate({}), raw_text="analista/pleno em sp")
+    assert c1.applied_params.city == "São Paulo"
+    assert _field(c1, "city").status == "aplicado"
+    assert _field(c1, "city").reason_code == "normalized"
+    assert _field(c1, "city").reason_code != "conflict_resolved"
+
+    c2 = map_intent(IntentLLMOutput.model_validate({}), raw_text="dev/frontend remoto")
+    assert c2.applied_params.city == "Remoto"
+    assert _field(c2, "city").status == "aplicado"
+    assert _field(c2, "city").reason_code == "normalized"
+    assert _field(c2, "city").reason_code != "conflict_resolved"
+
+    c3 = map_intent(IntentLLMOutput.model_validate({"city": "SP"}), raw_text="dev/frontend em sp")
+    assert c3.applied_params.city == "São Paulo"
+    assert _field(c3, "city").status == "aplicado"
+    assert _field(c3, "city").reason_code == "normalized"
+    assert _field(c3, "city").reason_code != "conflict_resolved"
