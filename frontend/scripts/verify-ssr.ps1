@@ -1,6 +1,7 @@
 ﻿param(
     [string]$BaseUrl = "http://localhost:3100",
-    [string]$BackendUrl = "http://localhost:8000"
+    [string]$BackendUrl = "http://localhost:8000",
+    [string]$AdsEnabled = $env:NEXT_PUBLIC_ADS_ENABLED
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,6 +25,13 @@ function Assert {
     }
 }
 
+function Get-AdsEnabled {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $true }
+    $normalized = $Value.Trim().ToLowerInvariant()
+    return @("false", "0", "off", "no", "disabled") -notcontains $normalized
+}
+
 function Get-StylesheetUrls {
     param([string]$Html)
     $matches = [regex]::Matches($Html, 'href="([^"]+\.css[^"]*)"')
@@ -43,12 +51,18 @@ function Get-StylesheetUrls {
 $html = Get-Html "$BaseUrl/"
 Assert ($html -match "Vagas abertas") "Home missing 'Vagas abertas'"
 Assert ($html -match "Ver a vaga") "Home missing 'Ver a vaga'"
+$adsOn = Get-AdsEnabled $AdsEnabled
 $adCount = ([regex]::Matches($html, "Espaço publicitário")).Count
-Assert ($adCount -ge 3) "Home has fewer than 3 ad placeholders ($adCount)"
+if ($adsOn) {
+    Assert ($adCount -ge 3) "Home has fewer than 3 ad placeholders ($adCount)"
+    Write-Output "PASS - home SSR renders jobs, ads and no contact data"
+} else {
+    Assert ($adCount -eq 0) "Home should have 0 ad placeholders when ads disabled ($adCount)"
+    Write-Output "PASS - home SSR renders jobs, no ads (disabled), and no contact data"
+}
 Assert (-not ($html -match "contact_email")) "Home leaks contact_email"
 Assert (-not ($html -match "contact_phone")) "Home leaks contact_phone"
 Assert (-not ($html -match "mailto:")) "Home leaks mailto:"
-Write-Output "PASS - home SSR renders jobs, ads and no contact data"
 
 # 1b. Positive CSS control: at least one stylesheet contains --color-canvas
 $cssUrls = Get-StylesheetUrls $html
