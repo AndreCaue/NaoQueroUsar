@@ -65,7 +65,8 @@ export function ChatPanel({
             id="chat-panel-close"
             type="button"
             ref={closeButtonRef}
-            onClick={onClose}
+            onClick={dismissible ? onClose : undefined}
+            aria-disabled={!dismissible || undefined}
             className="inline-flex h-11 min-h-11 items-center justify-center rounded-lg px-3 text-sm font-semibold text-fg-muted transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft"
           >
             Fechar chat
