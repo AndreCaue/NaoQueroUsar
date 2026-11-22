@@ -329,22 +329,25 @@ NEXT_PUBLIC_DONATION_URL=
 | A3 | `NEXT_PUBLIC_*` env changes require Vercel rebuild/redeploy. | Pitfalls / Env | Low - already documented in `.env.example`; standard Vercel behavior. |
 | A4 | Recommended env names (`NEXT_PUBLIC_ADS_ENABLED`, `NEXT_PUBLIC_DONATION_URL`) are acceptable; naming is at discretion. | Code Examples | Low - planner can rename; helpers isolate the name. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `verify-ssr.ps1` be parameterized or env-driven for ads state?**
    - What we know: Script currently hardcodes `>= 3` ad placeholders. [VERIFIED: verify-ssr.ps1]
    - What's unclear: Whether operators/CI run it with env var set, or prefer explicit param.
    - Recommendation: Support both: optional `-AdsEnabled` param, defaulting to `$env:NEXT_PUBLIC_ADS_ENABLED` parsing with default-show semantics. Keeps manual use simple.
+   - **RESOLVED (2026-11-22, Plan 27-01):** Support both. `verify-ssr.ps1` accepts optional `-AdsEnabled` param defaulting to `$env:NEXT_PUBLIC_ADS_ENABLED`, with D-01 default-show semantics.
 
 2. **Should `/doacoes` display the configured external link when present?**
    - What we know: D-06 requires page accessible; discretion allows minimal adjustments. [VERIFIED: CONTEXT]
    - What's unclear: Product value vs scope creep.
    - Recommendation: Keep minimal — no required change. Optional nice-to-have: if external URL configured, show a button/link on `/doacoes` too. Planner may skip to stay tight.
+   - **RESOLVED (2026-11-22, Plan 27-01):** Keep `/doacoes` unchanged/minimal. Page remains accessible per D-06; no external-link copy added in this phase.
 
 3. **Collapse behavior when ads hidden (spacing)?**
    - What we know: Discretion allows collapse vs preserve space, as long as ad spaces don't appear. [VERIFIED: CONTEXT discretion]
    - What's unclear: Visual preference.
    - Recommendation: Collapse (return `null`, no placeholder). Simpler, no empty dashed boxes; matches "não aparecem". Verify with quick visual smoke.
+   - **RESOLVED (2026-11-22, Plan 27-01):** Collapse. `AdSlot` returns `null` when disabled; `page.tsx` conditionally omits header/sidebar ad and aside to avoid empty 300px desktop gutter.
 
 ## Environment Availability
 
