@@ -8,7 +8,7 @@
 
 **v1.2 delivered (with caveats):** fundação social segura (modelos/migrações/tokens criptografados/`SocialPublisher`), OAuth Meta e Integrações admin, geração/revisão/aprovação de post social (LLM/fallback, site-first), publicação assíncrona resiliente com retry/idempotência/status/retry no admin, e testes/docs/handoffs de fechamento rastreável. **Pendências aceitas:** reconciliação de rastreabilidade `PUB-01..08`, handoffs reais para `TEST-04`/`DOC-01`/`AUD-05`, verificações humanas/runtime/canônicas e débitos carry-over do v1.1.
 
-**v1.3 in progress:** Phase 19 complete (contrato INT seguro). Phase 20 complete — endpoint público `POST /api/v1/public/chat-search` entregue com interpretação+resultados `JobPublic` pagináveis (sem contatos), busca determinística equivalente a `list_published` para `applied_params`, proteções/rate limit/timeout e fallback 200 degradado seguro com sinalização de suporte parcial (`API-01/02/03`). Phase 21 complete (UI-01/02/03, bookkeeping aprovado; verificação humana pendente em `21-HUMAN-UAT.md` / `21-VERIFICATION.md`). Phase 22 complete — controles operacionais (kill-switch/status/logging sem PII), matriz MVP/UAT versionada e suíte determinística consolidada implementados; verificação automatizada `human_needed` com UAT manual pendente (`22-HUMAN-UAT.md`, `22-VERIFICATION.md`). Phase 23 executed (5 plans, débitos/auditoria reconciliados com caveats). Phase 24 complete (3/3 plans, gap closure CR-01/WR-01/WR-03; verificação `human_needed`, UAT manual pendente em `24-HUMAN-UAT.md` / `24-VERIFICATION.md`).
+**v1.3 closure reconciled (Phase 25 complete, 2026-11-22):** Phases 19-25 complete. Phase 25 reconciliou estados finais rastreáveis de 23/24 verification/UAT, registrou aceite formal CL-02 (escopo limitado aos 4 quick tasks conhecidos, sem novos [missing]), e atualizou 1.3-MILESTONE-AUDIT.md para status: passed com residuals aceitos. gsd-sdk query audit-open pós-normalização: 0 UAT gaps, 0 verification gaps, 4 quick tasks [missing] CL-02 conhecidos. Residuals aceitos: D-14/WR-02 focus trap completo (deferido, não gap aberto), deferimentos runtime/browser por item, desvios Nyquist 21/22 aceitos. **Pronto para /gsd-audit-milestone.**
 
 ## Current Milestone: v1.3 Chatbot Inteligente de Busca de Vagas
 
@@ -55,7 +55,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 - [x] Implementar interface de chat no board público (drawer/modal mobile-first) consumindo `chat-search`, exibindo interpretação/parâmetros e resultados com acesso ao detalhe (UI, Phase 21) — concluído em 2026-11-18 (UAT humano pendente)
 - [x] Qualidade, hardening e validação operacional do chatbot (QA, Phase 22): cenários MVP, limites/custos/latência, resiliência e regressão do fluxo público sem fricção — concluído em 2026-11-18 (verificação `human_needed`; UAT/runtime manual pendente em `22-HUMAN-UAT.md` / `22-VERIFICATION.md`)
-- [ ] **Phase 23 (NEW):** Fechamento de débitos de auditoria e validação v1.3 — resolver 1 debug session (cidade cadastrada), 4 quick tasks pendentes, gaps de verificação/UAT humana (fases 21/22), gaps Nyquist (19–22) e avisos não-bloqueantes; pré-requisito para fechar o milestone v1.3 (CL-01..05)
+- [x] **Phases 23-25 (closure):** Fechamento/reconciliação de débitos de auditoria e validação v1.3 — CL-01/03/04/05 reconciliados com evidência, CL-02 formalmente aceito com escopo limitado aos 4 quick tasks conhecidos (sem novos `[missing]`), 23/24 verification+UAT reconciliados, `v1.3-MILESTONE-AUDIT.md` passado com residuals aceitos (D-14/WR-02 deferido, runtime/browser por item, Nyquist 21/22 desvio aceito).
 - [ ] (A definir) Incluir ou não itens de carry-over/hardening (PUB-01..08, handoffs v1.2, lacunas v1.1) no escopo do milestone
 
 ### Out of Scope
@@ -122,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-22 after Phase 24 execution (gap closure complete; human verification pending)*
+*Last updated: 2026-11-22 after Phase 25 execution (v1.3 reconciliation complete; closure-ready for /gsd-audit-milestone with accepted residuals)*
