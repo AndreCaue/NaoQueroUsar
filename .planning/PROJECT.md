@@ -17,7 +17,7 @@
 
 **Goal:** Melhorar a experiência pública e o fluxo admin com ajustes de UX, controle por ambiente e acesso admin dedicado — sem perder a fricção zero do candidato.
 
-**Status:** Phase 26 (Acesso Admin Dedicado) complete 2026-11-22 — automated checks passed, human smoke pending in `.planning/phases/26-acesso-admin-dedicado/26-HUMAN-UAT.md`. Next: Phase 27 (Controles por Ambiente).
+**Status:** Phase 27 (Controles por Ambiente) complete 2026-11-22 — automated checks passed, verifier 6/6. Human smoke pending for Phase 26 in `.planning/phases/26-acesso-admin-dedicado/26-HUMAN-UAT.md`. Next: Phase 28 (Polimento UX da Home).
 
 **Target features:**
 - **Filtros de cidade na home:** exibir somente cidades com vagas publicadas/ativas no momento
@@ -58,13 +58,12 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - [x] Fechamento de auditoria v1.3: CL-01..CL-05 reconciliados com evidência/aceite formal; CR-01/WR-03/WR-01 viável fechados; audit `tech_debt` sem blockers críticos — Validated in Phases 23-25 (CL-01..05)
 - [x] Login admin dedicado em `/admin/login`, separado do paste/revisão, com redirect seguro `next`, guard/logout/401 alinhados para `/admin/login` — Validated in Phase 26 (ADMN-01; human smoke recorded in 26-HUMAN-UAT.md)
 - [x] Entrada admin discreta na Política de Privacidade apontando para `/admin/login` — Validated in Phase 26 (ADMN-02; human smoke recorded in 26-HUMAN-UAT.md)
+- [x] Controles por ambiente para anúncios e doações (flag única de ads + URL de doação http/https com fallback seguro para `/doacoes`) — Validated in Phase 27 (ADS-01, DONA-01)
 
 ### Active
 
 - [ ] **CITY-01**: Filtro de cidades na home mostra apenas cidades com vagas publicadas/ativas
-- [ ] **ADS-01**: Espaços publicitários podem ser ocultados por flag única no `.env`
 - [ ] **UIUX-01**: Hover/feedback visual em dropdown recentes/antigos, cards e filtros de cidades
-- [ ] **DONA-01**: Botão de Doações funcional via link configurado no `.env`
 
 ### Out of Scope
 
@@ -136,4 +135,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-22 after Phase 26 execution (human verification pending)*
+*Last updated: 2026-11-22 after Phase 27 execution (verified, 6/6 must-haves)*

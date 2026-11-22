@@ -82,5 +82,5 @@ Plans:
 | 24. Corrigir conflito crítico de cidade e resíduos de review | v1.3 | 3/3 | Complete | 2026-11-22 |
 | 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | v1.3 | 2/2 | Complete | 2026-11-22 |
 | 26. Acesso Admin Dedicado | v1.4 | 2/2 | Complete    | 2026-11-22 |
-| 27. Controles por Ambiente | v1.4 | 1/1 | Complete | 2026-11-22 |
+| 27. Controles por Ambiente | v1.4 | 1/1 | Complete    | 2026-11-22 |
 | 28. Polimento UX da Home | v1.4 | 0/TBD | Not started | - |
