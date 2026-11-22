@@ -15,14 +15,16 @@ reconciled: 2026-11-22
 
 ### 1. WR-01 keyboard focus restore
 expected: Open chat by keyboard, open job detail by keyboard, close detail via Escape/dialog close. Focus returns to connected trigger or `#chat-panel-close` fallback; never `document.body`; ChatPanel remains mounted behind native dialog.
-result: deferred_accepted
+result: deferred
+reason: deferimento aceito por item
 - Motivo: Ambiente browser/integrado indisponível nesta execução de reconciliação; validação de teclado/foco nativo requer browser real.
 - Risco residual: Regressão de foco/teclado em ambiente browser real (detalhe aberto pelo chat, fechamento por Escape/controles, tentativa de fechar chat com detalhe aberto) pode não ser percebida até validação manual.
 - Ação futura: Revalidar em ambiente browser integrado com teclado (Tab/Shift+Tab/Escape), confirmando que foco retorna ao trigger conectado ou `#chat-panel-close` e nunca cai em `document.body`; registrar evidência no UAT/VERIFICATION.
 
 ### 2. Close chat while detail open
 expected: With detail open, attempt to activate "Fechar chat" by mouse/keyboard. Chat does not dismiss/unmount; after detail close, focus restores to connected trigger or `#chat-panel-close`, never `document.body`.
-result: deferred_accepted
+result: deferred
+reason: deferimento aceito por item
 - Motivo: Ambiente browser/integrado indisponível nesta execução de reconciliação; validação de teclado/foco nativo requer browser real.
 - Risco residual: Regressão de foco/teclado em ambiente browser real (detalhe aberto pelo chat, fechamento por Escape/controles, tentativa de fechar chat com detalhe aberto) pode não ser percebida até validação manual.
 - Ação futura: Revalidar em ambiente browser integrado com teclado (Tab/Shift+Tab/Escape), confirmando que foco retorna ao trigger conectado ou `#chat-panel-close` e nunca cai em `document.body`; registrar evidência no UAT/VERIFICATION.
