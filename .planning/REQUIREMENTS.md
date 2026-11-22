@@ -13,8 +13,8 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 
 ### Acesso Admin
 
-- [ ] **ADMN-01**: Admin acessa login em página dedicada, separada da página de paste/revisão
-- [ ] **ADMN-02**: Usuário encontra um link discreto para login admin na página de Política de Privacidade
+- [x] **ADMN-01**: Admin acessa login em página dedicada, separada da página de paste/revisão
+- [x] **ADMN-02**: Usuário encontra um link discreto para login admin na página de Política de Privacidade
 
 ### Configuração por Ambiente
 
@@ -48,8 +48,8 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CITY-01 | Phase 28 | Pending |
-| ADMN-01 | Phase 26 | Pending |
-| ADMN-02 | Phase 26 | Pending |
+| ADMN-01 | Phase 26 | Complete |
+| ADMN-02 | Phase 26 | Complete |
 | ADS-01 | Phase 27 | Pending |
 | DONA-01 | Phase 27 | Pending |
 | UIUX-01 | Phase 28 | Pending |
