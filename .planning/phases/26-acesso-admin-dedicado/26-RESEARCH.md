@@ -300,22 +300,25 @@ export function sanitizeAdminReturnTo(value: string | null | undefined): string 
 
 **If any assumption becomes load-bearing during planning:** confirm with a quick Next 16 build/dev check before finalizing plan.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Where should the return-to helper live?**
    - What we know: AdminGuard, login page, and possibly 401 handlers need consistent behavior. [VERIFIED: D-02/D-03/D-04, grep results]
    - What's unclear: Put in `lib/` (pure, testable) or duplicate small logic in components.
    - Recommendation: Create `frontend/lib/adminReturnTo.ts` with pure sanitize/build helpers; unit test with Vitest (fits existing lib test setup).
+   - **RESOLVED:** Use `frontend/lib/adminReturnTo.ts` as a pure, testable helper shared by login, guard, and 401/logout redirect flows; cover it with Vitest unit tests. This matches 26-01 Task 1.
 
 2. **Should 401 handlers preserve return-to?**
    - What we know: D-03 explicitly requires return-to for protected-route access without session. D-04 covers logout to `/admin/login`. 401 handlers currently do hard replace to `/admin/paste`.
    - What's unclear: Whether expired-session redirect must preserve current page as next.
    - Recommendation: Preserve return-to when the handler has access to current location (`window.location.pathname + search`) and sanitize it; otherwise fallback to `/admin/login`. This improves UX and aligns with D-03 intent without changing auth contract.
+   - **RESOLVED:** Preserve sanitized return-to on 401 handlers when current location is available (`window.location.pathname + search`), otherwise fallback to `/admin/login` (or safe `/admin` via helper). This matches 26-02 Task 2.
 
 3. **Should `/admin/paste` remain directly accessible when logged out?**
    - What we know: SC4 says paste page should not require login form as main flow. Paste is an admin tool and currently guarded behavior is mixed in ExtractForm.
    - What's unclear: Whether paste page should self-guard via `useAdminGuard`.
    - Recommendation: Yes. Make paste extraction require authenticated session and let AdminGuard redirect to `/admin/login?next=/admin/paste`.
+   - **RESOLVED:** Yes. `/admin/paste` remains a protected admin route and must self-guard via `useAdminGuard`; unauthenticated access redirects to `/admin/login?next=/admin/paste`. ExtractForm becomes extraction-only for authenticated sessions. This matches 26-01 Task 3 and 26-02 Task 1.
 
 ## Environment Availability
 
