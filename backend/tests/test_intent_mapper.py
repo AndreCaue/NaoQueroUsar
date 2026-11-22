@@ -434,3 +434,26 @@ def test_non_whitelist_vs_supported_conflict_guard_cr01() -> None:
     fs_absent = _field(absent, "city")
     assert fs_absent.status == "ignorado"
     assert fs_absent.reason_code == "conflict_resolved"
+
+
+def test_non_native_influence_uses_token_set_not_substring_wr03() -> None:
+    # Observable false-positive: "vaga" is a substring of "vagabundo" in applied_q,
+    # but it is NOT an equal normalized token-set member. Must not mark as approximated.
+    contract = map_intent(
+        IntentLLMOutput.model_validate({"q": "vagabundo", "seniority": {"value": None, "raw": "vaga"}}),
+        raw_text="vagabundo vaga",
+    )
+    fs_seniority = _field(contract, "seniority")
+    assert fs_seniority.status == "ignorado"
+    assert fs_seniority.reason_code == "unsupported_structured_filter"
+
+    # Positive control: genuine token membership in applied_q still approximates.
+    contract_pos = map_intent(
+        IntentLLMOutput.model_validate(
+            {"q": "coordenador pleno", "seniority": {"value": "pleno", "raw": "pleno"}}
+        ),
+        raw_text="vaga coordenador pleno",
+    )
+    fs_pos = _field(contract_pos, "seniority")
+    assert fs_pos.status == "aproximado"
+    assert fs_pos.reason_code == "textual_approximation_in_q"

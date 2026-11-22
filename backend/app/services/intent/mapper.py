@@ -471,11 +471,11 @@ def map_intent(candidate: IntentLLMOutput, raw_text: str = "") -> IntentContract
             if getattr(obj, "raw", None):
                 raw_terms.append(str(obj.raw))
         if applied_q:
-            aq = _strip_accents_lower(applied_q)
+            aq_tokens = set(_strip_accents_lower(applied_q).split())
             for t in raw_terms:
                 for tok in _normalize_whitespace(str(t)).split(" "):
                     k = _strip_accents_lower(tok)
-                    if k and k in aq:
+                    if k and k in aq_tokens:
                         influenced = True
                         break
                 if influenced:
