@@ -38,7 +38,7 @@ Requirements for the Phase 23 closure/hardening scope. These address the outstan
 ### Closure & Validation (CL)
 
 - [x] **CL-01**: Debug `city-filter-and-chat-ignores-registered-city` resolvido com decisão/evidência registrada (22-04 + hardening 23-01, testes determinísticos) e reteste runtime do caso reportado documentado como deferimento aceito por item quando inviável no ambiente (23-03/debug/UAT).
-- [ ] **CL-02**: Quick tasks reconciliadas com evidência ou deferimento justificado: u28/uik/krt concluídas com evidência (uik vigente supersede u28) e ttk como deferred justificado (PLAN-only, sem SUMMARY/evidência de execução; validação segura em produção/ambiente controlado fora do escopo local), com nenhuma permanecendo sem disposição documentada no contexto de fechamento. Se `gsd-sdk query audit-open` ainda reportar essas 4 tasks pré-existentes como `[missing]` por heurística, o residual pode ser formalmente aceito no gate/audit de fechamento do milestone quando as disposições estiverem evidenciadas/justificadas, sem itens novos desta fase e sem fabricar evidência.
+- [x] **CL-02**: Quick tasks reconciliadas com evidência ou deferimento justificado: u28/uik/krt concluídas com evidência (uik vigente supersede u28) e `261112-ttk-escape-hatch-turnstile-teste-em-prod` (ttk) como deferred justificado (PLAN-only, sem SUMMARY/evidência de execução; validação segura em produção/ambiente controlado fora do escopo local), com nenhuma permanecendo sem disposição documentada no contexto de fechamento. **Aceite formal (Phase 25, D-01/D-03/D-04):** Disposições evidenciadas/justificadas para os 4 slugs conhecidos (`261110-u28-bloquear-a-expressao-jacira-chavare-ao-c`, `261110-uik-remover-jacira-chavare-do-texto-colado-s`, `261111-krt-atualizar-next-16-4-6-eslint-9`, `261112-ttk-escape-hatch-turnstile-teste-em-prod`; u28/uik/krt concluídas com PLAN+SUMMARY; ttk PLAN-only deferred justificado sem SUMMARY/execução). Se `gsd-sdk query audit-open` ainda reportar esses 4 como `[missing]` por heurística, residual formalmente aceito com escopo limitado a esses slugs, desde que não haja nenhum outro `[missing]` novo/inesperado; sem fabricar evidência.
 - [x] **CL-03**: Gaps de verificação/UAT 21/22 reconciliados em estados finais aceitos e rastreáveis (`21-VERIFICATION` passed via UAT existente; `22-VERIFICATION/HUMAN-UAT/MANUAL-UAT` finalizados com passes preservados e deferimentos aceitos por item para runtime/UI inviável, incluindo reteste CL-01).
 - [x] **CL-04**: Gaps Nyquist 19–22 endereçados: `20-VALIDATION.md` criado; `19/20-VALIDATION.md` evoluídos para `nyquist_compliant: true` com evidência; `21/22-VALIDATION.md` mantêm `nyquist_compliant: false` com desvio aceito e plano de ação documentado.
 - [x] **CL-05**: Avisos não-bloqueantes tratados quando viáveis (`chatSearch` parse defensivo, `canApplyChatToBoard` sem no-op para cidade-only não normalizável, melhorias focadas de foco/a11y com residual de focus-trap explicitamente deferido/propagado, `22-SECURITY.md` criado) e `v1.3-MILESTONE-AUDIT.md` atualizado in-place para fechamento rastreável do milestone.
@@ -87,17 +87,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QA-02 | Phase 22 | Complete |
 | QA-03 | Phase 22 | Complete |
 | CL-01 | Phase 24 | Complete |
-| CL-02 | Phase 25 | Pending |
+| CL-02 | Phase 25 | Complete |
 | CL-03 | Phase 23 | Complete |
 | CL-04 | Phase 23 | Complete |
 | CL-05 | Phase 24 | Complete |
 
 **Coverage:**
 - v1.3 requirements: 12 total (all Complete)
-- v1.3 closure requirements: 5 total (CL-03, CL-04 Complete in Phase 23; CL-01, CL-05 Pending in Phase 24; CL-02 Pending in Phase 25)
+- v1.3 closure requirements: 5 total (all Complete: CL-03, CL-04 in Phase 23; CL-01, CL-05 in Phase 24; CL-02 formally accepted/reconciled in Phase 25)
 - Mapped to phases: 17
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-17*
-*Last updated: 2026-11-21 after v1.3 gap-closure planning (CL-01/CL-02/CL-05 reset to Pending; Phases 24-25 added)*
+*Last updated: 2026-11-22 after Phase 25 reconciliation (CL-02 formal acceptance recorded; CL-01/CL-02/CL-05 closure-ready with accepted residuals documented)*

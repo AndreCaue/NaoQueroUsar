@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Chatbot Inteligente de Busca de Vagas
-status: executing
-stopped_at: Phase 25 context gathered
-last_updated: "2026-11-22T04:15:12.554Z"
-last_activity: 2026-11-22 -- Phase 25 execution started
+status: phase_25_reconciled
+stopped_at: Phase 25 reconciliation complete
+last_updated: "2026-11-22T04:45:00Z"
+last_activity: 2026-11-22 -- Phase 25 reconciliation complete; audit closure-ready
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 8
-  percent: 33
+  completed_plans: 9
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-19)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 25 — reconciliar-gates-de-fechamento-e-revalidar-auditoria-v1-3
+**Current focus:** Phase 25 reconciliada — v1.3 closure-ready, pronto para `/gsd-audit-milestone`
 
 ## Current Position
 
-Phase: 25 (reconciliar-gates-de-fechamento-e-revalidar-auditoria-v1-3) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 25
-Last activity: 2026-11-22 -- Phase 25 execution started
+Phase: 25 (reconciliar-gates-de-fechamento-e-revalidar-auditoria-v1-3) — COMPLETE (reconciled)
+Plan: 2 of 2
+Status: Phase 25 reconciled; v1.3-MILESTONE-AUDIT.md passed with accepted residuals; pronto para `/gsd-audit-milestone`
+Last activity: 2026-11-22 -- Phase 25 reconciliation complete
 
 Progress: [██████████] 100%
 
@@ -70,6 +70,7 @@ Recent decisions affecting current work:
 - Campos não nativos (salário/modalidade/contrato/senioridade) tratados como suporte limitado/aproximado e sinalizado, sem afirmar filtragem inexistente.
 - Roadmap v1.3: 4 phases (19–22), coarse granularity, 100% coverage (12/12).
 - Phase 19: contrato de intenção estrito + mapeamento determinístico server-authoritative (`q/city/sort`), seam Groq isolado com prompt seguro/fallback determinístico; campos não nativos nunca viram filtro estruturado garantido.
+- Phase 25: CL-02 formally accepted for audit-open heuristic limited to 4 known quick-task slugs (u28/uik/krt/ttk) with evidence/justification; no new `[missing]` accepted; 23/24 verification artifacts reconciled; v1.3-MILESTONE-AUDIT.md passed with accepted residuals (D-14/WR-02 deferred).
 
 ### Pending Todos
 
@@ -77,9 +78,9 @@ None tracked.
 
 ### Blockers/Concerns
 
+- **v1.3 closure residuals (accepted, non-blocking):** CL-02 audit-open heuristic residual formalmente aceito apenas para os 4 quick-task slugs conhecidos (u28/uik/krt/ttk), com evidência/disposição e condição de nenhum `[missing]` novo/inesperado; `261112-ttk` permanece PLAN-only deferred justificado, sem evidência de execução. D-14/WR-02 focus trap completo permanece residual aceito explícito (não gap aberto). Deferimentos runtime/browser por item permanecem aceitos sem fabricação de execução.
 - **v1.2 close accepted gaps (out of v1.3 scope):** reconcile `PUB-01..08` traceability/evidence; execute real handoffs for `TEST-04`, `DOC-01`, `AUD-05` (Meta dev/live, DB-backed reproducible runs, canonical/browser/runtime smoke, human verifications).
 - **Carried from v1.1 (accepted, out of v1.3 scope):** EXTR-10/11/12, PUBL-10/11/12/13/14, SRCH-10/11/12, UIUX-10/11/12 unsatisfied in audited scope; canonical-host live smoke/provisioning pending; DB-backed test reproducibility issues (`relation "jobs" does not exist` in recorded runs); see `.planning/milestones/v1.1-MILESTONE-AUDIT.md`.
-- **v1.3 risks to watch:** fidelidade de filtros não nativos (salário/modalidade/contrato), limites/custos/latência Groq em endpoint público, e preservação do fluxo público sem fricção/sem exposição de contatos.
 
 ### Quick Tasks Completed
 
@@ -109,6 +110,6 @@ Items acknowledged/deferred at or before v1.2 close (2026-11-17), plus Phase 23 
 
 ## Session Continuity
 
-Last session: 2026-11-22T03:51:36.636Z
-Stopped at: Phase 25 context gathered
-Resume file: .planning/phases/25-reconciliar-gates-de-fechamento-e-revalidar-auditoria-v1-3/25-CONTEXT.md
+Last session: 2026-11-22T04:45:00Z
+Stopped at: Phase 25 reconciliation complete; v1.3 closure-ready
+Resume file: .planning/v1.3-MILESTONE-AUDIT.md
