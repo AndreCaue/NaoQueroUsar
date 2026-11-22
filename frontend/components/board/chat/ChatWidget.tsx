@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { chatSearch, getChatSearchStatus, ApiError } from "@/lib/api";
 import type { ChatSearchResponse, JobPublic } from "@/lib/api";
 import { appliedParamsToBoardFilters, canApplyChatToBoard } from "@/lib/chatApply";
+import { getChatDetailCloseFocusTarget } from "@/lib/chatFocus";
 import { buildBoardHref } from "@/lib/filters";
 import { JobDetailDialog } from "@/components/board/JobDetailDialog";
 import { ChatComposer } from "./ChatComposer";
@@ -281,7 +282,6 @@ export function ChatWidget() {
 
   const handleOpenDetail = (job: JobPublic, trigger?: HTMLElement | null) => {
     detailTriggerRef.current = trigger ?? null;
-    setIsOpen(false);
     setSelectedJob(job);
     syncVagaParam(job.id);
   };
@@ -290,7 +290,14 @@ export function ChatWidget() {
     setSelectedJob(null);
     syncVagaParam(null);
     const trigger = detailTriggerRef.current;
-    window.requestAnimationFrame(() => trigger?.focus());
+    const fallback = document.getElementById("chat-panel-close");
+    const target = getChatDetailCloseFocusTarget(
+      trigger,
+      fallback instanceof HTMLElement ? fallback : null,
+    );
+    window.requestAnimationFrame(() => {
+      target?.focus();
+    });
   };
 
   if (!chatEnabled) {
@@ -311,6 +318,7 @@ export function ChatWidget() {
       ) : null}
       <ChatPanel
         open={isOpen}
+        dismissible={!selectedJob}
         titleId="chat-panel-title"
         onClose={() => setIsOpen(false)}
         composer={
