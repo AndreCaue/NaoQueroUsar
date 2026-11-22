@@ -9,6 +9,7 @@ interface ChatPanelProps {
   onClose: () => void;
   children: ReactNode;
   composer: ReactNode;
+  dismissible?: boolean;
 }
 
 export function ChatPanel({
@@ -17,11 +18,12 @@ export function ChatPanel({
   onClose,
   children,
   composer,
+  dismissible = true,
 }: ChatPanelProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !dismissible) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -30,7 +32,7 @@ export function ChatPanel({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open, dismissible, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -44,7 +46,9 @@ export function ChatPanel({
       <button
         type="button"
         aria-label="Fechar chat"
-        onClick={onClose}
+        onClick={dismissible ? onClose : undefined}
+        tabIndex={dismissible ? 0 : -1}
+        aria-hidden={dismissible ? undefined : true}
         className="absolute inset-0 bg-[rgba(5,2,12,0.72)]"
       />
       <section
@@ -58,6 +62,7 @@ export function ChatPanel({
             Buscar vagas no chat
           </h2>
           <button
+            id="chat-panel-close"
             type="button"
             ref={closeButtonRef}
             onClick={onClose}
