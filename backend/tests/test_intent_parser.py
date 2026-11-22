@@ -127,12 +127,15 @@ async def test_extract_and_map_intent_maps_coherent_candidate_deterministically(
     contract = await extract_and_map_intent("dev pleno SP remoto", _Settings(), client=fake)
 
     assert isinstance(contract, IntentContract)
-    assert contract.applied_params.city in {"São Paulo", "Remoto"}
+    # CR-01: raw text contains conflicting supported city signals (SP vs Remoto) ->
+    # deterministic mapper must not apply either city.
+    assert contract.applied_params.city is None
+    city_fs = _status(contract, "city")
+    assert city_fs.status == "ignorado"
+    assert city_fs.reason_code == "conflict_resolved"
     assert contract.applied_params.q is not None and contract.applied_params.q.strip() != ""
     statuses = {fs.status for fs in contract.field_statuses}
     assert "aplicado" in statuses or "aproximado" in statuses
-    # city/seniority/work_mode should be assessed coherently
-    assert _status(contract, "city").status in {"aplicado", "ignorado"}
     assert _status(contract, "seniority").status in {"aproximado", "aplicado", "ignorado"}
 
 
