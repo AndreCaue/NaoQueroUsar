@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
-status: ready_to_plan
-stopped_at: Phase 26 complete (2/2) — ready to discuss Phase 27
-last_updated: 2026-11-22T21:39:35.828Z
-last_activity: 2026-11-22 -- Phase 26 execution started
+status: planning
+stopped_at: Phase 27 context gathered
+last_updated: "2026-11-22T22:04:55.971Z"
+last_activity: 2026-11-22
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
   completed_plans: 2
-  percent: 0
+  percent: 33
 ---
 
 # Project State
@@ -88,6 +88,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-11-22T20:45:22.120Z
-Stopped at: Phase 26 UI-SPEC approved (force)
-Resume file: .planning/phases/26-acesso-admin-dedicado/26-UI-SPEC.md
+Last session: 2026-11-22T22:04:55.952Z
+Stopped at: Phase 27 context gathered
+Resume file: .planning/phases/27-controles-por-ambiente/27-CONTEXT.md
