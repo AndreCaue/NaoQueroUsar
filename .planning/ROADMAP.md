@@ -157,7 +157,11 @@ Plans:
   3. `v1.3-MILESTONE-AUDIT.md` é atualizado para refletir resolução dos débitos críticos e estado de re-audit; milestone fica pronto para `/gsd-audit-milestone`
   4. Residual aceito D-14/WR-02 (focus trap completo) permanece explicitamente documentado como deferimento, sem ser confundido com gap aberto
 
-**Plans:** TBD
+**Plans:** 2/2 plans
+
+Plans:
+- [ ] 25-01-PLAN.md — Reconciliar 23/24 verification e 24-HUMAN-UAT para estados finais aceitos com deferimentos por item (CL-05)
+- [ ] 25-02-PLAN.md — Registrar aceite formal CL-02 e atualizar audit/REQUIREMENTS/STATE/ROADMAP para re-audit (CL-02, CL-05)
 
 ## Progress
 
@@ -169,4 +173,4 @@ Plans:
 | 22. Qualidade, hardening e validação operacional | 3/3 | Complete    | 2026-11-18 |
 | 23. Fechamento de débitos de auditoria e validação v1.3 | 5/5 | Complete   | 2026-11-20 |
 | 24. Corrigir conflito crítico de cidade e resíduos de review | 3/3 | Complete    | 2026-11-22 |
-| 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | 0/TBD | Not started | - |
+| 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | 0/2 | Planned | - |
