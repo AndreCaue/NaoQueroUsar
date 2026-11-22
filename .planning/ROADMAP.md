@@ -26,7 +26,7 @@
 
 **Milestone Goal:** Melhorar a experiência pública e o fluxo admin com ajustes de UX, controle por ambiente e acesso admin dedicado — sem perder a fricção zero do candidato.
 
-- [ ] **Phase 26: Acesso Admin Dedicado** - Login admin em página dedicada com entrada discreta pela Política de Privacidade
+- [x] **Phase 26: Acesso Admin Dedicado** - Login admin em página dedicada com entrada discreta pela Política de Privacidade (completed 2026-11-22)
 - [ ] **Phase 27: Controles por Ambiente** - Anúncios e doações controlados por variáveis de ambiente
 - [ ] **Phase 28: Polimento UX da Home** - Filtro de cidades dinâmico e feedback visual de hover na home
 
@@ -78,6 +78,6 @@
 | 23. Fechamento de débitos de auditoria e validação v1.3 | v1.3 | 5/5 | Complete | 2026-11-20 |
 | 24. Corrigir conflito crítico de cidade e resíduos de review | v1.3 | 3/3 | Complete | 2026-11-22 |
 | 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | v1.3 | 2/2 | Complete | 2026-11-22 |
-| 26. Acesso Admin Dedicado | v1.4 | 0/TBD | Not started | - |
+| 26. Acesso Admin Dedicado | v1.4 | 2/2 | Complete   | 2026-11-22 |
 | 27. Controles por Ambiente | v1.4 | 0/TBD | Not started | - |
 | 28. Polimento UX da Home | v1.4 | 0/TBD | Not started | - |
