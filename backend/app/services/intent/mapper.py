@@ -306,29 +306,56 @@ def map_intent(candidate: IntentLLMOutput, raw_text: str = "") -> IntentContract
     )
 
     # ----- CITY (whitelist only, D-05) -----
-    # simple conflict heuristic: multiple known distinct city tokens in raw text
-    lowered = _strip_accents_lower(raw)
-    mentioned = []
-    for token, canon in (
-        ("sao paulo", "São Paulo"),
-        ("rio de janeiro", "Rio de Janeiro"),
-        ("belo horizonte", "Belo Horizonte"),
-        ("campinas", "Campinas"),
-    ):
-        if token in lowered:
-            mentioned.append(canon)
-    distinct_whitelist = {m for m in mentioned if m in {"São Paulo", "Rio de Janeiro", "Belo Horizonte"}}
-    city_conflict = len(distinct_whitelist) > 1
-
+    normalized_raw = _strip_accents_lower(raw)
+    raw_detected_city, raw_city_reason = _detect_city_from_raw_text(raw)
     candidate_city_present = bool(candidate.city and str(candidate.city).strip())
+    resolved_candidate_city, resolved_candidate_reason = _resolve_city_safe(candidate.city, raw)
 
-    if city_conflict:
+    has_supported_raw_signal = raw_city_reason in {"normalized", "conflict_resolved"} or raw_detected_city is not None
+    has_conflict_sep = bool(re.search(r"\b(ou|or|vs)\b|/", normalized_raw))
+
+    def _segment_has_supported_city(segment: str) -> bool:
+        return any(pattern.search(segment) for _, patterns in _RAW_TEXT_CITY_PATTERNS for pattern in patterns)
+
+    non_whitelist_raw_conflict = False
+    if has_supported_raw_signal and has_conflict_sep:
+        if candidate_city_present and resolved_candidate_reason == "not_in_whitelist":
+            cand_norm = _strip_accents_lower(_normalize_whitespace(str(candidate.city)))
+            if cand_norm and cand_norm in normalized_raw:
+                non_whitelist_raw_conflict = True
+        if not non_whitelist_raw_conflict:
+            segments = [s.strip() for s in re.split(r"\b(?:ou|or|vs)\b|/", normalized_raw) if s.strip()]
+            supported_flags = [_segment_has_supported_city(seg) for seg in segments]
+            if any(supported_flags) and not all(supported_flags):
+                generic = {
+                    "vaga", "vagas", "emprego", "empregos", "trabalho", "trabalhos",
+                    "em", "no", "na", "para", "de", "do", "da", "e", "com",
+                    "area", "oportunidade", "oportunidades",
+                }
+                for seg, is_sup in zip(segments, supported_flags):
+                    if is_sup:
+                        continue
+                    tokens = [
+                        t
+                        for t in re.findall(r"[a-z]+", seg)
+                        if t not in generic and len(t) >= 3
+                    ]
+                    if tokens:
+                        non_whitelist_raw_conflict = True
+                        break
+
+    if raw_city_reason == "conflict_resolved" or non_whitelist_raw_conflict:
+        applied_city = None
+        city_status = FieldStatus.IGNORADO
+        city_reason_code = "conflict_resolved"
+        city_reason = "Múltiplas cidades incompatíveis; nenhuma cidade aplicada."
+    elif raw_detected_city and resolved_candidate_city and raw_detected_city != resolved_candidate_city:
         applied_city = None
         city_status = FieldStatus.IGNORADO
         city_reason_code = "conflict_resolved"
         city_reason = "Múltiplas cidades incompatíveis; nenhuma cidade aplicada."
     else:
-        applied_city, city_reason_code = _resolve_city_safe(candidate.city, raw)
+        applied_city, city_reason_code = resolved_candidate_city, resolved_candidate_reason
         if applied_city:
             city_status = FieldStatus.APLICADO
             if not candidate_city_present and city_reason_code == "normalized":

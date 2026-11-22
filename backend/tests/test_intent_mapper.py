@@ -243,13 +243,13 @@ def test_mvp_analista_dados_campinas_ou_remoto_salary_combo() -> None:
     )
 
     # Campinas is outside whitelist and must not be applied as city.
+    # Raw text has explicit non-whitelist vs supported conflict (Campinas ou Remoto):
+    # D-03 requires safe conflict_resolved and must not promote Remoto.
     assert contract.applied_params.city is None
     fs_city = _field(contract, "city")
     assert fs_city.status == "ignorado"
-    assert fs_city.reason_code == "not_in_whitelist"
+    assert fs_city.reason_code == "conflict_resolved"
 
-    # Current deterministic mapping: candidate city provided as non-whitelisted Campinas,
-    # so remote alternative in raw text is not promoted to applied city (explicit limitation).
     assert contract.applied_params.city != "Remoto"
 
     # Salary is understood but has no native structured filter.
@@ -264,7 +264,6 @@ def test_mvp_analista_dados_campinas_ou_remoto_salary_combo() -> None:
     assert "dados" in q_lower
 
     assert "unsupported_structured_filter" in contract.limitations
-    assert "not_in_whitelist" in {_field(contract, "city").reason_code} or "not_in_whitelist" in contract.limitations
 
 
 def test_mvp_estagio_marketing_digital_em_sp() -> None:
@@ -350,3 +349,88 @@ def test_absent_candidate_raw_text_rio_false_positive_safeguards() -> None:
     rb = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga em Rio Branco")
     assert rb.applied_params.city is None
     assert rb.applied_params.city != "Rio de Janeiro"
+
+
+def test_candidate_present_raw_text_city_conflicts_cr01() -> None:
+    c_sp_rj = map_intent(IntentLLMOutput.model_validate({"city": "SP"}), raw_text="vaga em sp ou rio de janeiro")
+    assert c_sp_rj.applied_params.city is None
+    fs_sp_rj = _field(c_sp_rj, "city")
+    assert fs_sp_rj.status == "ignorado"
+    assert fs_sp_rj.reason_code == "conflict_resolved"
+
+    c_remoto_sp = map_intent(IntentLLMOutput.model_validate({"city": "Remoto"}), raw_text="vaga remoto ou são paulo")
+    assert c_remoto_sp.applied_params.city is None
+    fs_remoto_sp = _field(c_remoto_sp, "city")
+    assert fs_remoto_sp.status == "ignorado"
+    assert fs_remoto_sp.reason_code == "conflict_resolved"
+
+    # alias/abbrev/remoto matrix cases - all conflict_resolved, no city applied
+    for raw_text, candidate_city in (
+        ("sp ou rj", "SP"),
+        ("bh ou remoto", "Belo Horizonte"),
+        ("home office ou belo horizonte", "Remoto"),
+    ):
+        contract = map_intent(IntentLLMOutput.model_validate({"city": candidate_city}), raw_text=raw_text)
+        assert contract.applied_params.city is None
+        fs_city = _field(contract, "city")
+        assert fs_city.status == "ignorado"
+        assert fs_city.reason_code == "conflict_resolved"
+
+
+def test_raw_vs_candidate_supported_divergence_conflict_cr01() -> None:
+    contract = map_intent(IntentLLMOutput.model_validate({"city": "RJ"}), raw_text="vaga em sp")
+    assert contract.applied_params.city is None
+    fs_city = _field(contract, "city")
+    assert fs_city.status == "ignorado"
+    assert fs_city.reason_code == "conflict_resolved"
+
+
+def test_same_canonical_city_and_safe_fallbacks_cr01() -> None:
+    same = map_intent(IntentLLMOutput.model_validate({"city": "São Paulo"}), raw_text="vaga em sp")
+    assert same.applied_params.city == "São Paulo"
+    fs_same = _field(same, "city")
+    assert fs_same.status == "aplicado"
+    assert fs_same.reason_code == "normalized"
+
+    absent = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga em sp")
+    assert absent.applied_params.city == "São Paulo"
+    assert _field(absent, "city").status == "aplicado"
+
+    non_whitelist = map_intent(IntentLLMOutput.model_validate({"city": "Campinas"}), raw_text="vaga em campinas")
+    assert non_whitelist.applied_params.city is None
+    fs_nw = _field(non_whitelist, "city")
+    assert fs_nw.status == "ignorado"
+    assert fs_nw.reason_code == "not_in_whitelist"
+
+    # Explicit conflict between non-whitelist and supported city must not promote supported city (D-03 safe)
+    conflict_present = map_intent(
+        IntentLLMOutput.model_validate({"city": "Campinas"}),
+        raw_text="vaga em campinas ou remoto",
+    )
+    assert conflict_present.applied_params.city is None
+    fs_conflict_present = _field(conflict_present, "city")
+    assert fs_conflict_present.status == "ignorado"
+    assert fs_conflict_present.reason_code == "conflict_resolved"
+
+    conflict_absent = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga em campinas ou remoto")
+    assert conflict_absent.applied_params.city is None
+    fs_conflict_absent = _field(conflict_absent, "city")
+    assert fs_conflict_absent.status == "ignorado"
+    assert fs_conflict_absent.reason_code == "conflict_resolved"
+
+
+def test_non_whitelist_vs_supported_conflict_guard_cr01() -> None:
+    contract = map_intent(
+        IntentLLMOutput.model_validate({"city": "Curitiba"}),
+        raw_text="vaga em curitiba ou sao paulo",
+    )
+    assert contract.applied_params.city is None
+    fs_city = _field(contract, "city")
+    assert fs_city.status == "ignorado"
+    assert fs_city.reason_code == "conflict_resolved"
+
+    absent = map_intent(IntentLLMOutput.model_validate({}), raw_text="vaga em curitiba ou remoto")
+    assert absent.applied_params.city is None
+    fs_absent = _field(absent, "city")
+    assert fs_absent.status == "ignorado"
+    assert fs_absent.reason_code == "conflict_resolved"
