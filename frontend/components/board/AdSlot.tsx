@@ -1,3 +1,5 @@
+import { isAdsEnabled } from "@/lib/publicEnv";
+
 type AdSlotVariant = "header" | "sidebar" | "inline";
 
 const BASE =
@@ -10,6 +12,8 @@ const VARIANTS: Record<AdSlotVariant, string> = {
 };
 
 export function AdSlot({ variant }: { variant: AdSlotVariant }) {
+  if (!isAdsEnabled()) return null;
+
   return (
     <div
       role="complementary"

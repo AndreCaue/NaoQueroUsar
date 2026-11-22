@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdSlot } from "@/components/board/AdSlot";
+import { isAdsEnabled } from "@/lib/publicEnv";
 import { BoardToolbar } from "@/components/board/BoardToolbar";
 import { ChatWidget } from "@/components/board/chat/ChatWidget";
 import { JobGrid } from "@/components/board/JobGrid";
@@ -52,6 +53,7 @@ export default async function Page({
 
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
   const filtersActive = hasActiveFilters(filters);
+  const adsEnabled = isAdsEnabled();
 
   const notFound = malformedVaga || Boolean(vaga && initialJob === null);
 
@@ -66,9 +68,15 @@ export default async function Page({
 
   return (
     <div className="pt-8">
-      <AdSlot variant="header" />
+      {adsEnabled ? <AdSlot variant="header" /> : null}
 
-      <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6 lg:items-start">
+      <div
+        className={
+          adsEnabled
+            ? "mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6 lg:items-start"
+            : "mt-6"
+        }
+      >
         <div id="vagas" className="min-w-0">
           <h1 className="text-[28px] font-semibold leading-tight [text-wrap:balance]">
             Vagas abertas
@@ -158,9 +166,11 @@ export default async function Page({
         )}
       </div>
         </div>
-        <aside className="hidden lg:block">
-          <AdSlot variant="sidebar" />
-        </aside>
+        {adsEnabled ? (
+          <aside className="hidden lg:block">
+            <AdSlot variant="sidebar" />
+          </aside>
+        ) : null}
       </div>
       <ChatWidget />
     </div>

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 
+import { getDonationUrl } from "@/lib/publicEnv";
+
 import "./public.css";
 
 export const metadata: Metadata = {
@@ -28,6 +30,10 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const DONATE_CLASS =
+    "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-[rgba(250,204,21,0.40)] px-3 text-sm font-semibold text-donate hover:border-donate hover:bg-[rgba(250,204,21,0.12)]";
+  const donationUrl = getDonationUrl();
+
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-fg">
       <a
@@ -51,12 +57,20 @@ export default function PublicLayout({
             </span>
           </div>
 
-          <Link
-            href="/doacoes"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-[rgba(250,204,21,0.40)] px-3 text-sm font-semibold text-donate hover:border-donate hover:bg-[rgba(250,204,21,0.12)]"
-          >
-            Doações
-          </Link>
+          {donationUrl ? (
+            <a
+              href={donationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={DONATE_CLASS}
+            >
+              Doações
+            </a>
+          ) : (
+            <Link href="/doacoes" className={DONATE_CLASS}>
+              Doações
+            </Link>
+          )}
         </div>
       </header>
 
