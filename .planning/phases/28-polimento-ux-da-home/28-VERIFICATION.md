@@ -141,3 +141,7 @@ No code gaps found. All Phase 28 must-have artifacts exist, are substantive, and
 
 _Verified: 2026-11-22T22:36:30Z_
 _Verifier: OpenCode (gsd-verifier)_
+
+## Acknowledged Gaps
+
+- Human verification items above were reviewed during /gsd-verify-work 28 (2026-11-22). All 5 UAT tests passed; user confirmed proceeding despite status: human_needed in frontmatter. No code gaps identified.
