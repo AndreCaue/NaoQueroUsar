@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.social_media_asset import SocialMediaAsset
@@ -57,34 +58,30 @@ async def upsert_media_asset(
     provenance_json: str | None,
 ) -> SocialMediaAsset:
     """Create or update a durable media asset. Caller owns commit."""
-    asset = await get_media_asset_by_job_version(
-        session, job_id=job_id, version_hash=version_hash, provider=provider
-    )
     now = datetime.now(timezone.utc)
-    if asset is None:
-        asset = SocialMediaAsset(
-            job_id=job_id,
-            provider=provider,
-            version_hash=version_hash,
-            template_version=template_version,
-            mime_type=mime_type,
-            width=width,
-            height=height,
-            byte_size=byte_size,
-            image_bytes=image_bytes,
-            provenance_json=provenance_json,
-        )
-        session.add(asset)
-        await session.flush()
-        return asset
-
-    asset.template_version = template_version
-    asset.mime_type = mime_type
-    asset.width = width
-    asset.height = height
-    asset.byte_size = byte_size
-    asset.image_bytes = image_bytes
-    asset.provenance_json = provenance_json
-    asset.updated_at = now
-    await session.flush()
-    return asset
+    stmt = insert(SocialMediaAsset).values(
+        job_id=job_id,
+        provider=provider,
+        version_hash=version_hash,
+        template_version=template_version,
+        mime_type=mime_type,
+        width=width,
+        height=height,
+        byte_size=byte_size,
+        image_bytes=image_bytes,
+        provenance_json=provenance_json,
+    )
+    stmt = stmt.on_conflict_do_update(
+        constraint="uq_social_media_assets_job_provider_version",
+        set_={
+            "template_version": template_version,
+            "mime_type": mime_type,
+            "width": width,
+            "height": height,
+            "byte_size": byte_size,
+            "image_bytes": image_bytes,
+            "provenance_json": provenance_json,
+            "updated_at": now,
+        },
+    ).returning(SocialMediaAsset)
+    return (await session.execute(stmt)).scalar_one()
