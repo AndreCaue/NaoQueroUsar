@@ -1,10 +1,11 @@
 ---
 phase: 29
 slug: meta-ig-readiness-media-foundation
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-11-23
+reviewed_at: 2026-11-23
 ---
 
 # Phase 29 — UI Design Contract
