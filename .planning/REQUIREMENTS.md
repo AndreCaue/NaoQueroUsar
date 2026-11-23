@@ -11,7 +11,7 @@ Requirements for milestone v1.5: Integração Instagram na Revisão. Each maps t
 
 - [x] **META-01**: Admin vê no Integrações o estado de prontidão do Instagram para a Página Facebook selecionada (conta IG Business/Creator vinculada, `ig-user-id` resolvido/armazenado, permissões/escopos necessários presentes) com estado acionável de reconexão/correção.
 - [x] **META-02**: Backend resolve e persiste `ig-user-id` a partir da Página Facebook vinculada reutilizando o fluxo/token Meta existente; linkage ausente/inválido é tratado com erro seguro e não quebra a integração Facebook.
-- [ ] **META-03**: Projeto documenta permissões/escopos Meta atuais, premissas de App Review/Advanced Access/roles/tasks e checklist manual de setup/verificação Instagram.
+- [x] **META-03**: Projeto documenta permissões/escopos Meta atuais, premissas de App Review/Advanced Access/roles/tasks e checklist manual de setup/verificação Instagram.
 
 ### Mídia / Imagem Pública
 
@@ -72,7 +72,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | META-01 | Phase 29 | Complete |
 | META-02 | Phase 29 | Complete |
-| META-03 | Phase 29 | Pending |
+| META-03 | Phase 29 | Complete |
 | IMAG-01 | Phase 29, Phase 30, Phase 31 | Complete |
 | IMAG-02 | Phase 29 | Complete |
 | IMAG-03 | Phase 29 | Complete |

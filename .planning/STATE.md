@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
-status: executing
-stopped_at: Completed 29-02-PLAN.md
-last_updated: "2026-11-23T16:40:26.994Z"
+status: verifying
+stopped_at: Completed 29-03-PLAN.md
+last_updated: "2026-11-23T16:49:43.264Z"
 last_activity: 2026-11-23
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 25
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-11-23)
 
 Phase: 29 (Meta/IG Readiness & Media Foundation) — EXECUTING
 Plan: 3 of 3
-Status: Plan 02 complete; ready for 29-03
+Status: Phase complete — ready for verification
 Last activity: 2026-11-23
 
-Progress: [███████░░░] 67%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [███████░░░] 67%
 | 28 | 3/3 | Complete |
 | Phase 29 P01 | 8min | 3 tasks | 15 files |
 | Phase 29 P02 | 25min | 3 tasks | 12 files |
+| Phase 29 P03 | 5min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase ?]: 29-01: IG readiness additive on SocialAccount; FB status authoritative, IG refreshed on connect/verify (D-13/D-14/D-15)
 - [Phase 29]: Public IG media serves exact job_id+version hash and rebuilds only when requested version matches current job hash
 - [Phase 29]: IG media hash uses only card-relevant job fields; contact-only edits do not invalidate version hash
+- [Phase 29]: Integrations UI shows additive IG readiness with actionable pt-BR states; META-03 live Meta verification is explicit handoff (D-15)
 
 ### Pending Todos
 
@@ -115,7 +117,7 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 
 ## Session Continuity
 
-Last session: 2026-11-23T16:40:09.776Z
-Stopped at: Completed 29-02-PLAN.md
+Last session: 2026-11-23T16:49:43.214Z
+Stopped at: Completed 29-03-PLAN.md
 Resume file: None
-Next: Execute 29-03-PLAN.md
+Next: Phase 29 verification / Phase 30 planning
