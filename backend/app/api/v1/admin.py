@@ -26,6 +26,7 @@ from app.deps import get_session, require_admin, require_cron_secret
 from app.models.job import JobStatus
 from app.models.social_post import SocialPostStatus
 from app.schemas.job import JobAdmin, JobAdminListResponse, JobApproveResponse, JobUpdate
+from app.schemas.social_media import InstagramMediaPrepareResponse
 from app.schemas.social_posts import (
     SocialApproveOutcome,
     SocialPostDraftRequest,
@@ -36,6 +37,7 @@ from app.schemas.social_posts import (
     SocialWorkerResponse,
 )
 from app.services.cities import resolve_city
+from app.services.social.image_media import prepare_instagram_media
 from app.services.social.post_generation import (
     ACTIONABLE_SITE_URL_ERROR,
     SocialPostLinkError,
@@ -124,6 +126,23 @@ async def get_job_detail(
     if job is None:
         raise HTTPException(status_code=404, detail="Vaga não encontrada")
     return JobAdmin.model_validate(job)
+
+
+@router.post("/jobs/{job_id}/instagram/media/prepare", response_model=InstagramMediaPrepareResponse)
+async def prepare_job_instagram_media(
+    job_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+    settings: Settings = Depends(get_settings),
+) -> InstagramMediaPrepareResponse:
+    """Prepare/validate the exact intended Instagram image for a job (IMAG-01/02/03)."""
+    job = await get_job(session, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
+    result = await prepare_instagram_media(session, job_id, settings)
+    await session.commit()
+    return result
 
 
 # ---------------------------------------------------------------------------

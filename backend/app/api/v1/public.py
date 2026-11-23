@@ -4,7 +4,7 @@ import time
 import uuid
 from copy import deepcopy
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.client_ip import UNKNOWN_IP, resolve_client_ip
@@ -25,6 +25,7 @@ from app.services.cities import resolve_city, resolve_sort
 from app.services.intent.mapper import build_empty_intent
 from app.services.intent.parser import extract_and_map_intent
 from app.services.intent.schema import FieldStatus, IntentContract
+from app.services.social.image_media import VERSION_HASH_RE, get_or_build_public_asset
 from app.services.turnstile import TurnstileVerifier, turnstile_error_detail
 
 # Mounted by router.py without an extra prefix, so these resolve to
@@ -432,3 +433,28 @@ async def report_job(
         resolve_client_ip(request),
     )
     return {"status": "ok"}
+
+
+@router.get("/ig-media/{job_id}/{version}.jpg")
+async def get_public_ig_media(
+    job_id: uuid.UUID,
+    version: str,
+    session: AsyncSession = Depends(get_session),
+    settings=Depends(get_settings),
+):
+    """Serve public, unauthenticated Instagram job card image by exact version."""
+    if not VERSION_HASH_RE.fullmatch(version or ""):
+        raise HTTPException(status_code=404, detail="Mídia não encontrada")
+
+    asset = await get_or_build_public_asset(session, job_id, version, settings)
+    if asset is None or not getattr(asset, "image_bytes", None):
+        raise HTTPException(status_code=404, detail="Mídia não encontrada")
+
+    return Response(
+        content=asset.image_bytes,
+        media_type="image/jpeg",
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Content-Disposition": 'inline; filename="vaga-instagram.jpg"',
+        },
+    )
