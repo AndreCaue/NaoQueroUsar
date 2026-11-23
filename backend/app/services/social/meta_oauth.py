@@ -16,6 +16,7 @@ from app.models.social_account import SocialAccount, SocialAccountStatus
 from app.models.social_oauth_pending import SocialOAuthPending
 from app.schemas.social_integrations import (
     MetaActionResponse,
+    MetaInstagramReadiness,
     MetaIntegrationAlert,
     MetaIntegrationStatus,
     MetaOAuthStartResponse,
@@ -23,10 +24,11 @@ from app.schemas.social_integrations import (
     MetaPendingSelectionResponse,
 )
 from app.services.social.crypto import encrypt_token
+from app.services.social.instagram_readiness import resolve_instagram_readiness
 
 logger = logging.getLogger(__name__)
 
-META_OAUTH_SCOPES = "pages_show_list,pages_manage_posts,pages_read_engagement"
+META_OAUTH_SCOPES = "pages_show_list,pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish"
 META_OAUTH_STATE_TTL_SECONDS = 600
 PENDING_SELECTION_TTL_MINUTES = 15
 _GRAPH_TIMEOUT_SECONDS = 10.0
@@ -35,6 +37,7 @@ _SAFE_CALLBACK_ERROR = "Não foi possível conectar ao Facebook."
 _SAFE_TRANSIENT_VERIFY = "Não foi possível verificar a conexão agora. Tente novamente."
 _SAFE_PENDING_EXPIRED = "Seleção de página expirada. Inicie a conexão novamente."
 _REQUIRED_META_SCOPES = {"pages_show_list", "pages_manage_posts", "pages_read_engagement"}
+_IG_REQUIRED_SCOPES = {"instagram_basic", "instagram_content_publish"}
 
 
 class MetaOAuthError(Exception):
@@ -286,6 +289,81 @@ async def _classify_current_token(input_token: str, settings: Any) -> tuple[Lite
     return classification, bool(evaluated.get("valid"))
 
 
+def _instagram_message_for_state(
+    state: str, *, ig_user_id: str | None = None, ig_username: str | None = None
+) -> str | None:
+    if state == "ready":
+        if ig_username:
+            return f"Conta Instagram vinculada: @{ig_username}"
+        if ig_user_id:
+            return f"Conta Instagram vinculada (ID: {ig_user_id})."
+        return "Conta Instagram vinculada."
+    if state == "missing_linkage":
+        return "Nenhuma conta Instagram Business/Creator vinculada a esta Página."
+    if state == "missing_permissions":
+        return "Permissões do Instagram ausentes. Reconecte para autorizar o Instagram."
+    if state == "needs_reconnect":
+        return "A conexão do Instagram precisa ser renovada. Reconecte para continuar."
+    if state == "unknown":
+        return "Não foi possível confirmar a prontidão do Instagram agora."
+    return None
+
+
+def _instagram_readiness_not_connected() -> MetaInstagramReadiness:
+    return MetaInstagramReadiness(
+        ready=False,
+        ig_user_id=None,
+        ig_username=None,
+        state="not_connected",
+        message=None,
+        checked_at=None,
+    )
+
+
+def _instagram_readiness_from_account(account: SocialAccount) -> MetaInstagramReadiness:
+    # IG readiness is additive; Facebook connection status remains authoritative for Facebook.
+    raw_state = str(account.ig_readiness_state or "unknown")
+    state = (
+        raw_state
+        if raw_state
+        in {
+            "ready",
+            "not_connected",
+            "missing_linkage",
+            "missing_permissions",
+            "needs_reconnect",
+            "unknown",
+        }
+        else "unknown"
+    )
+    ig_user_id = account.ig_user_id
+    ig_username = account.ig_username
+    ready = state == "ready" and bool(ig_user_id)
+    if ready:
+        state = "ready"
+    elif state == "ready":
+        state = "unknown"
+        ready = False
+    return MetaInstagramReadiness(
+        ready=ready,
+        ig_user_id=ig_user_id,
+        ig_username=ig_username,
+        state=state,  # type: ignore[arg-type]
+        message=_instagram_message_for_state(state, ig_user_id=ig_user_id, ig_username=ig_username),
+        checked_at=account.ig_readiness_checked_at,
+    )
+
+
+def _apply_instagram_readiness(account: SocialAccount, result: Any, *, checked_at: datetime) -> None:
+    # IG readiness is additive; Facebook connection status remains authoritative for Facebook.
+    account.ig_user_id = getattr(result, "ig_user_id", None)
+    account.ig_username = getattr(result, "ig_username", None)
+    account.ig_readiness_state = getattr(result, "state", "unknown")
+    account.ig_readiness_checked_at = checked_at
+    account.ig_readiness_last_error_code = getattr(result, "error_code", None)
+    account.ig_readiness_last_error_message = getattr(result, "message", None)
+
+
 async def get_current_meta_status(session: AsyncSession) -> MetaIntegrationStatus:
     # Pending selection (valid/unconsumed/unexpired) flag
     now = datetime.now(timezone.utc)
@@ -319,6 +397,7 @@ async def get_current_meta_status(session: AsyncSession) -> MetaIntegrationStatu
             token_checked_at=None,
             pending_selection=pending_selection,
             alert=None,
+            instagram=_instagram_readiness_not_connected(),
         )
 
     alert = None
@@ -332,6 +411,11 @@ async def get_current_meta_status(session: AsyncSession) -> MetaIntegrationStatu
     )
     if status_value not in {"connected", "needs_reconnect", "disconnected"}:
         status_value = "disconnected"
+    instagram = (
+        _instagram_readiness_not_connected()
+        if account.status == SocialAccountStatus.disconnected
+        else _instagram_readiness_from_account(account)
+    )
     return MetaIntegrationStatus(
         provider="facebook",
         status=status_value,  # type: ignore[arg-type]
@@ -341,6 +425,7 @@ async def get_current_meta_status(session: AsyncSession) -> MetaIntegrationStatu
         token_checked_at=account.token_checked_at,
         pending_selection=pending_selection,
         alert=alert,
+        instagram=instagram,
     )
 
 
@@ -375,6 +460,24 @@ async def replace_active_connection(
     )
     session.add(account)
     await session.flush()
+
+    # IG readiness is additive; Facebook connection status remains authoritative for Facebook.
+    try:
+        ig_result = await resolve_instagram_readiness(
+            page_id=str(page_id),
+            page_access_token_plain=page_access_token_plain,
+            settings=settings,
+        )
+        _apply_instagram_readiness(account, ig_result, checked_at=now)
+    except Exception:
+        logger.warning("instagram_readiness_resolve_failed_safe", extra={"error_type": "unexpected"})
+        account.ig_user_id = None
+        account.ig_username = None
+        account.ig_readiness_state = "unknown"
+        account.ig_readiness_checked_at = now
+        account.ig_readiness_last_error_code = "unexpected"
+        account.ig_readiness_last_error_message = "Não foi possível confirmar a prontidão do Instagram agora."
+    await session.flush()
     return account
 
 
@@ -388,10 +491,18 @@ async def mark_needs_reconnect(
     account = result.scalar_one_or_none()
     if account is None:
         return await get_current_meta_status(session)
+    now = datetime.now(timezone.utc)
     account.status = SocialAccountStatus.needs_reconnect
-    account.token_checked_at = datetime.now(timezone.utc)
+    account.token_checked_at = now
+    # IG readiness is additive; definitive FB reconnect also requires IG revalidation.
+    account.ig_readiness_state = "needs_reconnect"
+    account.ig_readiness_checked_at = now
+    account.ig_readiness_last_error_code = reason_code or "needs_reconnect"
+    account.ig_readiness_last_error_message = _instagram_message_for_state("needs_reconnect")
+    account.ig_user_id = None
+    account.ig_username = None
     await session.flush()
-    _ = (reason_code, message_safe)  # reason tracked via safe status alert
+    _ = message_safe  # reason tracked via safe status alert
     return await get_current_meta_status(session)
 
 
@@ -409,7 +520,12 @@ async def disconnect_meta(session: AsyncSession) -> MetaActionResponse:
         delete(SocialOAuthPending).where(SocialOAuthPending.provider == "facebook")
     )
     await session.flush()
-    return MetaActionResponse(status="disconnected", message="Integração com Facebook desconectada.", pending_selection=False)
+    return MetaActionResponse(
+        status="disconnected",
+        message="Integração com Facebook desconectada.",
+        pending_selection=False,
+        instagram=_instagram_readiness_not_connected(),
+    )
 
 
 async def create_pending_selection(
@@ -519,7 +635,7 @@ async def confirm_pending_selection(
             raise MetaOAuthGraphError("Conexão com o Facebook inválida. Reconecte para continuar.")
         raise MetaOAuthGraphError(_SAFE_TRANSIENT_VERIFY)
 
-    await replace_active_connection(
+    account = await replace_active_connection(
         session,
         provider="facebook",
         page_id=str(selected.get("page_id")),
@@ -530,7 +646,12 @@ async def confirm_pending_selection(
     )
     pending.consumed_at = datetime.now(timezone.utc)
     await session.flush()
-    return MetaActionResponse(status="connected", message="Página conectada com sucesso.", pending_selection=False)
+    return MetaActionResponse(
+        status="connected",
+        message="Página conectada com sucesso.",
+        pending_selection=False,
+        instagram=_instagram_readiness_from_account(account),
+    )
 
 
 async def process_callback(
@@ -606,7 +727,12 @@ async def verify_current_connection(session: AsyncSession, settings: Any) -> Met
     result = await session.execute(stmt)
     account = result.scalar_one_or_none()
     if account is None or account.status == SocialAccountStatus.disconnected:
-        return MetaActionResponse(status="disconnected", message="Integração com Facebook desconectada.", pending_selection=False)
+        return MetaActionResponse(
+            status="disconnected",
+            message="Integração com Facebook desconectada.",
+            pending_selection=False,
+            instagram=_instagram_readiness_not_connected(),
+        )
 
     from app.services.social.crypto import SocialTokenDecryptError, decrypt_token
 
@@ -615,22 +741,73 @@ async def verify_current_connection(session: AsyncSession, settings: Any) -> Met
         token_plain = decrypt_token(account.page_access_token, key)
     except (SocialTokenDecryptError, MetaOAuthConfigError):
         await mark_needs_reconnect(session)
-        return MetaActionResponse(status="needs_reconnect", message="Reconexão necessária com o Facebook.")
+        # IG readiness is additive; when FB token cannot be decrypted, reconnection is required.
+        account.ig_readiness_state = "needs_reconnect"
+        account.ig_readiness_checked_at = datetime.now(timezone.utc)
+        account.ig_readiness_last_error_code = "needs_reconnect"
+        account.ig_readiness_last_error_message = _instagram_message_for_state("needs_reconnect")
+        await session.flush()
+        return MetaActionResponse(
+            status="needs_reconnect",
+            message="Reconexão necessária com o Facebook.",
+            pending_selection=False,
+            instagram=_instagram_readiness_from_account(account),
+        )
 
     classification, valid = await _classify_current_token(token_plain, settings)
     now = datetime.now(timezone.utc)
     if valid:
         account.status = SocialAccountStatus.connected
         account.token_checked_at = now
+        # IG readiness is additive; Facebook connection status remains authoritative for Facebook.
+        try:
+            ig_result = await resolve_instagram_readiness(
+                page_id=str(account.page_id),
+                page_access_token_plain=token_plain,
+                settings=settings,
+            )
+            _apply_instagram_readiness(account, ig_result, checked_at=now)
+        except Exception:
+            logger.warning("instagram_readiness_verify_failed_safe", extra={"error_type": "unexpected"})
+            account.ig_readiness_state = account.ig_readiness_state or "unknown"
+            account.ig_readiness_checked_at = now
+            account.ig_readiness_last_error_code = "unexpected"
+            account.ig_readiness_last_error_message = _instagram_message_for_state(
+                account.ig_readiness_state,
+                ig_user_id=account.ig_user_id,
+                ig_username=account.ig_username,
+            )
         await session.flush()
-        return MetaActionResponse(status="connected", message="Conexão verificada com sucesso.")
+        return MetaActionResponse(
+            status="connected",
+            message="Conexão verificada com sucesso.",
+            pending_selection=False,
+            instagram=_instagram_readiness_from_account(account),
+        )
     if classification == "definitive":
         account.status = SocialAccountStatus.needs_reconnect
         account.token_checked_at = now
+        # FB definitive invalid: IG readiness must also require reconnect.
+        account.ig_readiness_state = "needs_reconnect"
+        account.ig_readiness_checked_at = now
+        account.ig_readiness_last_error_code = "needs_reconnect"
+        account.ig_readiness_last_error_message = _instagram_message_for_state("needs_reconnect")
+        account.ig_user_id = None
+        account.ig_username = None
         await session.flush()
-        return MetaActionResponse(status="needs_reconnect", message="Reconexão necessária com o Facebook.")
-    # transient: preserve previously valid connected state
+        return MetaActionResponse(
+            status="needs_reconnect",
+            message="Reconexão necessária com o Facebook.",
+            pending_selection=False,
+            instagram=_instagram_readiness_from_account(account),
+        )
+    # transient: preserve previously valid connected state and last known IG readiness.
     account.token_checked_at = account.token_checked_at or now
     await session.flush()
-    return MetaActionResponse(status=account.status.value, message=_SAFE_TRANSIENT_VERIFY)
+    return MetaActionResponse(
+        status=account.status.value,
+        message=_SAFE_TRANSIENT_VERIFY,
+        pending_selection=False,
+        instagram=_instagram_readiness_from_account(account),
+    )
 
