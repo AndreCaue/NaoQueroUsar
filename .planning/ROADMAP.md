@@ -67,12 +67,12 @@ Plans:
   2. Usuário recebe feedback visual de hover ao passar o mouse sobre opções do dropdown recentes/antigos.
   3. Usuário recebe feedback visual de hover ao passar o mouse sobre cards de vaga.
   4. Usuário recebe feedback visual de hover ao passar o mouse sobre filtros de cidades.
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 **UI hint**: yes
 
 Plans:
 - [x] 28-01-PLAN.md - Contrato backend de cidades ativas no board público
-- [ ] 28-02-PLAN.md - TBD
+- [x] 28-02-PLAN.md - TBD
 - [ ] 28-03-PLAN.md - TBD
 
 ## Progress
@@ -88,4 +88,4 @@ Plans:
 | 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | v1.3 | 2/2 | Complete | 2026-11-22 |
 | 26. Acesso Admin Dedicado | v1.4 | 2/2 | Complete    | 2026-11-22 |
 | 27. Controles por Ambiente | v1.4 | 1/1 | Complete    | 2026-11-22 |
-| 28. Polimento UX da Home | v1.4 | 0/TBD | Not started | - |
+| 28. Polimento UX da Home | v1.4 | 2/3 | In Progress|  |

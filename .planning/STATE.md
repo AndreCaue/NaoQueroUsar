@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
 status: executing
-stopped_at: Completed 28-01-PLAN.md
-last_updated: "2026-11-22T22:10:07-03:00"
-last_activity: 2026-11-22 -- Completed 28-01 available_cities board contract
+stopped_at: Completed 28-02-PLAN.md
+last_updated: "2026-11-23T01:20:29.088Z"
+last_activity: 2026-11-22 -- Completed 28-02 active city chips and hover feedback
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 67
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-11-22)
 ## Current Position
 
 Phase: 28 (polimento-ux-da-home) — EXECUTING
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: Executing Phase 28
-Last activity: 2026-11-22 -- Completed 28-01 available_cities board contract
+Last activity: 2026-11-22 -- Completed 28-02 active city chips and hover feedback
 
-Progress: [██████░░░░] 67%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -68,6 +68,8 @@ Recent decisions affecting next work:
 - LLM extracts only parameters; deterministic search reuses `list_published`/`JobPublic`; chat never exposes contacts.
 - Non-native chat fields remain limited/approximate and explicitly signaled.
 - v1.4 roadmap: 3 phases (26-28), coarse granularity; ADMN-02 depends on ADMN-01 within Phase 26.
+- Phase 28-02: Obsolete selected city cleaned in RSC via redirect to broad board URL when absent from available_cities.
+- Phase 28-02: BoardToolbar renders only active city chips from board payload with token-based hover classes (no layout shift).
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-11-23T00:28:58.682Z
+Last session: 2026-11-23T01:20:29.069Z
 Stopped at: Phase 28 UI-SPEC approved
-Resume file: .planning/phases/28-polimento-ux-da-home/28-UI-SPEC.md
+Resume file: None

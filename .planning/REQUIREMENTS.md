@@ -23,7 +23,7 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 
 ### UX Visual
 
-- [ ] **UIUX-01**: Usuário recebe feedback visual de hover em dropdown recentes/antigos, cards de vaga e filtros de cidades
+- [x] **UIUX-01**: Usuário recebe feedback visual de hover em dropdown recentes/antigos, cards de vaga e filtros de cidades
 
 ## Future Requirements
 
@@ -52,7 +52,7 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 | ADMN-02 | Phase 26 | Complete |
 | ADS-01 | Phase 27 | Complete |
 | DONA-01 | Phase 27 | Complete |
-| UIUX-01 | Phase 28 | Pending |
+| UIUX-01 | Phase 28 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 6 total
