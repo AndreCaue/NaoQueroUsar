@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
-status: planning
+status: executing
 stopped_at: Phase 29 UI-SPEC approved
-last_updated: "2026-11-23T13:28:48.121Z"
-last_activity: 2026-11-23 — v1.5 roadmap created (phases 29-32, 17/17 requirements mapped)
+last_updated: "2026-11-23T15:04:02.948Z"
+last_activity: 2026-11-23 -- Phase 29 planning complete
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 3
   completed_plans: 0
   percent: 0
 ---
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-11-23)
 
 Phase: 29 of 32 (Meta/IG Readiness & Media Foundation)
 Plan: —
-Status: Ready to plan
-Last activity: 2026-11-23 — v1.5 roadmap created (phases 29-32, 17/17 requirements mapped)
+Status: Ready to execute
+Last activity: 2026-11-23 -- Phase 29 planning complete
 
 Progress: [░░░░░░░░░░] 0%
 

@@ -461,27 +461,27 @@ def render_ig_card(job, font_regular, font_bold) -> bytes:
 | A3 | DB-backed durable asset storage (bytea or dedicated table) is acceptable at 100-500 jobs/month for 1080x1350 JPEG cards. | Architecture / Pitfalls | DB bloat or performance issues; mitigation: size cap, immutable cache key, optional future move to object storage. |
 | A4 | Phase 29 can satisfy IMAG-01 by delivering validation contract and clear pt-BR feedback primitives, while Phase 30/31 enforce UI/publish blocking. | Phase Requirements / Open Questions | Scope mismatch if stakeholders expect full review-dialog blocking in Phase 29; plan must explicitly split contract vs enforcement. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Where should the IMAG-01 "block Instagram publish" be enforced in Phase 29?**
    - What we know: IMAG-01 is assigned to Phase 29; Phase 30 owns review UX and Phase 31 owns publish pipeline. D-04 says block only Instagram.
    - What's unclear: Whether Phase 29 must add review-dialog blocking now or provide enforceable validation contracts consumed by Phase 30/31.
-   - Recommendation: Plan Phase 29 to implement backend validation + actionable pt-BR reason codes and integrate enforcement at the nearest existing Phase 29-touched surface only if trivial; otherwise create explicit contracts/tests and ensure Phase 30/31 plans consume them. Do not silently claim full review UX complete.
+   - **RESOLVED:** Phase 29 owns the IMAG-01 validation contract/primitives (backend validation, pt-BR reason codes/messages, prepare endpoint, public media validation) and makes IG-only blocking semantics explicit. Phase 30 wires review-dialog enforcement UX; Phase 31 revalidates before publish. ROADMAP/REQUIREMENTS traceability updated to reflect this split so Phase 29 is verifiable against the contract it owns without claiming full review/publish enforcement.
 
 2. **Media asset persistence shape: bytea in table vs filesystem cache + rebuild metadata?**
    - What we know: D-09 backend endpoint; D-10 generate on demand + cache and tolerate rebuild; deploy may be ephemeral.
    - What's unclear: Operational preference on Render disk persistence.
-   - Recommendation: Store durable metadata and, at MVP scale, image bytes in Postgres (`social_media_assets`) or a bytea cache table keyed by job_id+hash; treat filesystem as optional hot cache. This satisfies rebuildability and Meta fetch stability.
+   - **RESOLVED:** Use durable Postgres-backed `social_media_assets` metadata + image bytes (bytea) keyed by `job_id + version_hash` at v1.5 scale, with optional filesystem hot cache. This satisfies D-10 rebuildability/stability. D-09 is interpreted as "no dependency on external object-storage/CDN blob infra as primary infrastructure"; Postgres durable bytes are acceptable for v1.5 MVP scale.
 
 3. **IG readiness when FB token is valid but lacks new IG scopes**
    - What we know: D-15 requires actionable reconnect/reautorização; must not break FB integration.
    - What's unclear: Whether to expose as `status=connected` + `instagram.needs_reconnect` or a distinct top-level state.
-   - Recommendation: Keep top-level FB `status` unchanged when FB token remains valid for FB; add `instagram.state='missing_permissions'|'needs_reconnect'` with clear CTA. This preserves FB while making IG actionable.
+   - **RESOLVED:** Keep top-level Facebook `status` authoritative for FB when FB token remains valid for FB; add additive `instagram.state/readiness` fields (`missing_permissions|missing_linkage|needs_reconnect|unknown|ready`) with clear pt-BR CTA. This preserves FB while making IG actionable.
 
 4. **Exact "prepare review" hook for D-02**
    - What we know: EditJobDialog currently loads/generates FB draft on demand; Phase 30 will own IG review section.
    - What's unclear: Best minimal Phase 29 hook without building Phase 30 UI.
-   - Recommendation: Add an idempotent admin endpoint like `POST /api/v1/admin/jobs/{id}/instagram/media/prepare` returning `{job_id, image_url, version_hash, valid, validation_errors, provenance}`. Phase 30 can call it on dialog open; endpoint can also be used by future publish guard.
+   - **RESOLVED:** Add idempotent admin endpoint `POST /api/v1/admin/jobs/{id}/instagram/media/prepare` returning `{job_id, image_url, version_hash, valid, validation_errors, provenance}` (exact shape in schema). Phase 30 calls it on dialog open; Phase 31 can reuse validation/provenance before publish.
 
 ## Environment Availability
 

@@ -38,12 +38,12 @@ created: 2026-11-23
 
 | task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 29-01-01 | 01 | 1 | META-01 | T-29-01 | Status endpoint returns additive IG readiness without tokens/secrets; FB status unaffected | integration/unit | `cd backend && uv run pytest tests/test_meta_oauth_instagram.py -q` | ❌ W0 | ⬜ pending |
-| 29-01-02 | 01 | 1 | META-02 | T-29-02 | `ig-user-id` resolved/persisted from linked Page; missing/invalid linkage maps to safe actionable pt-BR state; FB not broken | unit/integration | `cd backend && uv run pytest tests/test_meta_oauth_instagram.py tests/test_integrations_instagram.py -q` | ❌ W0 | ⬜ pending |
+| 29-01-01 | 01 | 1 | META-01 | T-29-01 | Status endpoint returns additive IG readiness without tokens/secrets; FB status unaffected | integration/unit | `cd backend && uv run pytest tests/test_meta_oauth_instagram.py -q` | ❌ W0 (created as stub in 29-01 Task 1) | ⬜ pending |
+| 29-01-02 | 01 | 1 | META-02 | T-29-02 | `ig-user-id` resolved/persisted from linked Page; missing/invalid linkage maps to safe actionable pt-BR state; FB not broken | unit/integration | `cd backend && uv run pytest tests/test_meta_oauth_instagram.py tests/test_integrations_instagram.py -q` | ❌ W0 (stubs created in 29-01 Task 1; fleshed out in Task 3) | ⬜ pending |
 | 29-01-03 | 01 | 1 | META-03 | — | Ops docs contain required env/scopes/manual verification checklist; no fabricated live evidence | doc smoke | `cd backend && uv run pytest tests/test_docs_meta_instagram.py -q` | ❌ W0 | ⬜ pending |
-| 29-02-01 | 02 | 1 | IMAG-02 | T-29-03 | Deterministic 1080x1350 JPEG sRGB <8MB card; no contacts; bundled fonts; stable hash/version | unit | `cd backend && uv run pytest tests/test_ig_media_card.py -q` | ❌ W0 | ⬜ pending |
-| 29-02-02 | 02 | 1 | IMAG-01 | T-29-04 | Missing/invalid IG image returns clear pt-BR validation and blocks only IG path | unit/integration | `cd backend && uv run pytest tests/test_ig_media_validation.py -q` | ❌ W0 | ⬜ pending |
-| 29-02-03 | 02 | 1 | IMAG-03 | T-29-05 | Public HTTPS non-auth URL serves exact versioned image; localhost/private/auth URLs rejected; provenance available | integration | `cd backend && uv run pytest tests/test_public_ig_media.py -q` | ❌ W0 | ⬜ pending |
+| 29-02-01 | 02 | 1 | IMAG-02 | T-29-03 | Deterministic 1080x1350 JPEG sRGB <8MB card; no contacts; bundled fonts; stable hash/version | unit | `cd backend && uv run pytest tests/test_ig_media_card.py -q` | ❌ W0 (created as stub in 29-02 Task 1) | ⬜ pending |
+| 29-02-02 | 02 | 1 | IMAG-01 | T-29-04 | Missing/invalid IG image returns clear pt-BR validation and blocks only IG path | unit/integration | `cd backend && uv run pytest tests/test_ig_media_validation.py tests/test_public_ig_media.py -q` | ❌ W0 (stubs created in 29-02 Task 1; fleshed out in Task 3) | ⬜ pending |
+| 29-02-03 | 02 | 1 | IMAG-03 | T-29-05 | Public HTTPS non-auth URL serves exact versioned image; localhost/private/auth URLs rejected; provenance available | integration | `cd backend && uv run pytest tests/test_public_ig_media.py -q` | ❌ W0 (stub created in 29-02 Task 1; fleshed out in Task 3) | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,16 +51,16 @@ created: 2026-11-23
 
 ## Wave 0 Requirements
 
-- [ ] `backend/tests/test_meta_oauth_instagram.py` — stubs for META-01, META-02
-- [ ] `backend/tests/test_integrations_instagram.py` — covers integrations endpoint/schema safety (META-01, META-02)
-- [ ] `backend/tests/test_ig_media_card.py` — covers IMAG-02 determinism/size/format
-- [ ] `backend/tests/test_ig_media_validation.py` — covers IMAG-01 validation contract
-- [ ] `backend/tests/test_public_ig_media.py` — covers IMAG-03 public serving/version/provenance
-- [ ] `backend/tests/test_docs_meta_instagram.py` — covers META-03 checklist presence (lightweight doc assertion)
-- [ ] `backend/assets/fonts/` test fixture/font license note — deterministic render fixture
-- [ ] Framework/install: `cd backend && uv add "Pillow==13.0.0"` (if not already declared)
+- [ ] `backend/tests/test_meta_oauth_instagram.py` — META-01, META-02 stub created in 29-01 Task 1; full coverage in 29-01 Task 3
+- [ ] `backend/tests/test_integrations_instagram.py` — META-01, META-02 stub created in 29-01 Task 1; full coverage in 29-01 Task 3
+- [ ] `backend/tests/test_ig_media_card.py` — IMAG-02 stub created in 29-02 Task 1; full coverage in 29-02 Task 3
+- [ ] `backend/tests/test_ig_media_validation.py` — IMAG-01 stub created in 29-02 Task 1; full coverage in 29-02 Task 3
+- [ ] `backend/tests/test_public_ig_media.py` — IMAG-03 stub created in 29-02 Task 1; full coverage in 29-02 Task 3
+- [ ] `backend/tests/test_docs_meta_instagram.py` — covers META-03 checklist presence (lightweight doc assertion, created in 29-03 Task 2)
+- [ ] `backend/assets/fonts/DejaVuSans.ttf`, `backend/assets/fonts/DejaVuSans-Bold.ttf`, and `backend/assets/fonts/README.md` — deterministic vendored fonts with license/provenance (29-02 Task 1)
+- [ ] Framework/install: `cd backend && uv add "Pillow==13.0.0"` (if not already declared; declared in 29-01 Task 1)
 
-*If none: "Existing infrastructure covers all phase requirements."*
+*Wave 0 stubs are created early in plan order so every per-task `<automated>` verify command is executable at its point in the plan.*
 
 ---
 
@@ -77,9 +77,9 @@ created: 2026-11-23
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
 - [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
+- [x] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 60s
 - [ ] `nyquist_compliant: true` set in frontmatter

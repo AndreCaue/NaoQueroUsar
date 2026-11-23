@@ -50,7 +50,7 @@
 **Success Criteria** (what must be TRUE):
   1. Admin vê em Integrações se a Página selecionada está pronta para Instagram, incluindo conta IG Business/Creator vinculada, `ig-user-id` resolvido e estado acionável de reconexão/correção quando algo faltar.
   2. Backend resolve e persiste `ig-user-id` reaproveitando o fluxo/token Meta existente, e falhas de linkage ausente/inválido aparecem como erro seguro sem quebrar a integração Facebook.
-  3. Admin não consegue avançar para publicação Instagram sem imagem válida, recebendo feedback claro em pt-BR quando a imagem estiver ausente ou inválida.
+  3. Sistema expõe contrato de validação/preparação de imagem Instagram com feedback claro em pt-BR para imagem ausente/inválida/URL pública inválida, deixando explícito que o bloqueio se aplica apenas ao Instagram; Phase 30 aplica enforcement na revisão e Phase 31 revalida antes de publicar (sem bloquear Facebook/site).
   4. Quando não houver imagem de origem disponível, o sistema gera um card fallback determinístico da vaga em formato compatível com Instagram e o admin consegue visualizar a imagem exata pretendida por URL pública HTTPS acessível pela Meta.
   5. Existe documentação/checklist operacional da configuração Meta/Instagram (permissões/escopos, premissas de App Review/roles/tasks, setup/verificação) disponível para execução manual.
 **Plans**: TBD
@@ -65,7 +65,7 @@
   1. Admin vê na revisão uma seção Instagram ao lado do Facebook, com toggle por vaga e status independente por plataforma.
   2. Admin edita legenda Instagram pré-preenchida a partir da vaga, vê contador ao vivo `N/2200` e não consegue salvar/aprovar legenda acima do limite.
   3. Admin recebe aviso quando a legenda passa de 30 hashtags e orientação clara de que links na legenda não são clicáveis, com CTA no estilo “link na bio”.
-  4. Admin visualiza antes de aprovar/publicar o preview da imagem exata que será enviada ao Instagram.
+  4. Admin visualiza antes de aprovar/publicar o preview da imagem exata que será enviada ao Instagram e não consegue aprovar/publicar Instagram sem imagem válida (contrato IMAG-01 da Phase 29), sem bloquear Facebook/site.
 **Plans**: TBD
 **UI hint**: yes
 **Research flags / decisions**: Caption prefill must be Instagram-tuned (not blind Facebook reuse). Image source selection/preview depends on Phase 29 media decisions; keep UX ready for fallback card and future source extensions without new abstractions.

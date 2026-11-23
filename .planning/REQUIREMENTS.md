@@ -15,7 +15,7 @@ Requirements for milestone v1.5: Integração Instagram na Revisão. Each maps t
 
 ### Mídia / Imagem Pública
 
-- [ ] **IMAG-01**: Publicação no Instagram exige imagem válida; a revisão bloqueia publish IG sem imagem válida com feedback claro em pt-BR.
+- [ ] **IMAG-01**: Publicação no Instagram exige imagem válida; sistema fornece contrato/validação com feedback claro em pt-BR e bloqueio aplicável apenas ao Instagram (contrato/preparação na Phase 29, enforcement na revisão na Phase 30, revalidação no publish na Phase 31).
 - [ ] **IMAG-02**: Sistema gera card fallback determinístico a partir dos dados da vaga (1080x1080 ou 1080x1350, JPEG sRGB, <8MB, proporção compatível 4:5–1.91:1) quando não houver imagem de origem selecionada/disponível.
 - [ ] **IMAG-03**: A imagem usada no Instagram é servida por URL pública HTTPS estável, acessível pela Meta (sem auth, não localhost/privada/efêmera), com validação, preview e proveniência registrada.
 
@@ -73,7 +73,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | META-01 | Phase 29 | Pending |
 | META-02 | Phase 29 | Pending |
 | META-03 | Phase 29 | Pending |
-| IMAG-01 | Phase 29 | Pending |
+| IMAG-01 | Phase 29, Phase 30, Phase 31 | Pending |
 | IMAG-02 | Phase 29 | Pending |
 | IMAG-03 | Phase 29 | Pending |
 | REVW-01 | Phase 30 | Pending |
