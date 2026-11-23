@@ -10,6 +10,7 @@ import { formatJobCount } from "@/lib/format";
 interface BoardToolbarProps {
   filters: Filters;
   total: number;
+  availableCities: string[];
 }
 
 const DEBOUNCE_MS = 300;
@@ -21,7 +22,7 @@ const DEBOUNCE_MS = 300;
  * `router.replace` (no `push`, no history pollution) and the RSC re-renders
  * the list. Debounced typing + immediate commit on Enter/clear/chip change.
  */
-export function BoardToolbar({ filters, total }: BoardToolbarProps) {
+export function BoardToolbar({ filters, total, availableCities }: BoardToolbarProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -113,6 +114,10 @@ export function BoardToolbar({ filters, total }: BoardToolbarProps) {
     lastCommittedRef.current = "";
   };
 
+  const activeCityOptions = CITY_OPTIONS.filter((option) =>
+    availableCities.includes(option.slug),
+  );
+
   return (
     <div
       className="sticky top-16 z-10 -mx-4 border-b border-line bg-canvas px-4 py-3 sm:mx-0 sm:px-0"
@@ -182,13 +187,13 @@ export function BoardToolbar({ filters, total }: BoardToolbarProps) {
           onClick={() => commit({ city: null })}
           className={
             filters.city === null
-              ? "min-h-11 shrink-0 rounded-full bg-accent-strong px-4 text-sm font-semibold text-white"
-              : "min-h-11 shrink-0 rounded-full border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft"
+              ? "min-h-11 shrink-0 rounded-full bg-accent-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-strong-hover"
+              : "min-h-11 shrink-0 rounded-full border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft hover:bg-accent/10"
           }
         >
           Todas
         </button>
-        {CITY_OPTIONS.map((option) => {
+        {activeCityOptions.map((option) => {
           const active = filters.city === option.slug;
           return (
             <button
@@ -198,8 +203,8 @@ export function BoardToolbar({ filters, total }: BoardToolbarProps) {
               onClick={() => commit({ city: option.slug })}
               className={
                 active
-                  ? "min-h-11 shrink-0 rounded-full bg-accent-strong px-4 text-sm font-semibold text-white"
-                  : "min-h-11 shrink-0 rounded-full border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft"
+                  ? "min-h-11 shrink-0 rounded-full bg-accent-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-strong-hover"
+                  : "min-h-11 shrink-0 rounded-full border border-line-strong px-4 text-sm text-fg transition-colors hover:border-accent hover:text-accent-soft hover:bg-accent/10"
               }
             >
               {option.label}
