@@ -1,153 +1,190 @@
 # Pitfalls Research
 
-**Domain:** Adding NL chatbot job search (intent extraction + public chat UI) to an existing PT-BR public job board
-**Researched:** 2026-11-17
-**Confidence:** HIGH (grounded in project constraints/context + established LLM/chat/search patterns; some operational thresholds are MEDIUM pending production metrics)
+**Domain:** Adding Instagram Graph API Content Publishing to an existing Facebook Pages publishing system (EmpregaNoix v1.5)
+**Researched:** 2026-11-23
+**Confidence:** HIGH for official Meta API behavior/limits (verified against Meta docs fetched 2026-11-23); MEDIUM for App Review timelines/edge-case policy enforcement; HIGH for codebase integration risks (verified against current backend/frontend social integration code)
 
 ## Critical Pitfalls
 
-### Pitfall 1: Hallucinated or Over-Constrained Filters Kill Recall
+### Pitfall 1: Treating Instagram as "Facebook with an image"
 
 **What goes wrong:**
-The LLM turns vague PT-BR requests into overly specific or invented filters (e.g. infers `modality=remote`, `salary_min`, seniority, or exact city not mentioned), so valid jobs disappear and users conclude "não tem vaga" even when the board has matches.
+The team reuses the existing single-call Facebook publish pattern (`POST /{page_id}/feed`) and assumes Instagram is similar. Instagram Content Publishing is a 2-step async pipeline: create media container (`POST /{ig-user-id}/media`), poll container status (`GET /{ig-container-id}?fields=status_code`) until `FINISHED`, then publish (`POST /{ig-user-id}/media_publish` with `creation_id`). Skipping status checks causes publish attempts on `IN_PROGRESS`/`ERROR`/`EXPIRED` containers and intermittent failures that look random.
 
 **Why it happens:**
-- Prompts/examples bias the model to "fill all fields" instead of leaving unknowns null.
-- No strict schema/default-null discipline between extraction and query building.
-- Developers reuse admin-extraction habits (maximize structure) for user intent, where under-specification is normal.
-- Mismatch between rich extraction schema and sparse existing DB/search fields encourages invented mappings.
+The existing `FacebookPublisher.publish()` returns a direct result from one Graph call. Developers naturally extend `SocialPostPayload`/publisher without modeling container lifecycle. The current pipeline marks `publishing` and expects a terminal result in one pass.
 
 **How to avoid:**
-- Use a strict JSON schema with nullable fields, explicit `unknown/not_specified`, and "extract only what user stated or clearly implied" rules.
-- Separate **extracted intent** from **applied filters**; drop/relax unsupported or low-confidence constraints before querying.
-- Apply conservative defaults: no salary/modality/contract/seniority filter unless explicitly supported by evidence in user text.
-- Implement progressive relaxation/fallback search (all filters → drop weakest/unsupported → keyword/title-only) and show what was relaxed.
-- Add golden tests with PT-BR ambiguity ("vaga de atendimento em SP", "algo home office", "ganhando bem") to ensure recall-preserving behavior.
+- Model IG publishing as a stateful workflow, not a single HTTP call. Persist `ig_container_id`, `container_status`, `container_created_at`, and publish attempt metadata.
+- Implement container polling with bounded backoff (Meta recommends checking once per minute, no more than 5 minutes; adapt for worker cadence, but keep bounded).
+- Only call `media_publish` when container status is `FINISHED`. Handle `IN_PROGRESS`, `ERROR`, `EXPIRED`, `PUBLISHED` explicitly.
+- Keep Facebook single-step path intact; add an IG-specific publisher/workflow behind the same `SocialPublisher`-style interface or a separate IG pipeline branch. Do not force IG into FB assumptions.
 
 **Warning signs:**
-- High zero-result rate on broad queries compared to manual board search.
-- Extracted params frequently include fields user never mentioned.
-- Support/analytics show users rephrasing repeatedly to get any results.
-- Same query returns results on existing search UI but none via chat.
+- Logs show `9007 / subcode 2207027` "media is not ready for publishing".
+- Posts stuck in `publishing` with no `external_post_id`.
+- Code calls `media_publish` immediately after container creation without reading `status_code`.
+- Tests only mock one successful response for IG publish.
 
 **Phase to address:**
-Phase 1 (Intent schema + safe mapping) and Phase 3 (UX/result strategy/QA). Must be validated before broad public rollout.
+Phase 1 — IG domain model & publish workflow design (before UI wiring). Verify with integration tests that mock container `IN_PROGRESS -> FINISHED -> PUBLISHED` and error/expiry paths.
 
 ---
 
-### Pitfall 2: Public Chat Endpoint Becomes a Cost, Latency, and Abuse Magnet
+### Pitfall 2: Image URL is not publicly fetchable by Meta at publish time
 
 **What goes wrong:**
-A public, no-login LLM endpoint is hammered by bots/scripts/curious users, causing Groq quota exhaustion, slow responses, 429/5xx spikes, and degraded experience for both chat and potentially the rest of the app.
+IG container creation/publishing fails because Meta cURLs `image_url` from its servers. Local/dev URLs, auth-protected URLs, signed URLs that expire before Meta fetches/processes, redirect-to-login pages, `localhost`, private-network addresses, or non-image content-types cause `2207052` ("media could not be fetched"), processing `ERROR`, or silent downstream failures. "Works in my browser" is not sufficient.
 
 **Why it happens:**
-- "Public no friction" is correctly preserved but implemented without guardrails.
-- Each request triggers synchronous LLM extraction with no caching, timeout budget, or cheap pre-filter path.
-- Free-tier infrastructure (Groq/Neon/Vercel/server hosting) has tight rate/concurrency limits.
-- No observability on request volume, token/latency, and failure modes.
+Teams reuse internal admin/upload URLs or generate temporary links. In local dev, backend URLs are not internet-reachable. Signed CDN URLs are generated at review time but expire before delayed/scheduled publish or retry. The existing system has no media hosting requirement for Facebook text/link posts.
 
 **How to avoid:**
-- Add layered protections: IP+UA rate limiting, request size cap, strict server timeout, concurrency cap, and circuit breaker/fallback when Groq is unavailable.
-- Keep LLM use minimal: extract parameters only (never send hundreds of jobs), use smallest adequate model, bounded `max_tokens`, deterministic-ish settings.
-- Cache normalized query→intent results briefly (short TTL) and reuse for repeated prompts; short-circuit empty/too-short/gibberish input without LLM call when safe.
-- Return fast partial fallback (keyword search on existing endpoint/logic) when extraction is slow/fails.
-- Instrument metrics/logs (latency, timeout, rate-limit hits, provider errors) and set budget alerts/kill-switch for chat feature.
+- Treat image hosting as a first-class contract: public HTTPS URL, no auth/cookie/session, no private IP, resolves to actual media file, correct `Content-Type`.
+- Validate before saving/scheduling: server-side fetch/HEAD check from backend is useful but not sufficient; ensure URL is externally reachable (not just from your server on same network). For local dev, document tunnel/public bucket requirement or provide explicit dev guardrail.
+- Ensure URL lifetime covers: review preview, scheduled time, retry window, and Meta processing delay. If using signed URLs, set TTL >= max(schedule delay + retry window + 24h safety) or regenerate just-in-time at publish.
+- Enforce image constraints early: JPEG only (no MPO/JPS), max 8MB, aspect ratio 4:5 to 1.91:1. Reject/transform before container creation.
+- Store image source metadata (origin: upload/generated/logo), storage key, final public URL, and validation result. Do not store ephemeral signed URL as the only source of truth if regeneration is possible.
 
 **Warning signs:**
-- P95 latency > a few seconds, frequent timeouts, or Groq 429s.
-- Sudden traffic spikes to chat endpoint; many identical prompts.
-- Backend CPU/memory/connection pressure correlated with chat usage.
-- Chat outages impacting unrelated public API responsiveness.
+- `error_subcode 2207052` or container status `ERROR`.
+- Image URL contains `localhost`, `127.0.0.1`, private IP, query-signed expiry soon, or admin-auth path.
+- Scheduled posts fail more than immediate posts.
+- Preview works in admin (authenticated) but Meta publish fails.
 
 **Phase to address:**
-Phase 2 (Public chat-search API, protections, resilience) with verification in Phase 4 (hardening/observability/launch checks).
+Phase 1 — Media contract & storage decision. Phase 2 — Publish pipeline must validate/refresh URL just before container creation.
 
 ---
 
-### Pitfall 3: Prompt Injection and Untrusted Chat Input Break Safety/Behavior
+### Pitfall 3: Missing/incorrect permissions and IG account linkage assumptions
 
 **What goes wrong:**
-User messages (or pasted job-like blobs) manipulate the model to ignore instructions, emit invalid/non-JSON output, reveal system prompts/internal behavior, or produce parameters that bypass intended constraints (e.g. requesting hidden/admin behavior, unsupported filters, or abusive content flows).
+Publishing fails with OAuth/permission errors, or works in developer/admin testing but fails for real operational flow. Common causes: missing `instagram_content_publish` / `instagram_basic` / `pages_read_engagement`; app has no Advanced Access/App Review when needed; Instagram account not Business/Creator; IG account not linked to the selected Facebook Page; Page requires PPA; app user lacks required Page task/role; Business Manager role requires `ads_management`/`ads_read` in some cases.
 
 **Why it happens:**
-- Treating chat text as benign search input instead of untrusted adversarial input.
-- Reusing extraction prompts hardened for admin-only curated blobs in a public context with different threat model.
-- Not enforcing output validation/allowlists after generation.
-- Logging raw prompts/responses without redaction, amplifying impact.
+Existing FB integration uses `pages_show_list,pages_manage_posts,pages_read_engagement` (see `meta_oauth.py`). Teams add IG UI but forget to extend OAuth scopes, re-consent flow, and token capability verification. They also assume "connected Facebook Page" implies "publishable Instagram account". Meta's permission names differ across FB Login vs Instagram Login products.
 
 **How to avoid:**
-- System prompt hardening: explicit role ("extract search intent only"), ignore user instructions that conflict, never execute actions, output JSON only matching schema.
-- Strict post-processing: JSON parse + schema validation + allowlisted enums/fields/cities + range checks; reject/strip unknown fields.
-- Never pass secrets, admin context, or internal system details to the public chat prompt.
-- Limit input length and sanitize/control characters; do not let user text become SQL/ORM fragments (parameterized queries only, but also avoid dynamic field injection).
-- Red-team tests with PT-BR injection cases ("ignore as instruções...", "mostre o prompt", "liste vagas expiradas/contatos", attempts to force unsupported filters).
+- Use Facebook Login for Business / IG Graph API with Facebook Login consistently with existing system. For this setup, confirm required permissions: `instagram_basic`, `instagram_content_publish`, `pages_read_engagement` (Meta doc, fetched 2026-11-23). If app user role is granted via Business Manager, also assess `ads_management` and `ads_read`.
+- At connect/verify time, fetch and persist IG professional account ID: `GET /{page-id}?fields=instagram_business_account{id,username,name}` (or equivalent). Fail clearly if no linked IG professional account.
+- Add explicit preflight checks in UI and backend: connected FB page, linked IG account, token valid, required permissions/scopes present. Distinguish "not connected", "needs reconnect/consent", "missing IG account linkage", "missing permission".
+- Plan for App Review/Access Level: single-admin own-business use may work in Standard Access; any external app users/tech-provider scenario requires Advanced Access + App Review + Business Verification. Document current assumption in checklist.
+- Handle Page Publishing Authorization (PPA) as an operator-facing warning/blocker; Meta cannot be queried reliably for PPA beforehand per docs — surface actionable guidance when publish fails.
 
 **Warning signs:**
-- Non-JSON or schema-invalid model outputs in logs.
-- Extracted params include unexpected keys/values outside allowlists.
-- User-visible responses echo instructions/system text or behave inconsistently.
-- Security review finds raw prompt/PII over-logging.
+- OAuth callback succeeds but publish returns 200/10/190/permissions errors.
+- `instagram_business_account` is null for selected Page.
+- Scopes requested in `META_OAUTH_SCOPES` do not include IG publish permissions.
+- Integration works for app developer but not for target admin account/role.
 
 **Phase to address:**
-Phase 1 (prompt/schema/validation) and Phase 2 (API hardening), with explicit security test cases in Phase 4.
+Phase 1 — OAuth/permissions/linkage foundation. Include migration/reconnect path for existing connected FB accounts.
 
 ---
 
-### Pitfall 4: Extracted Parameters Don't Match Real DB/Search Capabilities
+### Pitfall 4: Duplicate Instagram posts from retries, ambiguous outcomes, or double-submit
 
 **What goes wrong:**
-Chat advertises or attempts filters the system cannot reliably apply today (salary range, modality, contract type, seniority, free-text location nuances beyond whitelist), producing wrong results, silent mismatches, or brittle post-filter behavior.
+The same job is published twice on Instagram. Causes: retrying after timeout/ambiguous response, worker reprocessing after crash, admin double-click/manual retry on an already-published-but-unrecorded post, or creating a new container when old publish may have succeeded. Unlike FB feed post, IG publish has container lifecycle and ambiguous failure modes.
 
 **Why it happens:**
-- MVP examples imply richer filtering than `GET /api/v1/public/jobs` / `crud.list_published` currently supports natively.
-- Job data is unstructured PT-BR text; salary/modality/contract may be missing, inconsistent, or not normalized in schema.
-- City whitelist (SP/RJ/BH/Remoto) conflicts with user inputs ("Campinas", "híbrido em Osasco", "qualquer lugar").
-- Team chooses ad-hoc string matching without defining semantics, precedence, or truthfulness.
+Existing pipeline already knows ambiguous failures (`PublishFailureCategory.ambiguous` -> no auto-retry, manual verification). IG adds more ambiguity: container created but publish response lost; publish returns transient/timeout after Meta accepted; container `PUBLISHED` but local DB not updated. Developers also may "retry" by creating a fresh container+publish, bypassing idempotency.
 
 **How to avoid:**
-- Build an explicit **capability matrix**: supported-now (DB/query), supported-via-safe-text-mapping, unsupported (must disclose/ignore).
-- Normalize to existing whitelist/canonical values; map common PT-BR synonyms carefully (`home office`→Remoto, `CLT/PJ/estágio` only if representable) and reject/relax unknown cities instead of guessing.
-- If adding fields/filters, do controlled schema/query extension with backfill/normalization rules; otherwise use transparent post-filtering on retrieved candidates with clear limits.
-- Never claim a filter was applied when it wasn't; include `applied_filters`, `ignored_or_unsupported`, and `interpretation` in response.
-- Document known gaps per MVP example and test them as acceptance criteria.
+- Preserve and extend existing idempotency invariants: never republish if `external_post_id` exists or status is `published`. This is already in `process_claimed_post` — keep it for IG.
+- Persist container ID immediately after creation. Before creating another container, check existing container status; if `PUBLISHED`, record external media ID and stop.
+- Treat `media_publish` timeout/5xx/unknown as ambiguous until proven otherwise. Do not auto-create new container+publish on ambiguous outcome. Require status reconciliation: check container status and/or query media.
+- Make manual retry endpoint idempotent and guarded: if post has `external_post_id`, return noop. If last failure was ambiguous, force operator confirmation or automated "check remote status" step before enabling publish retry.
+- Add DB/logic uniqueness: one active IG publish record per job/provider (`uq_social_posts_job_provider` exists) — good. Also guard against concurrent workers with claim lock (already exists). Consider unique constraint/index on `external_post_id` per provider where not null.
+- UI: disable publish/retry button while request in flight; render server state after refresh.
 
 **Warning signs:**
-- "Interpreted" chips show filters not reflected in results.
-- Discrepancies between chat results and equivalent manual filters/search.
-- Frequent empty results for salary/modality/contract queries on dataset lacking those fields.
-- Growing special-case code in mapping layer without tests/spec.
+- Duplicate posts visible on Instagram for same job.
+- Retry creates a new container when previous container exists.
+- Ambiguous failures converted to auto-retry.
+- No stored `ig_container_id`/publish attempt correlation.
 
 **Phase to address:**
-Phase 1 (capability matrix + normalization/mapping contract) and Phase 2 (API response contract), rechecked in Phase 3 (UI transparency).
+Phase 2 — Publish pipeline/idempotency. Phase 3 — Admin retry/status UX. Add explicit tests for timeout-after-publish and duplicate-click.
 
 ---
 
-### Pitfall 5: Integration Breaks Existing Public Board/Search and Core No-Login Value
+### Pitfall 5: Rate limits and daily publish cap handled too late or globally
 
 **What goes wrong:**
-Adding chat introduces regressions in the main board: changed query semantics, shared code path bugs in `crud.list_published` / public endpoints, new frontend bundle/perf issues, or accidental exposure/coupling of contact-reveal/admin flows.
+Posts fail with `code 9, subcode 2207042` ("reached maximum number of posts...") or app-level throttling. Batch approve/retry bursts consume the 24h moving-window quota. System retries aggressively, making throttling worse. Admin sees opaque errors and keeps retrying.
 
 **Why it happens:**
-- Reusing/modifying existing search logic without characterization tests or compatibility checks.
-- New UI (drawer/modal/chat state) interferes with existing filters, pagination, modal/detail, or mobile layout.
-- Convenience refactors blur boundaries between public job listing, contact reveal endpoint, and admin-only flows.
-- Performance regressions (large JS, blocking calls) hurt mobile users on low-end devices.
+EmpregaNoix is low volume now, so limits feel irrelevant. But moving-window caps, retry bursts, tests, or future growth can hit them. Existing FB pipeline has retry/backoff for transient errors but no IG-specific 24h publish cap awareness.
 
 **How to avoid:**
-- Treat existing public search/list/detail/contact-reveal behavior as a contract: add/keep regression tests before changing shared CRUD/query code.
-- Prefer additive integration: new chat endpoint/service that composes existing safe query primitives; avoid risky rewrites of `list_published` unless necessary and well-tested.
-- Keep chat UI lazy-loaded and isolated; ensure it does not block initial board render and preserves "ver vagas sem login/fricção" in first paint.
-- Enforce payload boundaries: chat responses return `JobPublic` data only, never contact fields/tokens/admin data.
-- Run side-by-side verification: same filters via old UI vs chat-mapped params produce consistent, explainable results.
+- Query `GET /{ig-user-id}/content_publishing_limit` before publish bursts and/or after 2207042. Expose safe summary in admin diagnostics (no tokens).
+- Treat 2207042 as non-retryable-until-window-moves. Do not schedule immediate exponential retry; mark as blocked/rate-limited with clear next action.
+- Add per-account publish pacing/queueing. For scheduled posts, spread dispatch; for manual bulk actions, serialize or warn.
+- Keep retry backoff jittered and cap attempts (existing `SOCIAL_MAX_ATTEMPTS`/`SOCIAL_RETRY_DELAYS` pattern). Ensure rate-limit errors map to appropriate category — not transient auto-retry storm unless carefully bounded.
+- Log/metric rate-limit events with sanitized fields for observability.
 
 **Warning signs:**
-- Existing public API tests fail or require semantic changes after chat work.
-- Increased frontend bundle size / slower mobile load after adding chat.
-- Bug reports on core board filters/sort/detail after chat merge.
-- Any chat path referencing contact-reveal internals or admin auth dependencies.
+- Spikes of 2207042 in logs.
+- Worker retries every few minutes on daily-limit error.
+- No use of `content_publishing_limit` endpoint.
+- Bulk review approvals trigger many simultaneous IG publishes.
 
 **Phase to address:**
-Phase 1 (design/contracts) and Phase 3 (frontend integration), with regression gate in Phase 4.
+Phase 2 — Pipeline error classification/backoff. Phase 3 — Admin status/diagnostics.
+
+---
+
+### Pitfall 6: Token expiry/revocation breaks publish silently or corruptly
+
+**What goes wrong:**
+IG publish starts failing after token expiry, password change, permission removal, app deauthorization, or Page role changes. System either keeps retrying uselessly, marks posts as generic permanent failures, or loses clarity about whether reconnect is needed. Because FB and IG share the Meta app/token context in this design, an FB token problem can also block IG.
+
+**Why it happens:**
+Current system has `SocialAccountStatus.needs_reconnect`, `debug_token` verification, and transient/definitive classification in `meta_oauth.py` — good foundation. Pitfall is not extending it to IG publish failures and not mapping IG-specific OAuth errors (190, 102, 200, 10, 2207006 permission/token) to reconnect/block states consistently. Long-lived tokens expire (~60 days) and there is no renewal/alert strategy yet (open decision in PROJECT.md).
+
+**How to avoid:**
+- Reuse/extend `meta_oauth` verification for IG publish capability: validate token, required scopes/permissions, Page access, IG account linkage.
+- Map definitive auth/permission Graph errors during publish to `needs_reconnect` or a clear integration-blocked state; do not auto-retry publish until reconnect.
+- Add proactive expiry/health signal: store token debug info checked_at; surface "reconecte em breve" / "reconexão necessária" in Integrations and review UI. If using long-lived tokens, define renewal/alert strategy (cron check + admin banner).
+- On reconnect, preserve existing pending social posts safely; define whether drafts/scheduled items remain valid.
+- Never log tokens, decrypted secrets, or raw OAuth responses containing tokens.
+
+**Warning signs:**
+- Repeated 190/OAuthException errors classified as generic permanent.
+- `needs_reconnect` only set by manual verify endpoint, not by publish pipeline.
+- No admin-visible token health/expiry warning.
+- IG and FB statuses diverge confusingly after reconnect.
+
+**Phase to address:**
+Phase 1 — Token/linkage verification model. Phase 2 — Error classification maps auth failures to blocked state. Phase 3 — Admin UX for reconnect/health.
+
+---
+
+### Pitfall 7: UI/status coupling makes Facebook and Instagram block each other
+
+**What goes wrong:**
+Adding IG to the review dialog creates a monolithic social flow: one save button, one status badge, one error message, or one "publish social" action that conflates FB and IG. A FB failure prevents IG retry, IG image validation blocks FB draft save, or status list shows ambiguous "Publicado/Falhou" without platform identity. This violates the v1.5 constraint: "falha de um não bloqueia o outro".
+
+**Why it happens:**
+Current UI is FB-centric: `EditJobDialog` has one `socialDraft`, one `socialStatus`, labels like "Publicar no Facebook"; `SocialPostStatusItem.provider` is `Literal["facebook"]`; `build_social_status_item` hardcodes Facebook labels/URLs. The simplest implementation extends these fields in-place.
+
+**How to avoid:**
+- Model per-platform state in API and UI: separate draft/status/action/error/loading for `facebook` and `instagram`. Shared job approval remains site-first.
+- Allow independent actions: save IG draft without touching FB; retry IG without FB; approve site even if one/both social registrations have warnings.
+- Make status explicit per platform: provider badge, platform-specific error, timestamps, external ID/permalink when available. Avoid one combined "social status".
+- Validate IG-specific prerequisites only for IG publish path (image required, caption length, hashtag warning) — do not block FB text-only publish.
+- Keep `ReviewQueue`/status list clear: per-platform chips/rows or expandable detail. Preserve existing FB behavior and tests.
+
+**Warning signs:**
+- One `socialAction`/`socialStatus` state drives both platforms in frontend.
+- API schema still has `provider: Literal["facebook"]`.
+- Retry endpoint/action cannot target IG independently.
+- FB regression tests fail after IG UI changes.
+
+**Phase to address:**
+Phase 3 — Review UI & status API. Include regression tests for FB-only flow and dual-platform independent outcomes.
 
 ## Technical Debt Patterns
 
@@ -155,12 +192,12 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Let LLM output drive DB filters directly (no mapping/allowlist layer) | Fastest path to demo | Hallucinations, invalid queries, security/behavior drift, hard-to-debug mismatches | Never |
-| Implement "salary/modality/contract" as brittle regex post-filter without capability contract | Satisfies MVP examples quickly | Inconsistent semantics, false positives/negatives, user distrust, untestable edge cases | MVP only, if labeled approximate + covered by tests + tracked for proper modeling |
-| Single global prompt with no versioning/eval cases | Quick iteration | Silent regressions in PT-BR understanding and safety; no rollback confidence | Only for throwaway spike, never merged as-is |
-| Reuse admin extraction prompt/config for public chat unchanged | Less code | Wrong threat model, wrong optimization (structure over recall), leakage/logging risks | Never without explicit adaptation and validation |
-| No rate limiting because "traffic is low now" | Zero setup now | Immediate exposure to abuse/quota exhaustion on public endpoint | Never for public LLM endpoint |
-| Log full user messages + raw LLM I/O forever | Easy debugging | Privacy/compliance risk, noisy storage, sensitive content retention on no-login product | Only short-lived, sampled, redacted debug logs with retention limits |
+| Reuse `social_posts` row/provider=`facebook` logic by adding special cases everywhere | Fewer schema changes now | Brittle conditionals, broken idempotency/status semantics, hard to add future providers | Never; extend schema deliberately with provider-aware fields |
+| Store only final `image_url` and discard source/validation metadata | Simpler model | Cannot regenerate expired signed URLs, cannot audit what was published, hard to debug 2207052 | Only MVP if URL is permanent public CDN and documented; prefer storing source + canonical public URL |
+| Auto-retry all IG failures with same FB transient policy | Reuses existing backoff code | Duplicate posts on ambiguous publish, wasted attempts on 2207042/auth errors, container spam | Never for ambiguous/auth/daily-limit classes; acceptable only for proven transient classes with safeguards |
+| Poll container status synchronously inside HTTP request | Easy to implement | Request timeouts, worker/API coupling, poor UX, duplicate triggers on retries | Only for local spike/debug; never in production request path |
+| Hardcode "Facebook" in labels/helpers and add "Instagram" ad hoc | Fast UI delivery | Inconsistent status/retry rules, broken admin mental model, regression risk | Never; make provider-aware status mapping |
+| Skip `content_publishing_limit` precheck because volume is low | Less code | Sudden failures during bursts/tests; poor operability | Acceptable for MVP only if 2207042 is classified clearly and surfaced; add precheck before scale/bulk features |
 
 ## Integration Gotchas
 
@@ -168,11 +205,12 @@ Common mistakes when connecting to external services.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Groq chat completions (public intent extraction) | Assuming admin-extraction reliability/latency holds for untrusted public prompts and traffic | Separate public-chat config (timeouts, token caps, model/fallback), strict JSON validation, and graceful fallback when provider fails/throttles |
-| Existing public jobs API / `crud.list_published` | Adding chat by mutating shared query behavior for new params | Introduce an intent→query adapter layer; preserve existing contracts and add regression tests for current filters/sort/pagination |
-| Neon Postgres (free tier) | Post-filtering by fetching large result sets or adding expensive unindexed text scans per chat request | Bound candidate sets, reuse indexed filters first (status/expiry/city/date), measure query cost, and avoid patterns that exhaust connections/compute |
-| Vercel frontend ↔ backend chat endpoint | Long LLM waits causing function/proxy timeouts and poor mobile UX | Set explicit timeout budgets, stream or return staged response if supported/needed later, but for MVP prefer fast fail + fallback search and clear loading states |
-| Cloudflare Turnstile / abuse controls (if used for chat) | Applying heavy friction that breaks "sem login, sem etapas" or skipping verification entirely | Prefer invisible/low-friction protections where possible (rate limit first); only add challenges proportional to abuse risk and never block core board browsing |
+| Meta OAuth / Graph permissions | Add IG UI but keep old scopes (`pages_show_list,pages_manage_posts,pages_read_engagement`) and never force re-consent | Add/confirm `instagram_basic`, `instagram_content_publish`, `pages_read_engagement` for FB Login flow; detect missing capabilities and prompt reconnect/consent |
+| FB Page -> IG account linkage | Assume selected Page has publishable IG account | Fetch `instagram_business_account` for Page; store `ig_user_id`/username; block IG enablement with actionable message if missing |
+| IG media container creation | Pass non-public/expiring/authenticated image URL | Host JPEG on public HTTPS URL reachable by Meta at attempt time; validate format/size/aspect before create |
+| Container publish lifecycle | Call `media_publish` immediately, ignore `status_code` | Poll `GET /{ig-container-id}?fields=status_code`; publish only on `FINISHED`; handle `ERROR/EXPIRED/PUBLISHED/IN_PROGRESS` |
+| Error handling | Treat all non-200 as transient retryable | Classify by Graph `code/subcode`: 2207042 daily limit (blocked), 2207027 not ready (wait/poll), 2207052 bad URL (fix media), 2207008 temporary (limited retry then recreate), 190/permissions definitive auth (needs reconnect) |
+| Rate limits | Only react after publish fails | Use `GET /{ig-user-id}/content_publishing_limit`; pace bulk publishes; back off/jitter on 429/app limits |
 
 ## Performance Traps
 
@@ -180,10 +218,10 @@ Patterns that work at small scale but fail as usage grows.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Synchronous LLM call in every chat request with no timeout/cap | Slow UI, hanging requests, thread/worker saturation | Hard timeout, bounded tokens, cheap prechecks, fallback path, concurrency limits | Immediately under bot bursts or Groq slowness; noticeable even at tens of concurrent users on free tiers |
-| Fetch-all-then-filter for salary/modality/contract inference | Rising DB/CPU latency, memory spikes | Constrain with native filters first, limit candidate rows, paginate/short-circuit, precompute normalized fields if feature persists | As dataset grows past a few hundred active jobs or with frequent chat use |
-| Chat UI ships heavy client bundle/state logic eagerly | Worse LCP/TTI on mobile, jank on open | Lazy-load chat drawer/modal/components, keep dependencies minimal, avoid blocking main thread | On low-end mobile devices/common PT-BR connections from first release |
-| No caching/dedup for repeated NL queries | Repeated Groq cost/latency for same intents | Short-TTL cache keyed by normalized prompt+locale/capability version | During campaigns/sharing or simple repeated usage patterns |
+| Publishing IG inline in approve/review request | Slow approve endpoint, timeouts, duplicate submits on client retry | Keep approve site-first; enqueue/dispatch async IG publish like existing social pipeline | As soon as image processing/polling or Meta latency exceeds request budget |
+| Polling container status too aggressively across many posts | Rate-limit pressure, wasted worker cycles | Bounded polling (e.g., 1/min, max ~5-10 checks) with persisted next-check time; stop on terminal states | Dozens of concurrent publishes or retry storms |
+| Regenerating/uploading image on every retry attempt | Extra storage, inconsistent media, slower retries | Generate/store canonical public media once per approved content version; reuse URL if still valid | Repeated transient failures/retries |
+| Bulk "retry all failed" without pacing | 2207042/429 spikes, noisy failures | Queue with per-account concurrency=1 or small batch + delay; surface daily quota remaining | >10-20 posts in short window, or lower effective quota |
 
 ## Security Mistakes
 
@@ -191,11 +229,11 @@ Domain-specific security issues beyond general web security.
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Exposing contact info or reveal tokens through chat responses "for convenience" | Re-enables scraping/bypasses existing reveal protections and trust model | Return only public-safe `JobPublic` fields; keep contact access on existing protected flow |
-| Trusting extracted params/enums without allowlist validation | Query abuse, logic bypass, inconsistent behavior via injected/invalid values | Validate against strict schema + allowlists (city whitelist, sort/order enums, supported filter keys/ranges) server-side |
-| Logging raw chat prompts/responses and inferred attributes without controls | Privacy leakage in a no-login public product; sensitive user intent retained unnecessarily | Redact/truncate, avoid storing PII, set retention, separate security/audit logs from debug dumps |
-| Public chat endpoint without rate limit/size/timeout controls | DoS/quota drain, cost spike, degraded availability | Enforce request caps, throttling, abuse detection, and operational kill-switch |
-| Leaking system prompt/internal capability details in errors/debug UI | Easier prompt injection and probing of defenses | Generic user-facing errors, sanitized server logs, no prompt echoing to client |
+| Logging raw Graph responses, access tokens, or signed image URLs with sensitive params | Credential/media URL leakage in logs/Sentry/support bundles | Reuse existing sanitization discipline; log only safe IDs/status codes/subcodes/categories; redact token/query secrets |
+| Making image URLs guessable/publicly enumerable with sensitive job data | Unintended disclosure of unpublished/job info, scraping | Use unguessable object keys; separate public media from private admin data; keep captions/job PII policy explicit |
+| Accepting arbitrary `image_url` from client without server validation | SSRF-like fetch abuse, hosting malware/non-image content, publishing unintended media | Server generates or strictly validates allowed origins/storage keys; enforce MIME/size/dimensions; never proxy arbitrary URLs to Meta blindly |
+| Storing long-lived tokens without clear reconnect/revocation handling | Unauthorized posting window after compromise, broken ops after revocation | Encrypt at rest (existing Fernet pattern), minimal scope, debug_token checks, needs_reconnect flow, documented rotation/reconnect procedure |
+| Coupling IG publish capability to overly broad permissions without need | Larger blast radius, harder App Review | Request minimum required permissions for FB Login IG publishing; justify any extra scopes |
 
 ## UX Pitfalls
 
@@ -203,22 +241,24 @@ Common user experience mistakes in this domain.
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Returning zero results with no explanation | User assumes platform has no jobs; abandons (breaks core value) | Show interpreted params, state which constraints may be too strict/unsupported, offer relax/remove-filter actions and nearby alternatives |
-| Hiding what the chatbot understood/applied | Loss of trust; users can't correct misinterpretation | Display transparent chips/summary: understood intent, applied filters, ignored/unsupported fields, and editable refinements |
-| Over-chatty or slow interaction before showing jobs | Adds friction opposite to "encontrar vaga em segundos" | Prioritize fast results list; keep chat concise, show loading/progressive states, allow one-tap fallback to normal search |
-| Pretending unsupported filters (salary/modality/contract) work fully | Wrong expectations and perceived dishonesty when results don't match | Explicitly label partial/unsupported capabilities and document MVP gaps in-response |
-| Poor mobile drawer/modal ergonomics | Hard to type/read/refine on primary device type (mobile PT-BR audience) | Mobile-first layout, keyboard-safe input, easy filter chips/editing, accessible focus/scroll behavior |
+| One generic "Social publish failed" message | Admin cannot tell whether FB or IG failed, or what to do | Per-platform status, safe pt-BR error, and actionable next step (reconnect, wait, check Instagram, fix image) |
+| Allowing IG toggle without image/preflight | Admin thinks post is scheduled/published; fails later | Inline validation: image required, JPEG/ratio/size checks, caption counter, hashtag warning before save/approve |
+| Auto-enabling IG retry after ambiguous publish | Admin creates duplicate Instagram post | Disable auto-retry; show "verifique no Instagram antes de tentar novamente" and require explicit reconciliation/confirmation |
+| Hiding linkage/permission problems until publish time | Late failure after content work | Show IG account linkage, permission/connection health, and token status in Integrations and Review panel |
+| Preview that doesn't match publish constraints | Surprise cropping/failure/ugly post | Use same aspect ratio/template rules as publish; show 1080x1080 or 1080x1350 preview and safe text area/caption length warnings |
 
 ## "Looks Done But Isn't" Checklist
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **NL intent extraction:** Often missing null/default discipline and schema rejection paths — verify ambiguous prompts produce no invented filters and invalid model output is handled safely.
-- [ ] **Chat-search API:** Often missing timeout/rate-limit/size caps/fallback behavior — verify overload, slow Groq, and malformed input scenarios.
-- [ ] **Filter mapping:** Often missing capability matrix and "unsupported vs applied" signaling — verify response explicitly reports ignored/relaxed filters for salary/modality/contract/city edge cases.
-- [ ] **Public UI integration:** Often missing regression checks on existing board/search and mobile performance — verify core browse/search/detail/contact flows still work without login/friction.
-- [ ] **Privacy & operations:** Often missing log redaction/retention and basic metrics — verify prompts/results aren't stored indiscriminately and latency/error/rate-limit signals are observable.
-- [ ] **MVP examples coverage:** Often missing documented gaps — verify each agreed example is tested and any unsupported parameter behavior is explicit, not silent.
+- [ ] **IG OAuth/connect:** Often missing re-consent for existing FB connections — verify existing connected accounts gain `instagram_content_publish`/`instagram_basic` capabilities or are prompted to reconnect.
+- [ ] **IG account linkage:** Often missing stored `ig_user_id` and "no linked IG Business/Creator account" handling — verify Page->IG lookup and clear blocked state.
+- [ ] **Image pipeline:** Often missing public reachability/expiry/JPEG/aspect validation — verify Meta-fetchable HTTPS URL, 8MB, 4:5-1.91:1, JPEG only.
+- [ ] **Container lifecycle:** Often missing status polling and terminal-state handling — verify `IN_PROGRESS/FINISHED/ERROR/EXPIRED/PUBLISHED` paths and 24h container expiry.
+- [ ] **Idempotency:** Often missing ambiguous publish reconciliation — verify timeout after `media_publish` does not create duplicate; retry checks container/external ID first.
+- [ ] **Rate limit handling:** Often missing 2207042 classification and quota visibility — verify daily-limit error is non-retry-storming and operator sees safe guidance.
+- [ ] **Decoupling:** Often missing independent FB/IG persistence/status/actions — verify FB publish succeeds when IG fails and vice versa.
+- [ ] **Observability:** Often missing sanitized structured logs/metrics — verify logs include provider/job/container/status/error code class but never tokens/raw secrets.
 
 ## Recovery Strategies
 
@@ -226,11 +266,12 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Over-constrained/hallucinated filters causing low recall | MEDIUM | Hotfix mapping to default-null + relaxation logic, adjust prompt/schema, add failing queries to golden tests, temporarily bias to keyword fallback |
-| Public endpoint abuse/quota exhaustion/latency spikes | MEDIUM | Enable kill-switch or degrade to non-LLM keyword search, tighten rate/timeout limits, reduce token/model cost, review logs/traffic and rotate protections |
-| Prompt injection or unsafe output handling discovered | HIGH | Disable/feature-flag chat endpoint, patch prompt+validator+allowlists, audit logs for exposure, add red-team regression cases before re-enable |
-| Param/DB capability mismatch producing misleading results | MEDIUM | Correct response contract to disclose unsupported filters, patch normalization/mapping, backfill or scope down claims in UI/docs, add targeted tests |
-| Regression in existing board/search behavior | HIGH | Revert chat integration commits/feature flag off, restore `list_published` contract, run regression suite, reintroduce via isolated adapter |
+| Duplicate IG post published | MEDIUM | Mark local record with confirmed external media ID; hide/disable retry; document manual deletion in Instagram if needed; add reconciliation check before future retries. |
+| Container expired before publish | LOW | Create new container from still-valid public image URL; restart publish flow; if image URL expired, regenerate URL first. |
+| Ambiguous publish (timeout/unknown) | MEDIUM | Query container `status_code`; if `PUBLISHED` or media exists, persist external ID and mark published; if `FINISHED`, publish once carefully; if `ERROR/EXPIRED`, create new container only after confirming no media was published. |
+| Token expired/revoked | LOW | Set integration `needs_reconnect`; prompt admin reconnect; after reconnect, re-run preflight and allow manual retry of blocked/failed posts. |
+| Image URL not fetchable | LOW | Fix storage/public URL/content-type; regenerate image URL; validate externally; retry with new container. |
+| Daily publish limit reached (2207042) | LOW | Pause IG dispatch for account; show next retry/window guidance; query `content_publishing_limit`; resume after window moves. |
 
 ## Pitfall-to-Phase Mapping
 
@@ -238,22 +279,29 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Hallucinated/over-constrained filters harming recall | Phase 1: Intent schema + mapping; Phase 3: UX/relaxation | Golden PT-BR queries show no invented filters; zero-result rate acceptable vs baseline; relaxation behavior visible |
-| Latency/cost/abuse on public endpoint | Phase 2: API protections/resilience; Phase 4: hardening/ops | Load/abuse tests pass; timeouts/rate limits/circuit-breaker/fallback verified; metrics and kill-switch in place |
-| Prompt injection in public chat | Phase 1: prompt+schema validation; Phase 2: endpoint hardening; Phase 4: security tests | Red-team cases cannot override instructions or emit unallowlisted actions/fields; raw internals not exposed |
-| Mismatch between extracted params and DB capabilities (salary/modality/contract/city whitelist) | Phase 1: capability matrix+normalization; Phase 2: response contract; Phase 3: UI transparency | Each supported/unsupported param has defined behavior; `applied` vs `ignored` accurate; whitelist enforced |
-| Poor UX when zero results | Phase 3: chat UI/result presentation | Zero-result state explains interpretation, suggests relaxations/alternatives, preserves fast path to jobs |
-| Privacy/logging risks on no-login chat | Phase 2: API/logging policy; Phase 4: review | Logs redacted/truncated with retention; no contacts/secrets/PII persisted unnecessarily |
-| Breaking existing board/search behavior or core no-friction value | Phase 1: additive design; Phase 3: isolated UI integration; Phase 4: regression gate | Existing public search/detail/contact flows unchanged; chat is additive/lazy-loaded; `JobPublic` boundary preserved |
+| IG treated as single-step FB publish | Phase 1: IG data model & publisher contract | Unit/integration tests cover container create -> poll -> publish; no direct single-call IG publish path |
+| Public image URL/fetchability | Phase 1: Media strategy/storage; Phase 2: publish preflight | Validation rejects private/expired/non-JPEG/bad-ratio media; staging test confirms Meta-fetchable URL |
+| Permissions/linkage/PPA gaps | Phase 1: OAuth scopes, Page->IG lookup, reconnect | Connect flow stores `ig_user_id`; missing linkage/permission produces actionable blocked state; reconnect upgrades existing FB connection |
+| Duplicate posts/idempotency | Phase 2: Pipeline/idempotency/reconciliation | Tests simulate timeout after publish, duplicate retry click, worker crash recovery; DB ends with one external post ID |
+| Rate/daily limit mishandling | Phase 2: Error classification & pacing; Phase 3: admin messaging | 2207042 mapped to blocked/non-storming; `content_publishing_limit` visible/queried; bulk publish paced |
+| Token expiry/revocation | Phase 1: verification model; Phase 2: publish-time classification; Phase 3: UX alerts | Auth errors set `needs_reconnect`; admin sees reconnect CTA; posts not auto-retried endlessly |
+| FB/IG UI-status coupling | Phase 3: Review/status UI/API | FB-only publish unaffected; IG failure leaves FB published; per-platform status/actions/errors render independently |
+| Observability/security leaks | All phases (cross-cutting) | Log audit finds no tokens/secrets; structured logs include provider, job_id, post_id, container_id, status, error class/code |
 
 ## Sources
 
-- `.planning/PROJECT.md` — milestone v1.3 goals, constraints (public no-login, free tiers, Groq, existing `GET /api/v1/public/jobs`/`crud.list_published`, `JobPublic` boundary), and known gaps (HIGH confidence, primary project context)
-- EmpregaNoix domain facts provided in milestone brief: PT-BR unstructured job texts, 100–500 jobs/month, small curated dataset, admin-hardened extraction vs new public chat threat model (HIGH confidence)
-- Established LLM application/security patterns: strict schema validation/allowlists for tool-less intent extraction, prompt-injection resistance for untrusted input, null-over-guessing for retrieval recall, and graceful degradation/fallbacks (MEDIUM-HIGH confidence; training knowledge aligned with common OWASP LLM/application guidance)
-- Public API/free-tier operations patterns: rate limiting, timeout budgets, bounded token usage, caching/dedup, and kill switches for abuse/cost control (MEDIUM-HIGH confidence)
-- Note: Live web/Context7 verification was not required to derive these domain-specific pitfalls from provided project artifacts; confidence on exact numeric thresholds (rate limits, cache TTLs) is MEDIUM and should be tuned from observed traffic/latency in Phase 2/4.
+- Meta Content Publishing guide (official, fetched 2026-11-23): https://developers.facebook.com/docs/instagram-platform/content-publishing — confirms 2-step container/publish flow, public media URL requirement, PPA note, FB Login permissions (`instagram_basic`, `instagram_content_publish`, `pages_read_engagement`), 100 posts/24h moving period, `content_publishing_limit`, container status codes, 5-min/1-min polling recommendation, containers expire in 24h.
+- Meta Instagram Platform error codes (official, fetched 2026-11-23): https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/error-codes — confirms 2207042 daily limit, 2207027 not ready, 2207052 media fetch failure, 2207008 temporary/expired builder, 2207020 expired media, 2207004/2207005/2207009/2207010 media/caption validation, 2207050 restricted account.
+- Meta App Review / permissions overview (official, fetched 2026-11-23): https://developers.facebook.com/docs/instagram-platform/app-review and https://developers.facebook.com/docs/instagram-platform/overview — confirms Standard vs Advanced Access, App Review scenarios, FB Login vs Instagram Login permission sets.
+- EmpregaNoix codebase (HIGH confidence, inspected 2026-11-23): `backend/app/services/social/publish_pipeline.py`, `facebook.py`, `publisher.py`, `meta_oauth.py`, `crud/social_posts.py`, `models/social_post.py`, `models/social_account.py`, `schemas/social_posts.py`, `frontend/app/admin/review/EditJobDialog.tsx`, `frontend/app/admin/integracoes/IntegrationsClient.tsx`.
+- Project context (HIGH confidence): `.planning/PROJECT.md` — v1.5 scope/constraints/decisions em aberto.
+
+**Confidence notes / assumptions to validate in implementation planning:**
+- **MEDIUM:** The official Content Publishing doc contains an internal inconsistency in carousel limitations ("50 published posts within a 24-hour period") versus Rate Limit section ("100 API-published posts within a 24-hour moving period"). Plan against `content_publishing_limit` endpoint and 100/24h rule, but handle 2207042 defensively. 
+- **MEDIUM:** App Review/Advanced Access requirements depend on whether app serves only owned/managed business assets (Standard may suffice) or other users/businesses (Advanced required). EmpregaNoix is single-master; confirm in Meta App Dashboard before launch.
+- **MEDIUM:** Exact PPA detectability is limited; docs state no reliable way to determine in advance. Design UX for clear remediation on failure.
+- **HIGH:** IG image must be publicly accessible at attempt time, JPEG-only, 8MB, 4:5-1.91:1, container lifecycle and error subcodes as documented above.
 
 ---
-*Pitfalls research for: EmpregaNoix v1.3 Chatbot Inteligente de Busca de Vagas (subsequent milestone)*
-*Researched: 2026-11-17*
+*Pitfalls research for: EmpregaNoix v1.5 — Instagram Graph API Content Publishing added to existing Facebook Pages integration*
+*Researched: 2026-11-23*

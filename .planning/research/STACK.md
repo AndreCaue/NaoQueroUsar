@@ -1,135 +1,293 @@
-# Stack Research
+# Stack Research — Instagram Publishing (v1.5)
 
-**Domain:** NL chat search (intent extraction → structured params → existing public job search) for EmpregaNoix v1.3
-**Researched:** 2026-11-17
-**Confidence:** HIGH (core recommendation) / MEDIUM (alternative providers, evolving free tiers)
+**Project:** EmpregaNoix  
+**Researched:** 2026-11-23  
+**Scope:** Subsequent milestone additions only — Instagram publishing in review stage, reusing existing Meta/Facebook foundation  
+**Overall confidence:** HIGH for Meta API shape/constraints (official docs verified), HIGH for Pillow/serving patterns, MEDIUM for rate-limit numbers due Meta doc inconsistency (mitigated by runtime endpoint)
 
-## Scope & Baseline (Do Not Re-research Broadly)
+---
 
-**Existing, validated stack (reuse):** Next.js 16 App Router + Tailwind 4 + React 19 (frontend), FastAPI + Pydantic v2 + SQLAlchemy 2 async + asyncpg/Neon (backend), Groq Python SDK for LLM extraction, slowapi rate limiting, Turnstile patterns, APScheduler/cron patterns, pytest/Vitest/Playwright.
+## Executive Summary
 
-**Existing integration points (confirmed in code):**
-- `backend/app/services/extraction/client.py` — Groq strict Structured Outputs (`response_format` json_schema, `strict: true`), model chain + fallback, 429/retry, timeout, untrusted-text delimiter wrapping/sanitization, Pydantic validation, pt-BR error surfacing.
-- `backend/app/services/extraction/schema.py` — strict JSON schema + Pydantic models pattern for LLM outputs.
-- `backend/app/core/config.py` — `GROQ_API_KEY`, `GROQ_MODEL`/`GROQ_MODEL_FALLBACK` (`openai/gpt-oss-20b`/`120b`), `GROQ_TIMEOUT_SECONDS`, env-tunable rate limits (`REVEAL_RATE_LIMIT`, `LOGIN_RATE_LIMIT`), CORS/Turnstile controls.
-- `backend/app/api/v1/public.py` — anonymous public routes, `@limiter.limit(...)`, `JobPublic` contact-free responses, `list_public_jobs` params `q` (max 80), `city` (whitelist resolve/ignore unknown), `sort` (`recentes|antigas` fallback), `page/limit`.
-- `backend/app/crud/jobs.py` — `list_published(..., q, city, sort)` over normalized `search_text` (title/company/activities/requirements, trigram/unaccent), AND semantics, DB-clock expiry filter.
-- `frontend/components/board/BoardToolbar.tsx` — URL-driven client controls, 300ms debounce, immediate commit on Enter/clear/chip/sort, `router.replace(..., {scroll:false})`.
+Instagram publishing fits the existing stack with **minimal additions**: keep FastAPI + SQLAlchemy async + Postgres + httpx + existing worker/cron/idempotency patterns, add **Pillow** for deterministic 1080x1080/1080x1350 JPEG card generation, and serve generated images through a **public backend URL** that Meta can cURL. Do **not** add a new queue, object-storage SDK, image CDN, or separate media service for v1.5.
 
-**Today:** no chatbot endpoint/UI, no embeddings/vector store.
+The main integration work is not new infrastructure; it is extending the existing Facebook/Meta social foundation: add Instagram scopes/permissions, resolve/store the Instagram professional account ID (`ig-user-id`) from the linked Facebook Page, add an Instagram publisher that implements the existing `SocialPublisher`-style result contract, and generalize the social draft/status/pipeline so Facebook and Instagram are independent per-platform records with shared operational safeguards.
 
-## Recommended Stack
+**Key Meta facts verified against official docs (2026-11-23):** Graph API latest is **v27.0** (changelog), while project config currently pins `META_GRAPH_VERSION=v21.0` (valid until 2027-01-21). Instagram Content Publishing for Facebook Login uses `graph.facebook.com`, Page access token, and permissions `instagram_basic`, `instagram_content_publish`, `pages_read_engagement` (plus BM-role ads permissions in some cases). Image containers require a **publicly accessible JPEG URL**; creation is `POST /{ig-user-id}/media`, publish is `POST /{ig-user-id}/media_publish`, status is `GET /{ig-container-id}?fields=status_code`.
 
-### Core Technologies (New capability: NL intent → structured search params)
+---
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Groq (reuse existing provider/models) | API, models via env (`GROQ_MODEL` default `openai/gpt-oss-20b`, fallback `openai/gpt-oss-120b`) | Extract user intent from pt-BR NL into validated JSON search params | **Best fit for this milestone:** already integrated, configured, and battle-tested in repo; zero new vendor/keys/billing; free tier aligns with "baixo custo"; low-latency inference fits chat UX; strict Structured Outputs supported (see `client.py`). Reuse infra (timeouts, retries, fallback, prompt-injection delimiting) instead of adding a second LLM stack. | 
-| Pydantic v2 (existing) | 2.14.x line (current project baseline) | Define/validate `ChatIntent` schema (LLM output) and request/response contracts | Single source of truth for validation, defaults, and normalization; same pattern as `ExtractedJobRaw`/`ExtractionLLMOutput`; prevents invented/unsafe params from reaching search. |
-| FastAPI + slowapi (existing) | project baseline | Public `chat-search` endpoint with rate limiting, timeouts, bounded payloads | Reuse proven public-surface protections (`limiter`, pt-BR errors, no contacts in public payload) and async request handling. |
-| Next.js 16 + React 19 + Tailwind 4 (existing) | project baseline | Mobile-first chat drawer/modal UI | No new UI framework needed; compose from existing primitives/patterns (client component, URL/search integration where appropriate, modal/drawer behavior) to keep bundle and complexity minimal. |
+## Recommended Stack Additions
 
-### Supporting Libraries
+### Core Technologies (No Change)
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| `groq` (Python SDK, existing) | 1.7.0 installed in env (PyPI latest observed: 1.7.0; npm `groq` 6.24.0 is unrelated JS pkg) | Chat completions with `response_format={"type":"json_schema","json_schema":{..., "strict": true}}` | Always for chat intent extraction when using Groq. Keep `temperature=0`, strict schema, and Pydantic re-validation. |
-| `httpx` (existing) | 0.28.x baseline | Timeouts/HTTP plumbing (already used across stack) | Reuse for any verification/calls; ensure overall chat request budget is enforced (see Protections). |
-| `slowapi` / existing limiter wiring (existing) | project baseline | Per-IP throttling of public chat endpoint | Required. Public, anonymous, LLM-backed endpoint is abuse/cost-amplification surface. |
-| `zod` (existing, frontend) | 4.x baseline | Runtime-validate chat API response shape in client (optional but cheap) | Use if parsing/guarding response in TS client; not mandatory if types are simple and trusted-internal. |
-| **No new frontend chat library** | n/a | Chat transcript/input UI | Build minimal custom drawer + message list + input (Tailwind). Avoid heavyweight chat kits for this scope. |
-| **No embeddings/vector DB libs** | n/a | Retrieval | Out of scope: "LLM não recebe centenas de vagas; apenas extrai parâmetros" and reuse existing `search_text`/filters. |
+| Technology | Current | Purpose | Instagram Impact | Confidence |
+|------------|---------|---------|------------------|------------|
+| FastAPI | 0.143.0 | Backend API/worker endpoints | Reuse; add public image-serving endpoint and Instagram admin endpoints | HIGH |
+| SQLAlchemy async + asyncpg | 2.1.4 / 0.32.0 | Persistence | Reuse; add small schema fields/tables for IG account id, image asset, per-platform post metadata | HIGH |
+| httpx | 0.28.1 | HTTP client | Reuse for Graph API container/publish/status/limit calls; no new client | HIGH |
+| APScheduler/existing cron worker | 3.10.4 / cron secret endpoint | Async publish | Reuse existing claim/lock/retry/idempotency pipeline; add Instagram provider handling | HIGH |
+| Next.js 16 + React 19 + Tailwind 4 | existing | Admin review UI | Reuse; extend EditJobDialog/review status UI with Instagram section | HIGH |
+| Neon Postgres | managed | DB | Reuse; acceptable for small JPEG bytea/blob metadata in v1.5 | HIGH |
 
-### Development Tools
+### Supporting Libraries (New)
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| pytest + pytest-asyncio + httpx ASGI/TestClient (existing) | Unit/integration tests for intent parser, normalization, endpoint protections, and search mapping | Mock Groq client (inject fake client / patch call seam) as in extraction tests; never require real `GROQ_API_KEY`. Add cases for pt-BR phrasing, unknown cities, prompt injection, timeouts, 429/rate-limit. |
-| Vitest / Playwright (existing) | Frontend chat drawer behavior and E2E search flows | Test mobile-first open/close, submit, "parâmetros entendidos" display, result rendering, empty/error states. |
+| Library | Version | Purpose | When to Use | Why | Confidence |
+|---------|---------|---------|-------------|-----|------------|
+| Pillow | `13.0.0` | Generate fallback job card image (1080x1080 or 1080x1350 JPEG) | When Instagram post has no selected/uploaded image source and fallback card is required | Standard Python imaging lib; pure backend generation; supports JPEG, drawing, text, RGB conversion. Current PyPI release 2026-10-16. | HIGH |
+| python-multipart | `>=0.0.22,<1.0` | Parse multipart/form-data image uploads in FastAPI | Only if v1.5 review flow supports admin image upload | FastAPI form/file upload dependency; small, explicit. Do **not** add if image source is logo/card-generated only. | MEDIUM |
+
+### Development Tools / Assets (New)
+
+| Tool/Asset | Purpose | Notes | Confidence |
+|------------|---------|-------|------------|
+| Bundled OSS font files (`.ttf/.otf`) in backend assets | Deterministic card rendering with Pillow | Use a permissively licensed font (e.g., Noto Sans / Inter / DejaVu Sans). Do not rely on OS fonts in Railway/Render. Store under `backend/app/assets/fonts/` and load by path. | HIGH |
+| Meta Graph API Explorer / Access Token Debugger (manual) | Manual checklist and permission/token validation | Operational tooling, not runtime dependency. Document in checklist. | HIGH |
 
 ## Installation
 
 ```bash
-# Backend (NEW deps): none required for recommended path
-# Reuse: fastapi, pydantic, groq, httpx, slowapi/limiter, sqlalchemy stack
+# Backend (pyproject.toml / uv)
+uv add "Pillow==13.0.0"
 
-# Frontend (NEW deps): none required for recommended path
-# Reuse: next, react, react-dom, tailwindcss (and existing utils)
-
-# Optional ONLY if an alternative provider is explicitly chosen later:
-# pip install google-genai        # Gemini API (alternative)
-# pip install ollama              # local Ollama client (dev/offline alternative)
-# pip install openai              # if preferring OpenAI-compatible client for OpenRouter (httpx also works)
+# Only if review-stage image upload is chosen:
+uv add "python-multipart>=0.0.22,<1.0"
 ```
+
+```toml
+# backend/pyproject.toml additions
+dependencies = [
+  # existing...
+  "Pillow==13.0.0",
+  # "python-multipart>=0.0.22,<1.0",  # only for upload flow
+]
+```
+
+**No frontend package additions required** for the core Instagram review/publish flow. Use existing React/Tailwind components and browser APIs for character/hashtag counting and image preview.
+
+---
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| **Groq reuse** (`openai/gpt-oss-20b`/`120b`, strict JSON schema) | **Google Gemini Flash via `google-genai`** (e.g. Flash-family models with `response_mime_type='application/json'` + `response_schema`/Pydantic) | If Groq free-tier limits/availability block MVP or quality is insufficient for pt-BR intent parsing. Tradeoff: adds dependency (`google-genai`), new API key/billing/quota management, and a second provider integration path. **Confidence: MEDIUM** (API pattern verified via docs; exact "free tier" quotas/models change). |
-| **Groq reuse** | **OpenRouter (OpenAI-compatible)** with a free/low-cost model | If you need model variety/fallback marketplace. Tradeoff: extra account/key, variable model support for strict structured outputs, latency/availability depends on routed provider; can often be called with existing `httpx` but schema enforcement must be verified per model. **Confidence: MEDIUM**. |
-| **Groq reuse** | **Ollama (local) + `ollama` Python client** (`format=model_json_schema()`) | Local/dev or offline experimentation; useful where no external API desired. **Not recommended for hosted MVP**: requires hosting the model/runtime (RAM/CPU/GPU), higher latency/ops cost on Railway/Render/Vercel-adjacent infra, and conflicts with "baixo custo operacional" for public traffic. **Confidence: HIGH** for local viability, **LOW/MEDIUM** for hosted free-tier fit. |
-| **Rule-based heuristics only** (regex/keyword parsing, no LLM) | — | Only as deterministic fallback for trivial cases; NL salary/modality/contract phrasing in pt-BR is too variable for primary path. Can complement LLM (post-normalization), not replace it. |
-| **Custom chat UI (Tailwind + React)** | Prebuilt chat UI libs (e.g. `react-chatbot-kit`, chat widget packages) | Only if you need rich chat features fast and accept bundle/style/lock-in cost. For MVP (single-turn or short guided search, params + results list), custom is simpler and matches existing dark minimal design. |
-| **Query-param translation (LLM → call existing `GET /public/jobs`)** | Dedicated DB columns/FTS for salary/modality/contract now | Prefer incremental: map extractable hints to `q`/`city`/`sort` and apply **in-memory post-filter/ranking** over the returned page/candidate set for non-native fields when feasible; only extend schema/indexes if product needs demand it (keeps milestone small, avoids migration risk). |
+| Category | Recommended | Alternative | When to Use Alternative |
+|----------|-------------|-------------|-------------------------|
+| Image generation | Pillow 13.0.0 | Playwright/HTML-to-image screenshot, Weasyprint, ImageMagick | Use browser rendering only if card design becomes too complex for Pillow. Avoid for v1.5: heavier runtime, fonts/browser deps, slower in worker. |
+| Public image hosting for Meta fetch | Backend public endpoint serving DB-stored JPEG bytes | S3/R2/Supabase Storage/Cloudinary public object URL | Use object storage when image volume/traffic grows, or when backend public serving becomes operationally limiting. Not needed for 100-500 jobs/month. |
+| Image persistence | Postgres `bytea`/metadata table with unguessable token | Filesystem on container disk | Use filesystem only with persistent volume. Avoid ephemeral disk on Railway/Render because Meta may fetch after restart/redeploy. |
+| Instagram API client | Direct httpx calls following existing FacebookPublisher pattern | Third-party Meta/Instagram SDK wrapper | Use SDK only if it is actively maintained and covers Content Publishing clearly. Avoid now: extra dependency, abstraction mismatch with existing explicit Graph error handling. |
+| Graph API version | Keep `META_GRAPH_VERSION` config-driven; current project default `v21.0`, latest verified `v27.0` | Hardcode v27.0 | Only hardcode after deliberate upgrade/test. Config-driven is safer and matches existing pattern. |
+| Instagram account linkage | Store `ig_user_id` (instagram_business_account id) on social account/metadata at connect/verify time | Resolve ig-user-id on every publish | On-demand lookup is acceptable fallback, but storing reduces publish latency and failure modes. Refresh on reconnect/verify. |
+
+---
 
 ## What NOT to Use
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| Adding a **second LLM provider** by default (Gemini/OpenRouter/Ollama) | Duplicates config, secrets, failure modes, and cost/latency tuning when Groq is already integrated and sufficient for parameter extraction. | **Reuse Groq** via existing `services/extraction/client.py` patterns; abstract only if/when a second provider is truly needed. |
-| **Embeddings/vector search / pgvector / external vector DB** | Overkill for 100–500 jobs/month and explicit constraint ("LLM não recebe centenas de vagas; apenas extrai parâmetros"). Adds infra, indexing, and cost. | LLM intent extraction + existing `search_text` trigram/unaccent + whitelist filters + lightweight post-filtering. |
-| **Sending job listings/content blobs to the LLM** | Privacy/cost/latency/token risk; unnecessary when DB/search already exists. | Send only the user's NL query (sanitized/delimited) and return structured params + DB results. |
-| **Unvalidated LLM output applied directly to DB/query** | Prompt injection/hallucination can produce invalid cities, extreme limits, or unsupported filters. | Strict JSON schema + Pydantic validation + whitelist normalization (`resolve_city`/`resolve_sort` semantics), caps on `q` length, page/limit bounds. |
-| **Public chat endpoint without throttle/timeout/budget** | Anonymous LLM endpoint is trivially abusable (cost, rate exhaustion, hanging requests). | `@limiter.limit(...)` (env-tunable, e.g. new `CHAT_SEARCH_RATE_LIMIT`), strict request body size/max chars, `asyncio.timeout`/client timeout aligned with `GROQ_TIMEOUT_SECONDS`, bounded retries. |
-| **Exposing contacts in chat-search response** | Breaks existing privacy/scraping posture (contacts revealed only via gated reveal flow). | Return `JobPublic`-shaped items (no contact fields) and reuse existing reveal flow for contact. |
-| **Frontend global chat state library / heavy widget SDK** | Unneeded complexity for MVP drawer; harder to keep mobile-first and on-brand. | Local component state (or small hook) + existing design tokens/Tailwind. |
+| New queue/broker (Celery, Redis, BullMQ, SQS) | Overkill for existing single-admin, low-volume, already-working worker/cron with claim/lock/retry/idempotency | Extend existing `publish_pipeline` / worker / cron pattern with provider-aware processing |
+| New object-storage service/SDK by default | Adds infra, credentials, failure modes, and unnecessary cost/complexity for small JPEG cards | DB-backed public image endpoint first; revisit object storage only if needed |
+| Frontend-only generated image data URLs/base64 for Meta | Meta fetches `image_url` from a public server; data URLs are not publishable URLs | Persist JPEG server-side and expose stable public HTTPS URL |
+| Localhost/ephemeral file URLs in production | Meta cannot fetch localhost; ephemeral disk may lose files before container fetch/publish | Public backend URL backed by persistent DB/object storage |
+| Separate Meta app/token system for Instagram | Product constraint: reuse existing Meta/Facebook integration | Reuse existing app, encrypted token storage, OAuth/connect flow, env vars |
+| Generic "social media scheduler" libraries | They hide Graph API behavior, idempotency, and error taxonomy needed for safe retries | Explicit provider publishers with existing `PublishResult` categories |
+| Storing raw Graph error payloads/tokens in logs | Security/privacy risk; tokens/secrets must never leak | Existing sanitized logging pattern and safe error messages |
+
+---
 
 ## Stack Patterns by Variant
 
-**If intent maps cleanly to existing filters (city whitelist, keywords, sort):**
-- LLM outputs `{ q?, city?, sort?, page?, limit?, interpreted: {...} }` (constrained).
-- Normalize with existing helpers/semantics: `resolve_city` behavior (unknown → ignored/no 400), `resolve_sort` fallback, trim/cap `q` (<=80 like public API), clamp pagination.
-- Call `crud.list_published` (or internal service) and return `{ interpretation, params_applied, results: JobPublic[], total }`.
+**If image source is "generated card from job data" (recommended default):**
+- Use Pillow to render 1080x1080 (1:1) or 1080x1350 (4:5) JPEG, sRGB, <8MB.
+- Store generated bytes + metadata in Postgres; expose public fetch URL.
+- Because it has no external asset dependency and is deterministic/retry-safe.
 
-**If user asks for non-native fields (salário/modalidade/contrato/senioridade) and schema is unchanged:**
-- Extract hints in intent schema (e.g. `salary_min`, `modality`, `contract_type`, `seniority`, `keywords`).
-- Translate to safe `q` expansions/keywords where helpful **and/or** post-filter/rank a bounded candidate set in Python (never scan unbounded rows).
-- **Be explicit in response:** mark unsupported/partially-supported params in `interpretation` so UI can show "entendi X; filtro Y aplicado parcialmente/não disponível".
-- Because: incremental delivery without DB migration; honest UX per milestone caveat.
+**If image source is "admin upload in review":**
+- Add `python-multipart`, validate MIME (`image/jpeg`, optionally accept PNG then normalize to JPEG), dimensions/aspect ratio, and max size.
+- Normalize to JPEG sRGB before storing/serving.
+- Because Meta image container supports JPEG; normalizing avoids runtime publish failures.
 
-**If Groq returns 429/model-unavailable/timeout:**
-- Reuse existing retry/fallback/dead-model handling pattern from `extraction/client.py` (adapted to chat intent call).
-- Return a fast, user-safe pt-BR fallback: suggest using manual search/filters (`BoardToolbar`) rather than hanging; never leak internals/keys.
+**If image source is "company logo":**
+- Treat logo as an asset input, not final publish image unless it already meets IG image rules.
+- Compose logo into a generated branded card via Pillow.
+- Because logos often have transparent PNG, wrong aspect ratio, or small dimensions.
 
-**If abuse risk is observed in production:**
-- Tighten `CHAT_SEARCH_RATE_LIMIT`, lower max input length, add cheap heuristics cache for identical normalized queries (in-memory, short TTL) before adding providers/infra.
+**If backend is not publicly reachable by Meta (local dev):**
+- Use a tunnel/public dev URL only for manual end-to-end IG publish tests.
+- Keep unit/integration tests fully mocked.
+- Because Meta must cURL `image_url`; localhost is not reachable from Meta.
+
+---
 
 ## Version Compatibility
 
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| `groq==1.7.0` (Python, installed) | `openai/gpt-oss-20b` / `openai/gpt-oss-120b` (configured) + `httpx 0.28.x` | Existing code already uses strict `json_schema` response_format; keep schema `additionalProperties:false` and required fields aligned with strict decoding. |
-| FastAPI + Pydantic v2 (project baseline) | `groq` 1.7.0, slowapi limiter | Define intent models as Pydantic v2; reuse dependency injection patterns from `public.py`/`deps.py`. |
-| Next.js 16.4.x + React 19.3.x + Tailwind 4.3.x | Existing component patterns (`"use client"`, `useTransition`, `router.replace`) | Chat drawer should be a client component; keep server/client boundary clear (no secrets in client). |
-| `google-genai` (optional alternative) | Python 3.x (project), Gemini API | Only if adopted: verify pinned version at implementation time; different SDK/response shape than Groq—**do not mix** without an adapter. (Confidence: MEDIUM) |
-| `ollama` Python client (optional alternative) | Local Ollama runtime | Only for local/dev; structured output via `format=<model_json_schema()>` differs from Groq's `response_format`. (Confidence: MEDIUM) |
+| Package/API | Compatible With | Notes |
+|-------------|-----------------|-------|
+| `Pillow==13.0.0` | Python >=3.11 (project uses 3.11+) | Current PyPI release verified 2026-10-16. Use `Image.new("RGB", ...)`, `ImageDraw`, `ImageFont.truetype`; save JPEG with `quality`, `optimize=True`, `progressive=False` as needed. |
+| Meta Graph API `v27.0` | Instagram Graph API Content Publishing | Latest per Graph API changelog (2026-11-04). Project currently configured as `v21.0`; keep config-driven and test before bump. |
+| Facebook Login Page access token | Instagram Content Publishing (Facebook Login flow) | Official docs: Facebook Login can publish using Page access token on `graph.facebook.com`; app user must have required tasks/roles on Page. |
+| `httpx==0.28.1` | Existing FacebookPublisher/pipeline | Reuse same timeout/error taxonomy style; add explicit handling for IG container status and rate-limit responses. |
 
-## Integration Blueprint (What to Build, Minimal)
+---
 
-1. **Backend schema/service:** `app/services/chat_search/` (or similar) with `ChatIntent` Pydantic/JSON schema, `extract_intent(query, settings, client?)` reusing Groq call hardening patterns (delimiter-wrap user text, strict schema, timeout/retries/fallback), and deterministic `normalize_intent()` mapping to existing search params.
-2. **Backend endpoint:** `POST /api/v1/public/jobs/chat-search` (name flexible) in `public.py` or a dedicated router: `@limiter.limit(chat_limit)`, input cap, LLM timeout budget, return interpretation + `JobListResponse`/`JobPublic` results; **no contact fields**.
-3. **Config:** add env-tunable knobs in `config.py` only as needed (e.g. `CHAT_SEARCH_RATE_LIMIT`, `CHAT_MAX_QUERY_CHARS`, `CHAT_TIMEOUT_SECONDS`) with safe defaults; **do not hardcode models** (keep `GROQ_MODEL` chain).
-4. **Frontend:** client component (e.g. `ChatSearchDrawer`) launched from board UI; calls backend, shows "entendi" params chips/summary, renders job cards/list reusing existing presentation where possible; mobile-first, accessible (focus trap/ESC), no history pollution required.
-5. **Non-native fields:** start with text-mapping/post-filter strategy and explicit "parcial/não suportado" signaling; add DB/filter extensions only if required by accepted examples.
+## Meta Graph API / Permissions / Limits (Verified)
+
+### Verified endpoints and flow (Facebook Login / existing app shape)
+
+| Step | Endpoint | Purpose | Notes |
+|------|----------|---------|-------|
+| Resolve IG user id | `GET /{page-id}?fields=instagram_business_account&access_token={page_access-token}` | Obtain `ig-user-id` linked to selected FB Page | Official Page/IG docs. Requires Page token and permissions; store resulting `instagram_business_account.id`. |
+| Create image container | `POST /{ig-user-id}/media` | Create IG media container | Params: `image_url` (required, public HTTPS), `caption` optional, `access_token`. Returns container `id`. For Facebook Login use `graph.facebook.com/{META_GRAPH_VERSION}`. |
+| Check container status | `GET /{ig-container-id}?fields=status_code` | Confirm readiness before publish when needed | Status: `EXPIRED`, `ERROR`, `FINISHED`, `IN_PROGRESS`, `PUBLISHED`. Poll ~1/min, max ~5 min for async cases; images often finish quickly but code must handle `IN_PROGRESS`. |
+| Publish container | `POST /{ig-user-id}/media_publish` | Publish container | Params: `creation_id`, `access_token`. Returns published media `id`. |
+| Read publish limit | `GET /{ig-user-id}/content_publishing_limit?fields=quota_usage,config` | Observe account quota | Use live values; do not hardcode 25/50/100. |
+| Optional permalink/status enrichment | `GET /{ig-media-id}?fields=id,permalink,timestamp` | Persist permalink/metadata | Only request needed fields; handle missing permalink gracefully. |
+
+### Permissions / App Review assumptions
+
+| Permission | Needed | Why | Confidence |
+|------------|--------|-----|------------|
+| `instagram_basic` | Yes | Read IG business account linkage and basic IG account/media access required by IG publishing flow | HIGH (official docs) |
+| `instagram_content_publish` | Yes | Create/publish IG containers | HIGH (official docs) |
+| `pages_read_engagement` | Yes | Required in Facebook Login IG Content Publishing requirements; already present | HIGH |
+| `pages_show_list` | Yes (already present) | Page listing/selection and Page->IG discovery flows | HIGH |
+| `pages_manage_posts` | Keep (already present) | Existing Facebook Page publishing; no regression | HIGH |
+| `ads_management` / `ads_read` | Conditional | Meta docs: may be required if app user role granted via Business Manager for some IG/Page flows | MEDIUM (role-dependent) |
+
+**App Review / access caveat:** Instagram Content Publishing and permissions may require Advanced Access/App Review for external users. EmpregaNoix is single-admin now, but checklist must document current mode, role/task requirements, and review needs before broader rollout.
+
+### Rate limits / publishing constraints
+
+| Constraint | Verified Value / Behavior | Stack implication | Confidence |
+|------------|---------------------------|-------------------|------------|
+| Content publishing limit | Meta docs currently conflict: Content Publishing guide says 100 posts/24h; other refs/pages mention 50; older blog posts mention 25. `content_publishing_limit` is authoritative at runtime. | Do **not** hardcode. Query `content_publishing_limit` before publish batches or on 429/rate-limit errors; expose safe retry/wait messaging. | MEDIUM (doc inconsistency), HIGH (mitigation) |
+| Container creation limit | 400 containers / rolling 24h (IG User Media reference) | Avoid unnecessary container recreation; reuse idempotency keys and persist container/media IDs. | HIGH |
+| Container expiry | 24 hours | Publish before expiry; if expired, recreate container. | HIGH |
+| Image format | JPEG only; no MPO/JPS | Normalize generated/uploaded output to JPEG. | HIGH |
+| Image size/aspect | <=8MB; width 320-1440; aspect ratio within 4:5 to 1.91:1; sRGB | Generate 1080x1080 or 1080x1350 JPEG, sRGB. | HIGH |
+| Caption | Max 2200 chars, 30 hashtags, 20 @ tags (API enforces/limits) | Keep existing backend validation as source of truth; UI counter/warning is advisory. | HIGH |
+| Media fetch | Meta cURLs `image_url`; must be public at attempt time | Public HTTPS URL, no auth, stable during publish window. | HIGH |
+
+---
+
+## Image Generation / Serving / Public URL Guidance (Concrete)
+
+### Recommended v1.5 default (no new infra)
+
+1. **Generate** image with Pillow in backend service (`app/services/social/image_card.py` or similar).
+2. **Normalize** to JPEG RGB/sRGB, dimensions 1080x1080 or 1080x1350, quality tuned to stay comfortably under 8MB.
+3. **Persist** bytes in Postgres in a small dedicated table, e.g. `social_media_assets`:
+   - `id` UUID PK
+   - `provider` (`instagram`)
+   - `job_id` FK
+   - `kind` (`generated_card`, `upload`, future)
+   - `mime_type` (`image/jpeg`)
+   - `width`, `height`, `bytes_size`
+   - `sha256` (dedupe/debug, optional)
+   - `storage` (`db`)
+   - `data` `bytea` (or split table if preferred)
+   - `public_token` unique, unguessable
+   - `created_at`, `expires_at` optional
+4. **Serve** via public endpoint: `GET /api/v1/public/social-images/{public_token}.jpg`.
+5. **Return URL** as `settings.BACKEND_PUBLIC_URL`/`SITE_PUBLIC_URL`-derived absolute HTTPS URL for `image_url` in IG container creation.
+
+### FastAPI serving pattern
+
+```py
+from fastapi import Response
+
+@app.get("/api/v1/public/social-images/{token}.jpg")
+async def get_social_image(token: str, session: AsyncSession = Depends(get_session)):
+    asset = await get_public_image_asset(session, token)
+    if asset is None:
+        raise HTTPException(status_code=404)
+    return Response(
+        content=asset.data,
+        media_type="image/jpeg",
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "Content-Disposition": 'inline; filename="job-card.jpg"',
+        },
+    )
+```
+
+**Rules:**
+- No auth on this endpoint (Meta fetches it), but path token must be unguessable.
+- Do not expose sequential IDs.
+- Set `Content-Type: image/jpeg` and long cache headers; tokened URLs are immutable.
+- Ensure backend URL is publicly reachable over HTTPS in deployed env.
+- For local dev, Meta cannot fetch `localhost`; use mock publish tests or a temporary tunnel only for manual validation.
+
+### Pillow card generation pattern
+
+```py
+from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont
+
+def render_job_card(payload: JobCardPayload, size=(1080, 1350)) -> bytes:
+    img = Image.new("RGB", size, "#0f0a1a")
+    draw = ImageDraw.Draw(img)
+    font_title = ImageFont.truetype("app/assets/fonts/NotoSans-Bold.ttf", 56)
+    # ...draw branded card...
+    buf = BytesIO()
+    img.save(buf, format="JPEG", quality=92, optimize=True, progressive=True)
+    data = buf.getvalue()
+    if len(data) > 8_000_000:
+        # deterministic fallback: reduce quality/dimensions while keeping aspect
+        ...
+    return data
+```
+
+**Rules:**
+- Bundle fonts in repo; never depend on host OS fonts.
+- Enforce aspect ratio and size before persisting.
+- Keep rendering deterministic and idempotent for same input+template version.
+- Include only safe job fields; avoid leaking admin-only/private data beyond intended caption/card policy.
+
+---
+
+## Integration Points with Existing Stack
+
+| Existing Component | Current Behavior | Instagram Addition | Confidence |
+|--------------------|------------------|--------------------|------------|
+| `app/services/social/meta_oauth.py` | FB scopes `pages_show_list,pages_manage_posts,pages_read_engagement`; stores Page token/account | Add `instagram_basic,instagram_content_publish` to scope set; on connect/verify fetch `instagram_business_account` for selected Page and persist `ig_user_id` (new column/field). Handle missing linked IG account as actionable safe error. | HIGH |
+| `app/models/social_account.py` / Alembic | Stores provider/page/token/status | Extend for IG linkage: either add `ig_user_id`/`ig_username` nullable columns or provider-specific metadata. Prefer explicit columns for queryability; keep token encrypted. | HIGH |
+| `app/services/social/types.py` | `SocialPostPayload` has FB/page fields only | Extend payload for Instagram: `ig_user_id`, `image_url`, `caption`, optional `alt_text`, `container_id`; keep provider-neutral result types. | HIGH |
+| `app/services/social/publisher.py` | Protocol `publish(post)` | Keep protocol; implement `InstagramPublisher` with same `PublishResult` category contract (`transient/permanent/ambiguous`). | HIGH |
+| `app/services/social/publish_pipeline.py` | Facebook-only claim/process/publish | Refactor to provider-aware pipeline or parallel IG pipeline reusing shared helpers. Preserve FB behavior exactly; isolate IG-specific container creation/status/publish. | HIGH |
+| `app/crud/social_posts.py` | Assumes one FB social post shape; status item builder FB-specific | Support per-platform records (`provider=facebook|instagram`, unique `(job_id, provider)` already exists). Add IG-specific status labels/URLs/permalink handling. | HIGH |
+| `app/api/v1/admin.py` | FB draft/generate/save/approve/status/retry endpoints | Add Instagram draft/status/retry endpoints or generalize by provider query param. Keep backward compatibility for FB UI. | HIGH |
+| `frontend/app/admin/review/EditJobDialog.tsx` | Single "Post para Facebook" section | Add "Post para Instagram" section side-by-side: toggle, editable caption prefilled, 2200 counter, >30 hashtags warning, image preview, per-platform status. Reuse existing auth/error patterns. | HIGH |
+| `frontend/app/admin/integracoes/IntegrationsClient.tsx` | Facebook connection UI | Show IG linked account state derived from FB Page connection; surface "no Instagram Business account linked" and permission/reconnect actions. | HIGH |
+| `backend/.env.example` / config | Meta/FB/social env vars | Add only needed vars: e.g. `BACKEND_PUBLIC_URL` (if needed for image URL), `INSTAGRAM_IMAGE_*` limits optional, feature flag if desired. Do **not** duplicate Meta app secrets. | MEDIUM |
+
+---
+
+## Observability / Safety Additions
+
+| Concern | Recommendation | Confidence |
+|---------|----------------|------------|
+| Token/secret logging | Never log access tokens, image public tokens in sensitive contexts beyond necessary URL generation; never log raw Graph responses containing tokens. | HIGH |
+| Error taxonomy | Map IG Graph errors to existing `PublishFailureCategory`: 429/5xx/transient network = transient; invalid token/permission/media format/ownership = permanent; timeout after create/publish ambiguity = ambiguous/no auto-retry. | HIGH |
+| Idempotency | Reuse `(job_id, provider)` uniqueness; persist `external_container_id`, `external_post_id`, attempts, status. Before create/publish, check existing IDs to avoid duplicates. | HIGH |
+| Rate limit handling | Read `content_publishing_limit` and back off when quota exhausted; treat publish 2207042/subcode as rate-limited transient/permanent-by-policy with clear operator message and next retry window. | MEDIUM |
+| Token expiration | Reuse existing verify/reconnect model; mark account `needs_reconnect` on definitive token/permission failures. Optional proactive alert before expiry if expiry metadata available. | HIGH |
+
+---
 
 ## Sources
 
-- **Codebase (HIGH):** `backend/app/services/extraction/client.py`, `backend/app/services/extraction/schema.py`, `backend/app/core/config.py`, `backend/app/api/v1/public.py`, `backend/app/crud/jobs.py`, `frontend/components/board/BoardToolbar.tsx`, `.planning/PROJECT.md`
-- **Context7 / library docs (HIGH for API patterns):** `/groq/groq-python` — `response_format` strict JSON schema / Structured Outputs for chat completions; `/websites/deepwiki_googleapis_python-genai` — Gemini structured output via `response_mime_type='application/json'` + `response_schema` (Pydantic) and `response.parsed`; `/ollama/ollama-python` — `chat(..., format=Model.model_json_schema(), options={"temperature":0})` structured outputs
-- **Registry checks (HIGH for installed/latest observed):** `pip index versions groq` → installed/latest `1.7.0`; `npm view groq version` → `6.24.0` (JS package, not the Python SDK)
-- **Project constraints (HIGH):** `.planning/PROJECT.md` v1.3 goal/constraints (public no-login, low cost, LLM only extracts params, reuse existing search)
+| Source | What was verified | Confidence |
+|--------|-------------------|------------|
+| https://developers.facebook.com/docs/instagram-platform/content-publishing | IG Content Publishing flow, requirements, permissions by login type, image public URL requirement, JPEG-only limitation, container/publish/status endpoints, rate-limit text, container expiry | HIGH |
+| https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media | Image specs (JPEG, 8MB, 320-1440, 4:5-1.91:1, sRGB), container creation params, 400 containers/24h, caption limits, status behavior | HIGH |
+| https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media_publish | Publish endpoint, creation_id, permissions/tasks, limitations | HIGH |
+| https://developers.facebook.com/docs/graph-api/changelog/ | Current Graph API version v27.0 (2026-11-04), v21.0 availability until 2027-01-21 | HIGH |
+| https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/page/ and Page docs (via web search results) | `GET /{page-id}?fields=instagram_business_account` returns linked IG business account id; permission requirements | HIGH |
+| https://pypi.org/project/pillow/ and https://pillow.readthedocs.io/en/latest/releasenotes/13.0.0.html | Pillow latest version 13.0.0 (2026-10-16), Python >=3.11 | HIGH |
+| https://fastapi.tiangolo.com/advanced/custom-response/ | Serving bytes via `Response(content=..., media_type="image/jpeg")` | HIGH |
+| Project code inspection (`backend/app/services/social/*`, models, schemas, admin routes, frontend review/integrations) | Existing integration points, provider contract, worker/pipeline patterns, env/config conventions | HIGH |
 
 ---
-*Stack research for: EmpregaNoix v1.3 Chatbot Inteligente de Busca de Vagas (NL chat search)*
-*Researched: 2026-11-17*
+
+*Stack research for: EmpregaNoix v1.5 Instagram publishing additions*  
+*Researched: 2026-11-23*

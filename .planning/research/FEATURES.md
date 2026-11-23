@@ -1,155 +1,218 @@
 # Feature Research
 
-**Domain:** Chatbot de busca de vagas por linguagem natural (NL job search) em job board/agregador existente
-**Researched:** 2026-11-17
-**Confidence:** MEDIUM (síntese de padrões comuns do domínio; buscas web retornaram indisponíveis neste ambiente — validar com referências de produto durante planejamento)
+**Domain:** Instagram job-post publishing integration in admin review (EmpregaNoix v1.5 subsequent milestone)
+**Researched:** 2026-11-23
+**Confidence:** MEDIUM-HIGH (Meta constraints verified via official docs; UX patterns from existing codebase + common admin publishing workflows; some product-pattern confidence is MEDIUM)
 
-## Contexto e escopo (milestone v1.3)
+## Scope
 
-Subsequente ao EmpregaNoix (board público sem login). **Já existe:** busca keyword `q` (título/empresa/atividades/requisitos), filtro cidade (SP, RJ, BH, Remoto), ordenação por data, paginação, modal/detalhe, revelação protegida de contato, curadoria/admin e pipeline de extração.
+This research covers **only** the new v1.5 capability: publishing approved jobs to Instagram from the review stage, alongside the existing Facebook flow. It assumes existing v1.2/v1.4 foundations remain: Meta OAuth/connect, selected Facebook Page, admin review queue/dialog, social draft generation/save, async publish worker/retry/idempotency primitives, per-job social status, and secure token storage.
 
-**Foco exclusivo das novas features:** interface de chat para busca em linguagem natural, extração de parâmetros (cargo, senioridade, cidade, remoto/híbrido/presencial, faixa salarial, tipo de contrato, palavras-chave), aplicação nos filtros/busca existentes, retorno de vagas relevantes, combinações de filtros e “vagas parecidas” (limitado/futuro conforme viável). **Restrição crítica:** o LLM **não** recebe centenas de vagas — apenas extrai parâmetros/intenção para JSON estruturado e validado.
+**Out of scope (explicit):** Stories/Reels/carousel, scheduling, analytics/insights, comment/DM handling, multiple Instagram accounts, auto-sync edits/deletes to published social posts.
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Recursos que usuários assumem existir em um chat de busca de vagas. Ausência faz o recurso parecer quebrado ou inútil.
+Features users assume exist. Missing these = the Instagram integration feels incomplete, unsafe, or unusable.
 
-| Feature | Why Expected | Complexity | Notes / Dependencies on existing |
-|---------|--------------|------------|----------------------------------|
-| Entrada em linguagem natural (pt-BR) com envio rápido | Usuário espera “digitar como fala” em vez de montar filtros manualmente | LOW | UI (drawer/modal) client-side; texto livre enviado ao endpoint de chat-search. Depende apenas de novo componente frontend. |
-| Extração de intenção/parâmetros para JSON estruturado e validado | Padrão de NL-to-search: converter frase em filtros executáveis sem inventar dados | MEDIUM | LLM (Groq, reuso/baixo custo) + schema rígido (Pydantic/Zod) + defaults seguros. **Sem corpus de vagas no prompt.** Campos-alvo: cargo, senioridade, cidade (whitelist), modalidade, faixa salarial, tipo contrato, palavras-chave, ordenação. |
-| Aplicação segura à busca/filtros existentes | Resultado precisa refletir o que o usuário pediu usando a fonte de verdade atual | MEDIUM | Mapear para `GET /api/v1/public/jobs` / `crud.list_published` (`q`, cidade, sort, paginação). Normalizar cidade para whitelist (SP/RJ/BH/Remoto); ignorar/avisar valores fora. Dependência direta do comportamento atual de `q` e filtros. |
-| Exibição do que o sistema entendeu (parâmetros interpretados) | Transparência: usuário confia quando vê filtros aplicados e pode corrigir | LOW | Mostrar chips/resumo (cargo, cidade, modalidade etc.) na UI do chat. Não requer mudança de backend além de retornar interpretação. |
-| Lista de resultados relevantes no próprio chat com acesso ao detalhe | Expectativa de “perguntei e vi vagas” sem sair do fluxo | LOW-MEDIUM | Reusar cards/lista compacta e abrir modal/detalhe existente; payload público `JobPublic` **sem contatos** (revelação protegida continua no fluxo atual). |
-| Suporte a combinações básicas de filtros na mesma frase | Consultas reais misturam atributos (“dev jr remoto SP”) | MEDIUM | Depende de extração multi-slot + merge correto com `q`/city/sort. Campos não nativos (salário/modalidade/contrato) exigem estratégia incremental (mapeamento textual em `q`, pós-filtro controlado no subconjunto retornado, ou extensão limitada de filtros) — documentar lacunas. |
-| Resposta quando não há resultados (empty state útil) | Comportamento esperado em busca; evita tela “morta” | LOW | Mensagem clara + sugestão de relaxar filtros (ex.: ampliar cidade/remover senioridade). UI apenas. |
-| Baixa latência percebida e estados de carregamento/erro | Chat lento ou silencioso parece quebrado | MEDIUM | Timeout no endpoint, loading indicator, mensagens de erro amigáveis/rate-limit. Proteções básicas (rate limit/timeout) no endpoint público. |
-| Preservação de privacidade/fricção zero | Core value do produto: sem login para buscar | LOW | Endpoint público; sem histórico persistente obrigatório no MVP; não pedir cadastro. Contato continua protegido pelo mecanismo existente. |
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| **Instagram section in review, alongside Facebook** | Admin already reviews Facebook draft in `EditJobDialog`; adding another platform in a different place would fragment the approval workflow. | MEDIUM | Extend existing review dialog/status surfaces; do not fork a separate Instagram-only review page. Keep platform sections visually distinct but in same job review context. Depends on existing review UI (`ReviewQueue`, `EditJobDialog`, `ReviewRow`). |
+| **Per-vaga Instagram toggle (opt-in/out per job)** | Not every approved job should be posted everywhere; admins expect control before publish. | LOW | Toggle state must be explicit and persisted (or clearly derived) before approval/publish. Default should be conservative (off or remembered policy) — decide in discuss-phase, but UX must show state unambiguously. |
+| **Editable caption prefilled from job data** | Facebook flow already has generate/edit/save draft; Instagram expects same editorial control with platform-specific copy. | MEDIUM | Prefill from structured job fields (title/company/city/salary/benefits) and job public link context, but caption must follow Instagram constraints. Reuse generation pattern carefully; do not blindly reuse Facebook 700-char/link-at-end draft. |
+| **2200-character caption counter** | Instagram caption limit is 2200 chars; admin needs immediate feedback before publish fails. | LOW | Show `current/2200` counter near caption textarea. Count actual caption text that will be sent. Block/disable publish action when over limit with clear pt-BR message. |
+| **>30 hashtags warning** | Instagram allows max 30 hashtags per caption; exceeding causes publish failure/rejection. | LOW | Warning at >30 (and ideally helper at 25+). Count `#tokens` robustly. Warning is table stakes because hashtag-heavy job posts are common. Do not silently trim hashtags. |
+| **No-clickable-link handling + "link na bio" CTA** | Instagram captions do not render clickable URLs; posting raw URL as primary CTA creates false expectation. | LOW | UI copy/helper text must state links are not clickable. Prefilled caption should include CTA like "Link na bio" / "Veja o link na bio" when appropriate; optionally include URL as plain text for copyability, but do not present it as clickable CTA. |
+| **Image required guardrail** | Instagram Content Publishing requires media; image container requires `image_url`. No image = cannot publish. | MEDIUM | Block Instagram publish when image missing/invalid. Show clear state: "Imagem obrigatória para publicar no Instagram". This is a hard platform constraint, not a nice-to-have validation. |
+| **Image preview before publish** | Admin must see what will be posted; image is mandatory and often generated. | MEDIUM | Preview the exact image that will be sent (or a faithful render) with aspect ratio/context. For generated card, preview after generation; for upload/logo, preview selected asset. |
+| **Per-platform publish status (Facebook vs Instagram independent)** | Existing UI has single social status; with two platforms, combined status becomes ambiguous and dangerous. | MEDIUM | Each platform needs its own status badge/state: none/draft/scheduled-if-ever/publishing/published/failed/cancelled-equivalent as applicable. A Facebook failure must not mark Instagram failed, and vice versa. `ReviewRow` badge and dialog status panel must become platform-aware. |
+| **Independent publish execution** | User decision: failure of one platform must not block the other. | HIGH | Separate publish records/jobs per provider. Pipeline/worker must claim/process/retry independently. Shared Meta token/account issues should be surfaced per platform with clear reason, but execution path remains isolated. |
+| **Visible publish outcome with permalink/external ID** | Admin needs confirmation where post landed; existing Facebook status exposes published state/URL behavior. | MEDIUM | Store and show Instagram permalink when available (via media permalink field after publish/lookup) and external media/post ID. If permalink unavailable, show "Publicado no Instagram. Link indisponível" with ID-safe fallback — same honesty pattern as Facebook. |
+| **Error visibility and retry** | Async publish can fail (token, media URL fetch, rate limit, container error). Admin needs actionable recovery. | MEDIUM | Show last safe error, attempt count/timestamps where useful, and retry only when eligible. Distinguish reconnect-needed, transient retryable, rate-limited/wait, ambiguous/manual-check, and permanent validation/content errors. |
+| **Persist audit trail for Instagram publish** | Existing social tables/logs provide traceability; Instagram must meet same operational bar. | MEDIUM | Persist caption used, image source/reference, post/container IDs, permalink, status, last_error, timestamps, attempts/retry metadata. Reuse/extend `social_posts`/`social_post_logs` patterns; keep logs token-free. |
 
 ### Differentiators (Competitive Advantage)
 
-Recursos que melhoram conversão/confiança além do básico, alinhados ao core value (“encontrar vaga e contato em segundos, sem fricção”).
+Features that set the product apart. Not required, but valuable.
 
-| Feature | Value Proposition | Complexity | Notes / Dependencies on existing |
-|---------|-------------------|------------|----------------------------------|
-| Interpretação tolerante a variações pt-BR e gírias leves (ex.: “home office”, “CLT”, “estágio”) | Reduz esforço do usuário mobile e aumenta recall sem cadastro/configuração | MEDIUM | Léxico/sinônimos e normalização no prompt/schema (modalidade/contrato/senioridade); mapear para termos buscáveis no `q` quando não houver coluna dedicada. |
-| Refinamento conversacional leve na mesma sessão (ajustar pedido) | Permite “na verdade em BH” sem recomeçar, mantendo rapidez | MEDIUM | Manter contexto curto no frontend (últimos parâmetros) e reenviar; sem memória server-side longa no MVP. Depende de UX do drawer/modal. |
-| Sugestões de “vagas parecidas” quando busca exata é fraca (limitado) | Evita dead-end e ajuda descoberta, comum em buscadores modernos | MEDIUM-HIGH | **Escopo limitado/futuro:** relaxar 1 constraint por vez (ex.: remover cidade específica mantendo `q`, ou ampliar keywords) usando queries existentes; **não** usar embeddings/LLM sobre corpus no MVP. Rotular como “sugestões próximas”. |
-| Resumo curto do porquê dos resultados (grounded nos parâmetros) | Aumenta confiança de que o match veio dos filtros, não “mágica” opaca | LOW | Templatear texto a partir dos parâmetros extraídos/efetivamente aplicados (sem LLM adicional no resultado). |
-| Atalhos/exemplos de consulta (chips) no chat vazio | Onboarding instantâneo sem tutorial; útil para mobile | LOW | UI estática alinhada aos exemplos de MVP do milestone. |
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| **Generated job card fallback (1080x1080 or 1080x1350 JPEG)** | Removes "I don't have an image" blocker; keeps publishing fast for one-person admin workflow. | HIGH | Milestone requires fallback generated card served by public URL accessible to Meta. Needs deterministic template, storage/serving, and cleanup/expiry policy. Good differentiator because it makes Instagram publish as fast as paste-review-approve. |
+| **Caption prefill tuned for Instagram job posts** | Better than generic copy: short hook, role/company/city/salary/benefits, CTA "link na bio", relevant hashtags, no fake clickable link. | MEDIUM | Different from Facebook: Instagram favors concise scannable caption + hashtags; Facebook already targets ~700 chars. Keep tone professional/acolhedor pt-BR, but optimize for IG reading behavior. |
+| **Hashtag quality assist (count + suggestions, not auto-spam)** | Prevents over-limit and low-quality hashtag stuffing while keeping speed. | LOW | Show count and optional suggested hashtags from city/role; admin can edit/remove. Avoid auto-adding 30 hashtags. |
+| **Pre-publish validation summary** | Catches avoidable failures before async worker: missing image, bad aspect ratio, over char/hashtag limit, missing IG account linkage. | MEDIUM | Inline checklist/status near publish controls: "Legenda OK", "Imagem OK", "Conta Instagram pronta". Saves retry cycles and Meta API quota. |
+| **Safe retry with ambiguity guard** | Prevents duplicate Instagram posts when publish result is ambiguous — critical trust feature. | MEDIUM | Existing pipeline already has ambiguity concept (`ambiguous`/no auto-retry). Extend to Instagram container publish flow: if create/publish response uncertain, require manual check before retry. |
+| **Image source provenance** | Helps admin understand what image was used (uploaded, generated card, logo) and reproduce/fix issues. | LOW | Store simple provenance metadata (source type, asset ID/path/template version). Useful for audits/debugging; no heavy DAM needed. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Recursos que parecem bons, mas conflitam com restrições do produto (custo, performance, sem login, LLM sem corpus).
+Features that seem good but create problems.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Enviar lista de centenas de vagas ao LLM para “escolher as melhores” | Parece mais “inteligente”/semântico | Viola restrição explícita; alto custo/latência; risco de alucinação e vazamento de dados desnecessário | LLM só extrai parâmetros → busca determinística no backend (`list_published`/filtros). “Parecidas” via relaxamento controlado de filtros. |
-| Ranking semântico/embeddings completos no MVP | Melhor matching além de keyword | Infra/custo/complexidade (índice vetorial, pipeline) desproporcional ao volume (100–500/mês) e ao milestone | Melhorar normalização de keywords/sinônimos e relaxamento de filtros; considerar embeddings em milestone futuro se métricas justificarem. |
-| Chatbot multi-turn longo com memória persistente por usuário | Experiência “assistente pessoal” | Exige identificação/armazenamento, aumenta custo e complexidade; conflita com fricção zero | Contexto efêmero de sessão no cliente (última interpretação) e refinamentos curtos. |
-| Clarifying questions obrigatórias antes de buscar | Máxima precisão de slots | Adiciona atrito; usuários querem resultado rápido | Buscar imediatamente com melhor esforço + mostrar parâmetros entendidos + permitir ajuste rápido. Perguntar só em casos extremos de ambiguidade total (opcional). |
-| Agente que “se candidata”/envia mensagens em nome do usuário | Automação total | Fora de escopo, riscos legais/spam, exige integrações e contas | Manter fluxo atual: encontrar vaga e revelar contato para candidatura manual. |
-| Inventar/normalizar salário, empresa ou modalidade ausentes nos dados | Preencher lacunas para parecer completo | Quebra confiança e pode induzir erro; dados vêm de curadoria | Exibir apenas campos disponíveis (`JobPublic`); parâmetros não suportados devem ser declarados como limitação na resposta. |
-| Expor contatos no payload/resposta do chat | Conveniência | Contraria proteção anti-scraping/fluxo de revelação existente | Retornar `JobPublic` sem contatos; “ver contato” usa mecanismo protegido atual no detalhe. |
+| **Auto-publish Instagram on job approval by default** | "One click does everything." | Risky when image/caption/account may be unready; Instagram has stricter media constraints than Facebook text posts. Can create failed/low-quality posts. | Per-vaga toggle + explicit review state. If auto-publish ever added later, gate on all validations passing. |
+| **Reusing Facebook caption unchanged** | Seems efficient; one draft for all platforms. | Facebook draft may include clickable-style link CTA, different length target (~700), fewer hashtags, and formatting assumptions. Instagram needs "link na bio" and has different constraints. | Separate Instagram caption field prefilled from job data, optionally "Copy from Facebook" action. |
+| **Posting external URL directly in caption as primary CTA** | URL is easy to include. | Instagram captions are not clickable; users can't tap through. Creates friction and confusion. | CTA "link na bio"; keep canonical job URL in profile/site flow. If URL included, treat as plain text secondary info. |
+| **Stories/Reels/carousel/video in same milestone** | "Instagram means all formats." | Different media specs, containers, UX, and failure modes; explodes scope. Current need is feed image post for job card. | Single-image feed post only. Document others as out of scope. |
+| **Scheduling UI for Instagram** | Facebook has schedule/publish-now concepts; parity feels nice. | Milestone explicitly out of scope; adds time zone, queue, edit-after-schedule, and worker complexity. | Publish-now only (or inherit only if already trivial, but do not add new scheduling product surface). Keep schema extensible only if cheap. |
+| **In-app Instagram analytics/comments/DM inbox** | Feels like "complete social management". | Large API/scope/permissions surface; not core to job discovery. | Store permalink and publish status only; use native Instagram/Meta tools for engagement. |
+| **Multiple Instagram accounts / account picker** | Agencies want it. | Conflicts with single-admin, single-page operating model and adds token/page/account selection complexity. | One IG business/creator account linked to selected Facebook Page. |
+| **Silent image auto-crop without preview** | Makes uploads "just work". | Can cut off job title/salary/CTA in generated/uploaded image; damages trust. | Enforce supported aspect ratios/templates (4:5 or 1:1), preview final render, reject or require adjustment when unsafe. |
+| **Auto-retry ambiguous publishes aggressively** | Retries feel resilient. | Instagram container/publish ambiguity can create duplicate posts; duplicates are painful to clean up manually. | Mark ambiguous, block auto-retry, require admin check/permalink confirmation before manual retry. |
 
 ## Feature Dependencies
 
 ```
-[Schema de extração + validação + normalização pt-BR/whitelist]
-    └──requires──> [LLM provider/estratégia (Groq) + prompt/JSON]
-                         └──requires──> [Config/env, timeout, tratamento de falhas]
+[Existing Meta OAuth + connected Facebook Page]
+    └──requires──> [Instagram-capable account discovery]
+                       └──requires──> [IG User ID resolution/storage]
+                                          └──requires──> [Instagram publish capability]
 
-[Endpoint público chat-search (interpretação + resultados)]
-    └──requires──> [Schema de extração]
-    └──requires──> [Busca pública existente: GET /api/v1/public/jobs / crud.list_published (q, city, sort, paginação)]
-    └──requires──> [Rate limit/timeout/proteção básica]
+[Existing Review Dialog + Social Draft pattern]
+    └──requires──> [Instagram section in review]
+                       ├──requires──> [Instagram caption draft model/UI]
+                       ├──requires──> [Image asset selection/generation/preview]
+                       └──requires──> [Per-platform validation]
 
-[Aplicação de parâmetros não nativos (salário/modalidade/contrato)]
-    └──requires──> [Decisão incremental: mapear para q / pós-filtro / extensão controlada]
-    └──enhances──> [Combinações de filtros na mesma frase]
+[Image public URL accessible by Meta]
+    └──requires──> [Generated card storage/serving OR uploaded asset hosting]
+                       └──requires──> [Instagram container creation (image_url)]
 
-[UI de chat (drawer/modal mobile-first)]
-    └──requires──> [Endpoint público chat-search]
-    └──requires──> [Componentes de lista/card/modal/detalhe existentes]
-    └──requires──> [Fluxo de revelação de contato existente (sem expor no payload)]
+[Instagram container creation]
+    └──requires──> [Container status check when needed]
+                       └──requires──> [media_publish]
+                                          └──requires──> [Permalink/ID capture + status persist]
 
-[“Vagas parecidas” (limitado)]
-    └──requires──> [Busca existente + lógica de relaxamento de constraints]
-    └──conflicts──> [Embeddings/ranking LLM sobre corpus no MVP]
+[Existing async worker/retry/idempotency pattern]
+    └──enhances──> [Instagram independent publish pipeline]
+                       └──requires──> [Provider-aware social_posts/social_post_logs]
+
+[Per-platform status model]
+    └──requires──> [ReviewRow badge + EditJobDialog status panels per provider]
+
+[Facebook publish flow] ──must remain independent of──> [Instagram publish flow]
+[Clickable link CTA] ──conflicts with──> [Instagram caption UX]
+[Ambiguous publish auto-retry] ──conflicts with──> [Duplicate-post safety]
 ```
 
 ### Dependency Notes
 
-- **Endpoint chat-search requires busca existente:** a consulta determinística deve reutilizar `list_published`/filtros atuais para garantir consistência, paginação e regras de publicação/expiração.
-- **Extração requires validação rígida:** nunca confiar em saída livre do LLM; validar tipos/enums/whitelist e descartar campos inventados.
-- **Parâmetros não nativos enhances combinações:** salário/modalidade/contrato podem não ter colunas/filtros nativos hoje — sem estratégia incremental, combinações que os incluam degradam silenciosamente; é necessário declarar aplicação parcial.
-- **UI requires fluxo de contato existente:** chat pode levar ao detalhe, mas não pode substituir/contornar a revelação protegida.
-- **“Vagas parecidas” conflicts com LLM-sobre-corpus:** aproximação deve ser por relaxamento determinístico, não por re-ranking com todas as vagas no prompt.
+- **Instagram section requires existing review flow:** `frontend/app/admin/review/ReviewQueue.tsx`, `ReviewRow.tsx`, and `EditJobDialog.tsx` already own review UX. Instagram should extend these surfaces, not create a parallel review system.
+- **IG publish requires IG User ID from connected Page:** Meta Content Publishing publishes against IG user/media objects. v1.5 must obtain/store the professional IG account linked to the selected Facebook Page while reusing existing token lifecycle.
+- **Image preview/publish requires public URL:** Meta fetches `image_url` from a public server. Local-only paths, auth-protected URLs, or expiring/private blobs will fail. Generated/uploaded assets need a stable public URL strategy.
+- **Independent publish requires provider-aware persistence:** current `social_posts` is effectively one record per job/provider concept; schema already has `provider` and unique `(job_id, provider)`. v1.5 should extend this pattern, not overload a single Facebook row with Instagram fields.
+- **Per-platform status requires API/UI contract changes:** `getSocialStatus`, `SocialPostStatusItem`, and review badges are Facebook-shaped (`provider: "facebook"`, single status). v1.5 needs platform-specific or multi-provider status responses.
+- **Facebook flow must remain independent:** approval/site publish remains source of truth; social publishing for each platform is best-effort/async and isolated. Regression protection is a table stake.
 
 ## MVP Definition
 
-### Launch With (v1.3)
+### Launch With (v1)
 
-Mínimo para validar busca NL sem fricção, respeitando custo/performance e reuso da busca existente.
+Minimum viable for v1.5 — what's needed to validate "approved job can also be published to Instagram safely".
 
-- [ ] **Extração NL → JSON validado (sem inventar)** — cargo, senioridade, cidade whitelist, modalidade, remoto/híbrido/presencial, faixa salarial, tipo contrato, palavras-chave, ordenação; normalização segura e descarte de fora do domínio.
-- [ ] **Endpoint público de chat-search** — recebe texto, aplica timeout/rate limit, retorna interpretação + resultados pagináveis (`JobPublic`) com erros/empty states tratados.
-- [ ] **Mapeamento para busca existente** — aplicar `q`/cidade/sort/paginação em `list_published`; estratégia incremental explícita para campos não nativos (ex.: incluir termos no `q` e/ou pós-filtro controlado) com lacunas documentadas na resposta.
-- [ ] **UI de chat (drawer/modal mobile-first)** — entrada, loading/erro, exibição de parâmetros entendidos e lista de vagas com acesso a detalhe/link; exemplos de consulta do MVP.
-- [ ] **Cobertura dos exemplos de uso do MVP** — validar combinações definidas; registrar quais parâmetros são suportados total/parcialmente.
+- [ ] **Instagram review section with per-vaga toggle** — admin can decide per job; no hidden auto-posting.
+- [ ] **Editable Instagram caption prefilled from job data** — fast workflow, admin control preserved.
+- [ ] **Caption constraints UX: 2200 counter + 30-hashtag warning + no-clickable-link CTA** — prevents common platform-specific failures and misleading copy.
+- [ ] **Mandatory image with preview** — satisfies IG Content Publishing requirement; admin sees final media.
+- [ ] **Generated fallback card (1080x1080 or 1080x1350 JPEG, public URL)** — ensures image is always possible even without logo/upload. Origin can remain open, but fallback must exist.
+- [ ] **IG account linkage using existing Meta connection** — resolve/store IG user ID from linked Page; block with actionable state if unavailable.
+- [ ] **Async independent publish pipeline** — separate provider execution/retry/idempotency; Facebook unaffected.
+- [ ] **Per-platform status, error, retry, permalink/ID persistence** — admin can trust what happened on each platform.
 
 ### Add After Validation (v1.x)
 
-- [ ] **Refinamento conversacional leve** — reutilizar última interpretação no cliente para ajustes rápidos (“só remoto”, “muda para RJ”). Trigger: usuários repetem buscas do zero.
-- [ ] **“Vagas parecidas” via relaxamento determinístico** — remover/afrouxar 1 constraint e sinalizar aproximação. Trigger: alta taxa de zero resultados em consultas válidas.
-- [ ] **Telemetria mínima de qualidade (agregada, sem PII)** — contagem de buscas, taxa de vazio, uso de sugestões. Trigger: necessidade de calibrar prompt/mapeamentos.
+- [ ] **Image source options beyond fallback (logo/upload)** — add when template quality or branding needs are confirmed; requires asset management/validation.
+- [ ] **"Copy from Facebook" / "Regenerate Instagram caption" actions** — convenience after base flow is stable.
+- [ ] **Better preflight diagnostics** — aspect-ratio checker, hashtag parser details, token expiry warning banner, rate-limit countdown.
 
 ### Future Consideration (v2+)
 
-- [ ] **Busca semântica/embeddings** — adiar até volume/qualidade justificar custo/infra; requer pipeline de indexação e avaliação.
-- [ ] **Suporte nativo a salário/modalidade/contrato no modelo/filtros** — evolução de schema/índices se campos se tornarem estruturados e confiáveis na curadoria.
-- [ ] **Memória/histórico opt-in** — exigiria decisões de identidade/privacidade; conflita com fricção zero no curto prazo.
+- [ ] **Scheduling** — explicitly out of scope for v1.5; adds queue/time UX complexity.
+- [ ] **Stories/Reels/carousel/multi-image** — different media products and review UX.
+- [ ] **Analytics/engagement sync** — requires extra permissions, storage, and product surface.
+- [ ] **Multi-account / multi-page Instagram selection** — conflicts with current single-admin/simple model.
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Extração NL → JSON validado (LLM só parâmetros) | HIGH | MEDIUM | P1 |
-| Endpoint chat-search + rate limit/timeout + mapeamento à busca existente | HIGH | MEDIUM | P1 |
-| UI chat com parâmetros entendidos + resultados (`JobPublic`) + detalhe | HIGH | MEDIUM | P1 |
-| Combinações de filtros com estratégia para campos não nativos (parcial documentado) | HIGH | MEDIUM-HIGH | P1 |
-| Empty states, erros e baixa latência percebida | MEDIUM | LOW-MEDIUM | P1 |
-| Refinamento leve de contexto no cliente | MEDIUM | MEDIUM | P2 |
-| “Vagas parecidas” por relaxamento determinístico (limitado) | MEDIUM | MEDIUM | P2 |
-| Chips/exemplos e resumo grounded dos filtros aplicados | MEDIUM | LOW | P2 |
-| Telemetria agregada de qualidade | MEDIUM | LOW-MEDIUM | P3 |
-| Busca semântica/embeddings/ranking por LLM sobre corpus | MEDIUM | HIGH | P3 (anti-feature no MVP) |
+| Per-platform independent status model | HIGH | HIGH | P1 |
+| Instagram section in review + per-vaga toggle | HIGH | MEDIUM | P1 |
+| Editable caption + prefill | HIGH | MEDIUM | P1 |
+| 2200 char counter + 30 hashtag warning + link-na-bio helper | HIGH | LOW | P1 |
+| Mandatory image validation + preview | HIGH | MEDIUM | P1 |
+| Generated fallback card + public hosting | HIGH | HIGH | P1 |
+| IG user ID resolution/storage from linked Page | HIGH | MEDIUM | P1 |
+| Async publish + retry/idempotency + ambiguity guard | HIGH | HIGH | P1 |
+| Permalink/external ID/timestamps/error persistence | HIGH | MEDIUM | P1 |
+| Image upload/logo source options | MEDIUM | HIGH | P2 |
+| Caption quality helpers/suggestions | MEDIUM | LOW | P2 |
+| Rate-limit countdown UI | MEDIUM | MEDIUM | P2 |
+| Scheduling/Stories/Reels/analytics | LOW (for this milestone) | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for launch (v1.3)
+- P1: Must have for launch
 - P2: Should have, add when possible
 - P3: Nice to have, future consideration
 
+## Detailed Expectations
+
+### Caption Review ("done" looks like)
+
+- Admin sees an **Instagram caption** field in review, separate from Facebook text.
+- Field is **prefilled** from job data when empty/generated; admin can edit freely before publish.
+- UI shows **live `N/2200` character count**; at >2200, publish is blocked and error is specific.
+- UI shows **hashtag count warning when >30**; warning is visible before publish, not only after API error.
+- Helper copy makes clear: **Instagram caption links are not clickable**; CTA should direct to "link na bio" (or equivalent). Any URL shown is plain text, not a primary clickable CTA expectation.
+- Caption used for publish is the **saved/approved Instagram draft caption**; persisted for audit/debug.
+- Empty caption or invalid caption state prevents Instagram publish but should not corrupt Facebook draft.
+
+### Image Handling ("done" looks like)
+
+- Instagram publish cannot proceed without an image.
+- Admin can see **image preview** for the exact asset intended for publish.
+- v1.5 has at least one reliable path: **generated fallback card** (1080x1080 or 1080x1350, JPEG) rendered from job data and served by a **public URL accessible by Meta**.
+- Image validation covers platform basics before send: JPEG/acceptable format, accessible public URL, supported aspect ratio (4:5 to 1.91:1 for feed image), and file size guard (8MB max).
+- Image origin/provenance is recorded (generated/upload/logo/template) for debugging.
+- If image hosting/URL is temporary, it must remain accessible long enough for Meta fetch/container processing; do not use auth-gated or localhost URLs.
+
+### Publish Status ("done" looks like)
+
+- Review row and review dialog show **Instagram status independently** from Facebook.
+- Status model covers at least: not configured/not enabled/no draft, draft/ready, publishing, published, failed, blocked-needs-action (e.g., reconnect/rate limit/manual check).
+- Published state shows **published timestamp** and **permalink** when available; otherwise external ID and honest fallback message.
+- Failed state shows **safe, actionable error** (pt-BR), no raw tokens/secrets/provider dumps.
+- `publishing` is visually in-progress and not retryable.
+- Status refresh after retry/publish reflects latest persisted state; no stale "published" or "failed" badge after action.
+
+### Error Recovery ("done" looks like)
+
+- **Transient errors** (network/5xx/temporary) use bounded retry/backoff and surface "nova tentativa automática" when applicable.
+- **Rate limit / daily limit reached** is surfaced clearly; auto-retry waits for window or blocks with explicit next-eligible timing/message. Do not hammer API.
+- **Token/permission/account linkage errors** become blocked/reconnect-needed with CTA to Integrations; no silent failure.
+- **Media/container errors** (bad image URL, fetch failed, invalid aspect ratio, processing error) are shown as actionable content/media errors.
+- **Ambiguous publish outcome** (timeout after publish call, uncertain container/publish state) is marked for manual verification; no automatic duplicate retry.
+- Retry action is idempotent and disabled when not eligible. Manual retry creates/uses safe path that checks existing external ID/permalink before republishing.
+
 ## Competitor Feature Analysis
 
-| Feature | Padrão em job boards/assistentes (Indeed, LinkedIn, Google Jobs e chats de busca) | Nosso enfoque (EmpregaNoix v1.3) |
-|---------|----------------------------------------------------------------------------------|----------------------------------|
-| Entrada NL | Barra/chat aceita frases; alguns sugerem prompts | Chat simples pt-BR em drawer/modal, mobile-first, sem login |
-| Extração de filtros | Inferência de cargo/local/remoto/senioridade; nem sempre transparente | JSON estruturado validado, **LLM não vê vagas**, mostrar parâmetros entendidos |
-| Aplicação de filtros | Mapeamento para facets/filtros nativos da plataforma | Reuso de `GET /api/v1/public/jobs`/`list_published`; incremental para campos não nativos com lacunas explícitas |
-| Resultados | Lista ranqueada com resumo e link/detalhe | `JobPublic` sem contato + acesso a modal/detalhe e revelação protegida existente |
-| Refinamento | Follow-ups ajustam busca; às vezes exige conta para salvar | Refinamento leve sem persistência/conta (P2) |
-| “Vagas parecidas” | Recomendações/semântica/ML em grande escala | Apenas relaxamento determinístico limitado (P2/futuro), sem corpus no LLM |
-| Privacidade/atrito | Frequentemente empurra login/alertas | Zero fricção: buscar e ver resultados sem cadastro (core value) |
+| Feature | Common Job/Social Admin Tools | Existing EmpregaNoix Facebook Flow | Our Approach (v1.5) |
+|---------|-------------------------------|------------------------------------|---------------------|
+| Multi-platform review | Separate tabs/platform cards with per-network status | Single Facebook draft/status in review dialog | Add Instagram as parallel section in same review dialog; keep per-platform status independent. |
+| Caption editing | Editable per-platform caption with counters/warnings | Editable Facebook text, ~700 char guidance | Instagram-specific caption editor: 2200 counter, 30-hashtag warning, "link na bio" CTA guidance. |
+| Media handling | Upload/library + preview; required for IG | Facebook flow is text/link oriented | Make image mandatory for Instagram; provide generated fallback card + preview + public URL. |
+| Publish status | Per-network badges, timestamps, link to post | `SocialPostStatusItem` for Facebook | Extend status model to provider-aware/per-platform items with permalink/ID/error/retry state. |
+| Error recovery | Retry, reconnect, rate-limit messaging | Retry/backoff/idempotency/blocked reasons exist | Reuse pattern, add Instagram-specific media/rate-limit/ambiguity handling and duplicate-post safety. |
 
 ## Sources
 
-- `.planning/PROJECT.md` (contexto do produto, milestone v1.3, restrições e busca existente) — HIGH (primário)
-- Conhecimento de domínio sobre padrões de NL search/slot filling em job boards e chatbots de busca (intent → structured filters → retrieval → apresentação) — MEDIUM, **não verificado com fontes externas neste ambiente** (ferramenta de websearch sem resultados)
-- Recomendação: validar durante planejamento com documentação/comportamento público de buscadores de vagas (ex.: Google Jobs, Indeed, LinkedIn) e testes com usuários pt-BR
+- [Meta - Instagram Platform Content Publishing](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/content-publishing) — HIGH, official docs fetched 2026-11-23. Confirms image/video container + publish flow, public media hosting, rate limit (100 API-published posts/24h), container publish troubleshooting.
+- [Meta - IG User Media endpoint](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) — HIGH, official docs fetched 2026-11-23. Confirms image specs (JPEG, 8MB, 4:5-1.91:1, 320-1440 width), caption limits (2200 chars, 30 hashtags, 20 @tags), required permissions, alt_text, container creation fields, status/error behavior.
+- [Meta - IG Container endpoint](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-container) — MEDIUM, referenced by docs; should be rechecked during implementation for `status_code` polling semantics. 
+- Existing codebase patterns (HIGH for project fit): `frontend/app/admin/review/EditJobDialog.tsx`, `frontend/app/admin/review/ReviewQueue.tsx`, `frontend/components/admin/ReviewRow.tsx`, `frontend/app/admin/social-posts/SocialPostsClient.tsx`, `backend/app/models/social_post.py`, `backend/app/schemas/social_posts.py`, `backend/app/crud/social_posts.py`, `backend/app/services/social/publish_pipeline.py`, `backend/app/services/social/types.py`.
+- Project constraints: `.planning/PROJECT.md` v1.5 scope/guardrails.
 
 ---
-*Feature research for: Chatbot de busca de vagas por linguagem natural (EmpregaNoix v1.3)*
-*Researched: 2026-11-17*
+*Feature research for: EmpregaNoix v1.5 Instagram publishing integration in review stage*
+*Researched: 2026-11-23*
