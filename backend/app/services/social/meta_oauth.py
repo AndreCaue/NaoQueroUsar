@@ -507,13 +507,10 @@ async def mark_needs_reconnect(
 
 
 async def disconnect_meta(session: AsyncSession) -> MetaActionResponse:
-    # Remove usable credential/record and mark disconnected state (D-07)
     stmt = select(SocialAccount).where(SocialAccount.provider == "facebook")
     result = await session.execute(stmt)
     account = result.scalar_one_or_none()
     if account is not None:
-        # Keep a non-reusable disconnected marker without storing real token
-        account.page_access_token = encrypt_token("disconnected", getattr(getattr(session, "info", {}), "get", lambda *_: "")("social_token_key") or "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=") if False else account.page_access_token
         # Safer: delete active record so no reusable secret remains; UI shows disconnected.
         await session.delete(account)
     await session.execute(
