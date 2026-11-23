@@ -95,3 +95,67 @@ Frontend: apenas variáveis públicas necessárias (`NEXT_PUBLIC_API_URL`, `BACK
 - [ ] `SITE_PUBLIC_URL`, chaves/segredos e cron configurados no ambiente de produção canônico; smoke operacional executado.
 
 **Critério de aceite (documentação):** roteiro e checklist completos, reproduzíveis e seguros (sem segredos). **Critério de aceite (execução real):** somente com evidência registrada em ambiente autorizado.
+
+## 5) Prontidão Instagram e mídia IG (META-03 / Phase 29)
+
+Esta seção complementa a integração Facebook existente com a base de prontidão Instagram (IG) e mídia pública para publicação futura. **A prontidão IG é aditiva:** ela não deve quebrar nem apresentar a conexão Facebook como desconectada quando apenas o Instagram não estiver pronto.
+
+### 5.1 Permissões e escopos
+
+O fluxo Meta/OAuth deve solicitar/validar as permissões necessárias para Facebook e Instagram:
+
+- `pages_show_list`
+- `pages_manage_posts`
+- `pages_read_engagement`
+- `instagram_basic`
+- `instagram_content_publish`
+
+**Reconexão/reautorização:** conexões Facebook existentes podem não ter os escopos IG novos. Nesses casos, o admin deve ver estado acionável e usar **Reconectar** para reautorizar com as permissões necessárias.
+
+### 5.2 Pré-requisitos de vínculo Página ↔ Instagram
+
+- A Página do Facebook selecionada deve estar vinculada a uma conta Instagram Business/Creator.
+- O admin deve ter os papéis/tarefas necessários na Página/conta vinculada.
+- A verificação de prontidão usa o probe Graph conceitual `/{page-id}?fields=instagram_business_account{id,username}` (implementado no backend; referência operacional).
+- Se não houver vínculo, a UI deve orientar correção sem expor erros brutos da Graph.
+
+### 5.3 Variáveis de ambiente (mídia IG)
+
+Além das variáveis Meta já documentadas, configurar:
+
+- `MEDIA_PUBLIC_BASE_URL`: base pública HTTPS explícita do backend para servir mídia IG acessível pela Meta. **Não usar localhost/IP privado** e **não inferir** de `SITE_PUBLIC_URL`. Exemplo: `https://api.seudominio.com`.
+- Demais variáveis Meta sociais: `META_APP_ID`, `META_APP_SECRET`, `META_GRAPH_VERSION`, `META_OAUTH_REDIRECT_URI`, `SOCIAL_TOKEN_ENCRYPTION_KEY`, `SITE_PUBLIC_URL` conforme aplicável.
+
+Notas operacionais:
+- Geração de card IG usa Pillow no backend com fontes empacotadas no repositório; não requer R2/S3 no v1.5.
+- O endpoint público de mídia deve estar acessível sem autenticação por HTTPS público para que a Meta consiga buscar a imagem.
+
+### 5.4 Estados de prontidão IG e troubleshooting
+
+| Estado | Significado | Ação do admin (pt-BR segura) |
+|--------|-------------|------------------------------|
+| `ready` | Página conectada e IG vinculado/pronto | Confirmar username/ID exibido; usar Verificar agora se necessário |
+| `missing_linkage` | Página sem conta Instagram Business/Creator vinculada | Vincular conta IG Business/Creator à Página no Meta e depois usar **Reconectar** ou verificar conforme orientação |
+| `missing_permissions` | Escopos IG ausentes/insuficientes | Usar **Reconectar** para reautorizar concedendo `instagram_basic` e `instagram_content_publish` |
+| `needs_reconnect` | Token/conexão IG precisa renovação/reconexão | Usar **Reconectar** para renovar a conexão com segurança |
+| `unknown` | Verificação indisponível/transitória | Usar Verificar agora; se persistir, usar **Reconectar** |
+
+Mensagens devem ser acionáveis em pt-BR e não expor tokens, segredos ou payloads brutos da Graph.
+
+### 5.5 Checklist manual (handoff)
+
+Execução real depende de credenciais/app Meta e Página de teste. Registrar evidência separadamente; **não marcar como aprovado sem execução real**.
+
+- [ ] Conectar Página Facebook no `/admin/integracoes` com app/permissões corretas.
+- [ ] Confirmar que a UI mostra prontidão IG aditiva (Facebook conectado permanece visível mesmo com IG não pronto).
+- [ ] Validar estado `missing_linkage` com mensagem acionável quando a Página não tiver Instagram Business/Creator vinculado.
+- [ ] Validar estado `missing_permissions` com CTA **Reconectar** quando escopos IG estiverem ausentes.
+- [ ] Validar fluxo **Reconectar** e atualização de prontidão após reautorização.
+- [ ] Confirmar que `MEDIA_PUBLIC_BASE_URL` aponta para backend público HTTPS e que a URL de mídia IG é acessível pela Meta (sem auth, sem localhost/privado).
+- [ ] Confirmar que falhas de prontidão IG não bloqueiam/regredem comportamento Facebook.
+
+### 5.6 Segurança operacional
+
+- Nunca registrar tokens, segredos, `SOCIAL_TOKEN_ENCRYPTION_KEY`, `CRON_SECRET` ou payloads sensíveis em docs, screenshots ou logs.
+- Manter evidências sanitizadas (IDs públicos de página/IG podem aparecer quando necessários para operação; tokens não).
+- Em caso de incidente, usar **Reconectar**/desconectar e rotacionar segredos no backend/provedor conforme procedimento seguro.
