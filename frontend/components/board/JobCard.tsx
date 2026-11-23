@@ -35,7 +35,7 @@ export function JobCard({ job, onOpen }: JobCardProps) {
   const salary = job.salary?.trim() ? job.salary : null;
 
   return (
-    <article className="flex h-full flex-col gap-3 rounded-[12px] border border-line bg-surface p-4 transition-colors hover:border-accent focus-within:border-accent">
+    <article className="flex h-full flex-col gap-3 rounded-[12px] border border-line bg-surface p-4 transition-colors hover:border-accent hover:bg-[rgba(139,92,246,0.04)] focus-within:border-accent">
       {company ? (
         <p className="text-sm text-fg-muted [overflow-wrap:anywhere]">
           {company}
