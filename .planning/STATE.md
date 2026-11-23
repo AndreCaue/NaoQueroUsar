@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
 status: executing
-stopped_at: Phase 29 UI-SPEC approved
-last_updated: "2026-11-23T16:17:04.529Z"
+stopped_at: Completed 29-02-PLAN.md
+last_updated: "2026-11-23T16:40:26.994Z"
 last_activity: 2026-11-23
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-11-23)
 ## Current Position
 
 Phase: 29 (Meta/IG Readiness & Media Foundation) — EXECUTING
-Plan: 2 of 3
-Status: Ready to execute
+Plan: 3 of 3
+Status: Plan 02 complete; ready for 29-03
 Last activity: 2026-11-23
 
-Progress: [███░░░░░░░] 33%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [███░░░░░░░] 33%
 | 27 | 1/1 | Complete |
 | 28 | 3/3 | Complete |
 | Phase 29 P01 | 8min | 3 tasks | 15 files |
+| Phase 29 P02 | 25min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - Ambiguous IG publish outcomes must never trigger blind auto-retry; rate-limit handling must avoid retry storms and treat `content_publishing_limit` as runtime authority.
 - v1.3/v1.4 accepted residuals remain accepted carry-over unless explicitly pulled into scope.
 - [Phase ?]: 29-01: IG readiness additive on SocialAccount; FB status authoritative, IG refreshed on connect/verify (D-13/D-14/D-15)
+- [Phase 29]: Public IG media serves exact job_id+version hash and rebuilds only when requested version matches current job hash
+- [Phase 29]: IG media hash uses only card-relevant job fields; contact-only edits do not invalidate version hash
 
 ### Pending Todos
 
@@ -112,7 +115,7 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 
 ## Session Continuity
 
-Last session: 2026-11-23T16:16:52.010Z
-Stopped at: Phase 29 UI-SPEC approved
+Last session: 2026-11-23T16:40:09.776Z
+Stopped at: Completed 29-02-PLAN.md
 Resume file: None
-Next: `/gsd-discuss-phase 29` or `/gsd-plan-phase 29`
+Next: Execute 29-03-PLAN.md

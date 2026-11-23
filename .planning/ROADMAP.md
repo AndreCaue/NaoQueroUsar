@@ -36,7 +36,7 @@
 
 **Milestone Goal:** Permitir publicar cada vaga aprovada também no Instagram, com legenda configurada na etapa de revisão, reaproveitando a base Meta/Facebook existente e mantendo as publicações independentes.
 
-- [ ] **Phase 29: Meta/IG Readiness & Media Foundation** - Prontidão Meta/Instagram e base de imagem pública segura para publicação (1/3 plans)
+- [ ] **Phase 29: Meta/IG Readiness & Media Foundation** - Prontidão Meta/Instagram e base de imagem pública segura para publicação (2/3 plans)
 - [ ] **Phase 30: Instagram Review Experience** - Seção Instagram na revisão com controles, validações e preview
 - [ ] **Phase 31: Independent Publish Pipeline** - Publicação assíncrona Instagram desacoplada do Facebook com segurança operacional
 - [ ] **Phase 32: Hardening, Regression & Operations** - Cobertura automatizada, regressão Facebook e documentação operacional
@@ -53,9 +53,9 @@
   3. Sistema expõe contrato de validação/preparação de imagem Instagram com feedback claro em pt-BR para imagem ausente/inválida/URL pública inválida, deixando explícito que o bloqueio se aplica apenas ao Instagram; Phase 30 aplica enforcement na revisão e Phase 31 revalida antes de publicar (sem bloquear Facebook/site).
   4. Quando não houver imagem de origem disponível, o sistema gera um card fallback determinístico da vaga em formato compatível com Instagram e o admin consegue visualizar a imagem exata pretendida por URL pública HTTPS acessível pela Meta.
   5. Existe documentação/checklist operacional da configuração Meta/Instagram (permissões/escopos, premissas de App Review/roles/tasks, setup/verificação) disponível para execução manual.
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 - [x] 29-01-PLAN.md — IG readiness foundation: SocialAccount IG fields, migration 0006, media contracts, Meta status/verify IG readiness, META-01/02 tests
-- [ ] 29-02-PLAN.md — Deterministic IG card rendering, versioned public HTTPS media serving, validation/provenance contracts
+- [x] 29-02-PLAN.md — Deterministic IG card rendering, versioned public HTTPS media serving, validation/provenance contracts
 - [ ] 29-03-PLAN.md — Admin Integrations IG readiness UX and Meta/IG operational documentation
 
 **UI hint**: yes
@@ -112,7 +112,7 @@
 | 26. Acesso Admin Dedicado | v1.4 | 2/2 | Complete | 2026-11-22 |
 | 27. Controles por Ambiente | v1.4 | 1/1 | Complete | 2026-11-22 |
 | 28. Polimento UX da Home | v1.4 | 3/3 | Complete | 2026-11-23 |
-| 29. Meta/IG Readiness & Media Foundation | v1.5 | 1/3 | In Progress|  |
+| 29. Meta/IG Readiness & Media Foundation | v1.5 | 2/3 | In Progress|  |
 | 30. Instagram Review Experience | v1.5 | 0/TBD | Not started | - |
 | 31. Independent Publish Pipeline | v1.5 | 0/TBD | Not started | - |
 | 32. Hardening, Regression & Operations | v1.5 | 0/TBD | Not started | - |
