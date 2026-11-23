@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
 status: planning
-stopped_at: Phase 28 context gathered
-last_updated: "2026-11-22T23:29:24.424Z"
+stopped_at: Phase 28 UI-SPEC approved
+last_updated: "2026-11-23T00:28:58.713Z"
 last_activity: 2026-11-22
 progress:
   total_phases: 3
@@ -90,6 +90,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-11-22T23:29:24.402Z
-Stopped at: Phase 28 context gathered
-Resume file: .planning/phases/28-polimento-ux-da-home/28-CONTEXT.md
+Last session: 2026-11-23T00:28:58.682Z
+Stopped at: Phase 28 UI-SPEC approved
+Resume file: .planning/phases/28-polimento-ux-da-home/28-UI-SPEC.md
