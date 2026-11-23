@@ -28,7 +28,7 @@
 
 - [x] **Phase 26: Acesso Admin Dedicado** - Login admin em página dedicada com entrada discreta pela Política de Privacidade (completed 2026-11-22)
 - [x] **Phase 27: Controles por Ambiente** - Anúncios e doações controlados por variáveis de ambiente (completed 2026-11-22)
-- [ ] **Phase 28: Polimento UX da Home** - Filtro de cidades dinâmico e feedback visual de hover na home
+- [x] **Phase 28: Polimento UX da Home** - Filtro de cidades dinâmico e feedback visual de hover na home (completed 2026-11-22)
 
 ## Phase Details
 
@@ -67,13 +67,13 @@ Plans:
   2. Usuário recebe feedback visual de hover ao passar o mouse sobre opções do dropdown recentes/antigos.
   3. Usuário recebe feedback visual de hover ao passar o mouse sobre cards de vaga.
   4. Usuário recebe feedback visual de hover ao passar o mouse sobre filtros de cidades.
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 **UI hint**: yes
 
 Plans:
 - [x] 28-01-PLAN.md - Contrato backend de cidades ativas no board público
-- [x] 28-02-PLAN.md - TBD
-- [ ] 28-03-PLAN.md - TBD
+- [x] 28-02-PLAN.md - Chips de cidades ativas e hover na toolbar da home
+- [x] 28-03-PLAN.md - Dropdown de ordenação acessível e hover médio nos cards
 
 ## Progress
 
@@ -88,4 +88,4 @@ Plans:
 | 25. Reconciliar gates de fechamento e revalidar auditoria v1.3 | v1.3 | 2/2 | Complete | 2026-11-22 |
 | 26. Acesso Admin Dedicado | v1.4 | 2/2 | Complete    | 2026-11-22 |
 | 27. Controles por Ambiente | v1.4 | 1/1 | Complete    | 2026-11-22 |
-| 28. Polimento UX da Home | v1.4 | 2/3 | In Progress|  |
+| 28. Polimento UX da Home | v1.4 | 3/3 | Complete | 2026-11-22 |

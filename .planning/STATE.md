@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
 status: executing
-stopped_at: Completed 28-02-PLAN.md
-last_updated: "2026-11-23T01:20:29.088Z"
-last_activity: 2026-11-22 -- Completed 28-02 active city chips and hover feedback
+stopped_at: Completed 28-03-PLAN.md
+last_updated: "2026-11-22T22:24:51Z"
+last_activity: 2026-11-22 -- Completed 28-03 accessible sort dropdown and card hover polish
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
-  percent: 67
+  completed_plans: 6
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-11-22)
 
 ## Current Position
 
-Phase: 28 (polimento-ux-da-home) — EXECUTING
-Plan: 2 of 3 complete
-Status: Executing Phase 28
-Last activity: 2026-11-22 -- Completed 28-02 active city chips and hover feedback
+Phase: 28 (polimento-ux-da-home) — COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 28 complete, ready for phase verification
+Last activity: 2026-11-22 -- Completed 28-03 accessible sort dropdown and card hover polish
 
-Progress: [████████░░] 83%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 83%
 | 25 | 2/2 | Complete |
 | 26 | 2/2 | Complete |
 | 27 | 1/1 | Complete |
+| 28 | 3/3 | Complete |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting next work:
 - v1.4 roadmap: 3 phases (26-28), coarse granularity; ADMN-02 depends on ADMN-01 within Phase 26.
 - Phase 28-02: Obsolete selected city cleaned in RSC via redirect to broad board URL when absent from available_cities.
 - Phase 28-02: BoardToolbar renders only active city chips from board payload with token-based hover classes (no layout shift).
+- Phase 28-03: SortDropdown uses custom button+listbox with aria-activedescendant, keyboard/outside-click/Escape handling, and focus return to trigger.
+- Phase 28-03: Home hover feedback stays token-consistent (accent border/text + subtle accent/10 tint) with no layout-shifting hover styles.
 
 ### Pending Todos
 
@@ -92,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-11-23T01:20:29.069Z
-Stopped at: Phase 28 UI-SPEC approved
+Last session: 2026-11-22T22:24:51Z
+Stopped at: Completed 28-03-PLAN.md
 Resume file: None
