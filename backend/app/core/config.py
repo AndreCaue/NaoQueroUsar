@@ -1,3 +1,4 @@
+import ipaddress
 import logging
 import re
 from functools import lru_cache
@@ -92,6 +93,10 @@ class Settings(BaseSettings):
     # Política de conteúdo do post social (Phase 16): por padrão sem empresa/contatos.
     SOCIAL_POST_INCLUDE_CONTACT: bool = False
 
+    # --- Instagram / Mídia IG (Phase 29) ---
+    # Base pública HTTPS explícita para mídia IG (D-12). Nunca inferir de host/request.
+    MEDIA_PUBLIC_BASE_URL: str = ""
+
     @model_validator(mode="after")
     def _validate_social_foundation(self) -> "Settings":
         site_url = self.SITE_PUBLIC_URL.strip()
@@ -125,6 +130,34 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "SOCIAL_TOKEN_ENCRYPTION_KEY inválida: informe uma chave Fernet válida (32 bytes url-safe base64)"
                 ) from exc
+
+        media_base = self.MEDIA_PUBLIC_BASE_URL.strip()
+        if media_base:
+            parsed_media = urlparse(media_base)
+            host = (parsed_media.hostname or "").strip().lower()
+            is_private_or_local_ip = False
+            if host:
+                try:
+                    ip = ipaddress.ip_address(host)
+                    is_private_or_local_ip = (
+                        ip.is_private
+                        or ip.is_loopback
+                        or ip.is_reserved
+                        or ip.is_link_local
+                    )
+                except ValueError:
+                    is_private_or_local_ip = False
+            if (
+                parsed_media.scheme != "https"
+                or not host
+                or host == "localhost"
+                or host.endswith(".local")
+                or is_private_or_local_ip
+            ):
+                raise ValueError(
+                    "MEDIA_PUBLIC_BASE_URL deve ser uma URL HTTPS pública válida (não-localhost/privada)"
+                )
+            self.MEDIA_PUBLIC_BASE_URL = media_base.rstrip("/")
 
         return self
 

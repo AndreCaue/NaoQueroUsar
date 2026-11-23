@@ -20,6 +20,7 @@ dependencies = [
   "slowapi==0.1.10",
   "apscheduler==3.10.4",
   "cryptography==50.0.2",
+  "Pillow==13.0.0",
 ]
 
 [dependency-groups]

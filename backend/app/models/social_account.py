@@ -40,6 +40,16 @@ class SocialAccount(Base):
         TIMESTAMP(timezone=True),
         nullable=True,
     )
+    # IG readiness is additive; Facebook connection status remains authoritative for Facebook.
+    ig_user_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ig_username: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    ig_readiness_state: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    ig_readiness_checked_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=True,
+    )
+    ig_readiness_last_error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ig_readiness_last_error_message: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         nullable=False,

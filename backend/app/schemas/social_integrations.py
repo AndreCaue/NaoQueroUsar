@@ -11,6 +11,22 @@ class MetaIntegrationAlert(BaseModel):
     message: str
 
 
+class MetaInstagramReadiness(BaseModel):
+    ready: bool
+    ig_user_id: str | None = None
+    ig_username: str | None = None
+    state: Literal[
+        "ready",
+        "not_connected",
+        "missing_linkage",
+        "missing_permissions",
+        "needs_reconnect",
+        "unknown",
+    ]
+    message: str | None = None
+    checked_at: datetime | None = None
+
+
 class MetaIntegrationStatus(BaseModel):
     provider: Literal["facebook"] = "facebook"
     status: Literal["connected", "needs_reconnect", "disconnected"]
@@ -20,6 +36,7 @@ class MetaIntegrationStatus(BaseModel):
     token_checked_at: datetime | None = None
     pending_selection: bool = False
     alert: MetaIntegrationAlert | None = None
+    instagram: MetaInstagramReadiness | None = None
 
 
 class MetaPendingPage(BaseModel):
@@ -45,3 +62,4 @@ class MetaActionResponse(BaseModel):
     status: Literal["connected", "needs_reconnect", "disconnected"]
     message: str | None = None
     pending_selection: bool | None = None
+    instagram: MetaInstagramReadiness | None = None

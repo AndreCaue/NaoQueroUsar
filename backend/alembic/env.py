@@ -17,6 +17,7 @@ from app.models import (  # noqa: F401
     JobStatus,
     SocialAccount,
     SocialAccountStatus,
+    SocialMediaAsset,
     SocialPost,
     SocialPostLog,
     SocialPostStatus,
