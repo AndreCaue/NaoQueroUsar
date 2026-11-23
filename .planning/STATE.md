@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
-status: ready_to_plan
-stopped_at: Phase 29 complete (3/3) — ready to discuss Phase 30
-last_updated: 2026-11-23T17:45:19.139Z
+status: planning
+stopped_at: Phase 30 context gathered
+last_updated: "2026-11-23T21:13:49.055Z"
 last_activity: 2026-11-23
 progress:
   total_phases: 4
@@ -117,7 +117,7 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 
 ## Session Continuity
 
-Last session: 2026-11-23T16:49:43.214Z
-Stopped at: Completed 29-03-PLAN.md
-Resume file: None
+Last session: 2026-11-23T21:13:48.999Z
+Stopped at: Phase 30 context gathered
+Resume file: .planning/phases/30-instagram-review-experience/30-CONTEXT.md
 Next: Phase 29 verification / Phase 30 planning
