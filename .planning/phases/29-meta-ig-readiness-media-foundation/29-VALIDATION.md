@@ -17,20 +17,20 @@ created: 2026-11-23
 
 | Property | Value |
 |----------|-------|
-| **Framework** | {pytest 7.x / jest 29.x / vitest / go test / other} |
-| **Config file** | {path or "none — Wave 0 installs"} |
-| **Quick run command** | `{quick command}` |
-| **Full suite command** | `{full command}` |
-| **Estimated runtime** | ~{N} seconds |
+| **Framework** | pytest 9.1.1 + pytest-asyncio >=1.0.0,<2.0.0 (backend); Vitest ^2.1.9 (frontend) |
+| **Config file** | `backend/pyproject.toml` (`[tool.pytest.ini_options]`, `asyncio_mode=auto`); `frontend/package.json` scripts |
+| **Quick run command** | `cd backend && uv run pytest tests/test_meta_oauth_security.py -q` |
+| **Full suite command** | `cd backend && uv run pytest -q` |
+| **Estimated runtime** | ~60 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `{quick run command}`
-- **After every plan wave:** Run `{full suite command}`
+- **After every task commit:** Run `cd backend && uv run pytest tests/test_meta_oauth_instagram.py tests/test_ig_media_card.py -q` (or closest phase-specific subset)
+- **After every plan wave:** Run `cd backend && uv run pytest -q`
 - **Before `/gsd-verify-work`:** Full suite must be green
-- **Max feedback latency:** {N} seconds
+- **Max feedback latency:** 60 seconds
 
 ---
 
@@ -38,7 +38,12 @@ created: 2026-11-23
 
 | task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| {N}-01-01 | 01 | 1 | REQ-{XX} | T-{N}-01 / — | {expected secure behavior or "N/A"} | unit | `{command}` | ❌ / ✅ W0 | ⬜ pending |
+| 29-01-01 | 01 | 1 | META-01 | T-29-01 | Status endpoint returns additive IG readiness without tokens/secrets; FB status unaffected | integration/unit | `cd backend && uv run pytest tests/test_meta_oauth_instagram.py -q` | ❌ W0 | ⬜ pending |
+| 29-01-02 | 01 | 1 | META-02 | T-29-02 | `ig-user-id` resolved/persisted from linked Page; missing/invalid linkage maps to safe actionable pt-BR state; FB not broken | unit/integration | `cd backend && uv run pytest tests/test_meta_oauth_instagram.py tests/test_integrations_instagram.py -q` | ❌ W0 | ⬜ pending |
+| 29-01-03 | 01 | 1 | META-03 | — | Ops docs contain required env/scopes/manual verification checklist; no fabricated live evidence | doc smoke | `cd backend && uv run pytest tests/test_docs_meta_instagram.py -q` | ❌ W0 | ⬜ pending |
+| 29-02-01 | 02 | 1 | IMAG-02 | T-29-03 | Deterministic 1080x1350 JPEG sRGB <8MB card; no contacts; bundled fonts; stable hash/version | unit | `cd backend && uv run pytest tests/test_ig_media_card.py -q` | ❌ W0 | ⬜ pending |
+| 29-02-02 | 02 | 1 | IMAG-01 | T-29-04 | Missing/invalid IG image returns clear pt-BR validation and blocks only IG path | unit/integration | `cd backend && uv run pytest tests/test_ig_media_validation.py -q` | ❌ W0 | ⬜ pending |
+| 29-02-03 | 02 | 1 | IMAG-03 | T-29-05 | Public HTTPS non-auth URL serves exact versioned image; localhost/private/auth URLs rejected; provenance available | integration | `cd backend && uv run pytest tests/test_public_ig_media.py -q` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -46,9 +51,14 @@ created: 2026-11-23
 
 ## Wave 0 Requirements
 
-- [ ] `{tests/test_file.py}` — stubs for REQ-{XX}
-- [ ] `{tests/conftest.py}` — shared fixtures
-- [ ] `{framework install}` — if no framework detected
+- [ ] `backend/tests/test_meta_oauth_instagram.py` — stubs for META-01, META-02
+- [ ] `backend/tests/test_integrations_instagram.py` — covers integrations endpoint/schema safety (META-01, META-02)
+- [ ] `backend/tests/test_ig_media_card.py` — covers IMAG-02 determinism/size/format
+- [ ] `backend/tests/test_ig_media_validation.py` — covers IMAG-01 validation contract
+- [ ] `backend/tests/test_public_ig_media.py` — covers IMAG-03 public serving/version/provenance
+- [ ] `backend/tests/test_docs_meta_instagram.py` — covers META-03 checklist presence (lightweight doc assertion)
+- [ ] `backend/assets/fonts/` test fixture/font license note — deterministic render fixture
+- [ ] Framework/install: `cd backend && uv add "Pillow==13.0.0"` (if not already declared)
 
 *If none: "Existing infrastructure covers all phase requirements."*
 
@@ -58,7 +68,8 @@ created: 2026-11-23
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| {behavior} | REQ-{XX} | {reason} | {steps} |
+| Live Meta app/page/IG linkage and permission grant behavior | META-01, META-02, META-03 | Requires real Meta app credentials, Page roles/tasks, and linked IG Business/Creator account in target app mode | Follow `docs/META-INTEGRATION-TESTING.md` IG checklist: connect page, confirm IG readiness state, verify missing-linkage/missing-permissions handling, confirm reconnect flow. Record evidence separately; do not fabricate pass. |
+| Meta can fetch public image URL from deployed backend | IMAG-03 | Requires publicly reachable HTTPS deployment; localhost/dev tunnels not authoritative | Deploy/stage backend with valid `MEDIA_PUBLIC_BASE_URL`, open generated image URL unauthenticated, confirm 200 JPEG and Meta-accessible public host. |
 
 *If none: "All phase behaviors have automated verification."*
 
@@ -70,7 +81,7 @@ created: 2026-11-23
 - [ ] Sampling continuity: no 3 consecutive tasks without automated verify
 - [ ] Wave 0 covers all MISSING references
 - [ ] No watch-mode flags
-- [ ] Feedback latency < {N}s
+- [ ] Feedback latency < 60s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** {pending / approved YYYY-MM-DD}
+**Approval:** pending
