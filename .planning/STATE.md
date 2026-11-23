@@ -4,13 +4,13 @@ milestone: v1.5
 milestone_name: Integração Instagram na Revisão
 status: executing
 stopped_at: Phase 29 UI-SPEC approved
-last_updated: "2026-11-23T15:04:02.948Z"
-last_activity: 2026-11-23 -- Phase 29 planning complete
+last_updated: "2026-11-23T16:17:04.529Z"
+last_activity: 2026-11-23
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-23)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** v1.5 roadmap created — ready to plan Phase 29
+**Current focus:** Phase 29 — Meta/IG Readiness & Media Foundation
 
 ## Current Position
 
-Phase: 29 of 32 (Meta/IG Readiness & Media Foundation)
-Plan: —
+Phase: 29 (Meta/IG Readiness & Media Foundation) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-11-23 -- Phase 29 planning complete
+Last activity: 2026-11-23
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | 26 | 2/2 | Complete |
 | 27 | 1/1 | Complete |
 | 28 | 3/3 | Complete |
+| Phase 29 P01 | 8min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,7 @@ Recent decisions affecting current work:
 - Meta permission/App Review/Advanced Access assumptions must be confirmed before live rollout; keep Graph API version config-driven.
 - Ambiguous IG publish outcomes must never trigger blind auto-retry; rate-limit handling must avoid retry storms and treat `content_publishing_limit` as runtime authority.
 - v1.3/v1.4 accepted residuals remain accepted carry-over unless explicitly pulled into scope.
+- [Phase ?]: 29-01: IG readiness additive on SocialAccount; FB status authoritative, IG refreshed on connect/verify (D-13/D-14/D-15)
 
 ### Pending Todos
 
@@ -110,7 +112,7 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 
 ## Session Continuity
 
-Last session: 2026-11-23T13:28:48.101Z
+Last session: 2026-11-23T16:16:52.010Z
 Stopped at: Phase 29 UI-SPEC approved
-Resume file: .planning/phases/29-meta-ig-readiness-media-foundation/29-UI-SPEC.md
+Resume file: None
 Next: `/gsd-discuss-phase 29` or `/gsd-plan-phase 29`
