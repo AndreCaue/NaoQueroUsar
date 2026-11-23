@@ -7,6 +7,8 @@ import { CITY_OPTIONS, resolveCitySlugFromText } from "@/lib/cities";
 import { buildBoardHref, type Filters } from "@/lib/filters";
 import { formatJobCount } from "@/lib/format";
 
+import { SortDropdown } from "./SortDropdown";
+
 interface BoardToolbarProps {
   filters: Filters;
   total: number;
@@ -225,21 +227,10 @@ export function BoardToolbar({ filters, total, availableCities }: BoardToolbarPr
         ) : (
           <span />
         )}
-        <label className="sr-only" htmlFor="board-sort">
-          Ordenar por
-        </label>
-        <select
-          id="board-sort"
-          aria-label="Ordenar por"
+        <SortDropdown
           value={filters.sort}
-          onChange={(event) =>
-            commit({ sort: event.target.value as Filters["sort"] })
-          }
-          className="h-11 w-40 rounded-lg border border-line-strong bg-canvas px-3 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft"
-        >
-          <option value="recentes">Mais recentes</option>
-          <option value="antigas">Mais antigas</option>
-        </select>
+          onChange={(sort) => commit({ sort })}
+        />
       </div>
     </div>
   );
