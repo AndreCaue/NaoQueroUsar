@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.client_ip import UNKNOWN_IP, resolve_client_ip
 from app.core.config import get_settings
 from app.core.ratelimit import chat_search_limit, limiter, reveal_limit
-from app.crud import get_published, list_published
+from app.crud import get_published, list_active_cities, list_published
 from app.db.session import get_session
 from app.deps import get_turnstile_verifier
 from app.schemas.chat import ChatSearchRequest, ChatSearchResponse, ChatSearchResults
@@ -175,6 +175,7 @@ async def list_public_jobs(
     if not term:
         term = None
 
+    available_cities = await list_active_cities(session)
     items, total = await list_published(
         session,
         page=page,
@@ -188,6 +189,7 @@ async def list_public_jobs(
         page=page,
         limit=limit,
         total=total,
+        available_cities=available_cities,
     )
 
 

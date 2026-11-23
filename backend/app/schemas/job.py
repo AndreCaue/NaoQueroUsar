@@ -52,6 +52,7 @@ class JobListResponse(BaseModel):
     page: int
     limit: int
     total: int
+    available_cities: list[str] = Field(default_factory=list)
 
 
 class RevealRequest(BaseModel):

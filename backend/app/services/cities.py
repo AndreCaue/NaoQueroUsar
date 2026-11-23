@@ -19,6 +19,27 @@ CITY_ALIASES: Final[dict[str, str]] = {
     "remoto": "Remoto",
 }
 
+CANONICAL_TO_SLUG: Final[dict[str, str]] = {
+    "São Paulo": "sao-paulo",
+    "Rio de Janeiro": "rio-de-janeiro",
+    "Belo Horizonte": "belo-horizonte",
+    "Remoto": "remoto",
+}
+
+ACTIVE_CITY_SLUG_ORDER: Final[tuple[str, ...]] = (
+    "sao-paulo",
+    "rio-de-janeiro",
+    "belo-horizonte",
+    "remoto",
+)
+
+
+def canonical_to_slug(value: str | None) -> str | None:
+    """Map a canonical DB city name to the supported public slug."""
+    if not value:
+        return None
+    return CANONICAL_TO_SLUG.get(value.strip())
+
 
 def resolve_city(value: str | None) -> str | None:
     """Whitelist the city (slug/canonical/label); anything else is ``None``."""

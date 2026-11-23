@@ -9,10 +9,22 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.job import Job, JobStatus
+from app.services.cities import ACTIVE_CITY_SLUG_ORDER, canonical_to_slug
 
 PUBLISHED_TTL = timedelta(days=14)
 
-__all__ = ["list_published", "get_published", "bulk_create_pending", "list_by_status", "get_job", "approve_job", "update_job", "delete_job", "delete_expired_jobs"]
+__all__ = [
+    "list_published",
+    "get_published",
+    "list_active_cities",
+    "bulk_create_pending",
+    "list_by_status",
+    "get_job",
+    "approve_job",
+    "update_job",
+    "delete_job",
+    "delete_expired_jobs",
+]
 
 
 def _escape_like(term: str) -> str:
@@ -89,6 +101,26 @@ async def list_published(
     items = list((await session.scalars(items_stmt)).all())
     total = int((await session.scalar(count_stmt)) or 0)
     return items, total
+
+
+async def list_active_cities(session: AsyncSession) -> list[str]:
+    """Return supported city slugs with published, non-expired jobs.
+
+    Computed for the general board (D-01): only published/non-expired
+    visibility applies. Request filters (q/city/sort) are intentionally ignored.
+    """
+    stmt = (
+        select(Job.city)
+        .where(Job.status == JobStatus.published, Job.expires_at > func.now())
+        .distinct()
+    )
+    rows = (await session.scalars(stmt)).all()
+    active = {
+        slug
+        for row in rows
+        if (slug := canonical_to_slug(row)) is not None
+    }
+    return [slug for slug in ACTIVE_CITY_SLUG_ORDER if slug in active]
 
 
 async def list_by_status(
