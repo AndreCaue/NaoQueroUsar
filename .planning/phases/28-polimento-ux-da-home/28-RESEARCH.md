@@ -340,17 +340,19 @@ const activeCityOptions = CITY_OPTIONS.filter((o) =>
 | A3 | `available_cities` should return supported slugs in `CITY_OPTIONS` order, as resolved by UI-SPEC discretion. | Standard Stack / Architecture | If backend/frontend expect canonical labels instead, mapping bugs occur. Mitigation: lock contract in schema/types/tests. |
 | A4 | Vitest remains lib-only (`lib/**/*.test.ts`) per current config; component-level tests may require config adjustment or be deferred to manual/E2E. | Validation Architecture | Validation may miss dropdown interaction regressions. Mitigation: add pure helper tests + manual accessibility checks; optionally extend Vitest config if planner chooses. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Where should D-03 obsolete-city cleanup run?**
+1. **Where should D-03 obsolete-city cleanup run?** — **RESOLVED**
    - What we know: D-03 requires URL cleared and broad board state; UI-SPEC allows `router.replace` or equivalent; page is RSC and fetches filtered board. [VERIFIED: 28-CONTEXT.md, 28-UI-SPEC.md, page.tsx]
    - What's unclear: Best UX in Next 16 between server `redirect()` and client effect replacement.
    - Recommendation: Prefer server-side canonicalization (redirect to cleaned URL) before rendering stale filtered results; if redirect is unsuitable, fetch broad data when city obsolete and emit client replace. Planner should pick one and test no empty flash.
+   - **Resolution:** Use RSC `redirect(buildBoardHref({ ...filters, city: null, page: 1, vaga: null }))` in `frontend/app/(public)/page.tsx` when the selected city is not in `available_cities`, before rendering stale filtered results (Plan 28-02).
 
-2. **How should backend map canonical DB cities to slugs?**
+2. **How should backend map canonical DB cities to slugs?** — **RESOLVED**
    - What we know: DB stores canonical accented names; frontend expects slugs in `CITY_OPTIONS`; backend has `CITY_ALIASES` canonical resolver only. [VERIFIED: crud/jobs.py, services/cities.py, cities.ts]
    - What's unclear: Whether to add canonical->slug map in backend service or return canonical and map in frontend.
    - Recommendation: Return slugs as per UI-SPEC (`available_cities` slug array). Add a small explicit canonical->slug mapping in backend `services/cities.py` to keep contract clear.
+   - **Resolution:** Add explicit canonical DB city -> supported slug mapping in `backend/app/services/cities.py` (`CANONICAL_TO_SLUG`/`canonical_to_slug`), returning `available_cities` as supported slugs in stable `CITY_OPTIONS` order (Plan 28-01).
 
 ## Environment Availability
 
