@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
-status: executing
-stopped_at: Completed 28-03-PLAN.md
-last_updated: "2026-11-22T22:24:51Z"
+status: milestone_complete
+stopped_at: Milestone complete (Phase 28 was final phase)
+last_updated: 2026-11-23T01:40:04.536Z
 last_activity: 2026-11-22 -- Completed 28-03 accessible sort dropdown and card hover polish
 progress:
   total_phases: 3
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-22)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 28 — polimento-ux-da-home
+**Current focus:** Milestone complete
 
 ## Current Position
 
-Phase: 28 (polimento-ux-da-home) — COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 28 complete, ready for phase verification
-Last activity: 2026-11-22 -- Completed 28-03 accessible sort dropdown and card hover polish
+Phase: 28
+Plan: Not started
+Status: Milestone complete
+Last activity: 2026-11-23
 
 Progress: [██████████] 100%
 
