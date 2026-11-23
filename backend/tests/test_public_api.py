@@ -123,3 +123,32 @@ async def test_cors_preflight_allows_reveal_post(client):
     # Deliberately NO expose-headers assertion here: Starlette omits it on the
     # preflight reply (see the test above for where it actually appears).
 
+
+async def test_list_includes_available_cities_in_stable_order(
+    client, db_session, seed_published_job
+):
+    sao_paulo = Job(
+        title="Vaga SP — Teste",
+        city="São Paulo",
+        contact_phone="+55 11 90000-0010",
+        status=JobStatus.published,
+    )
+    pending_rio = Job(
+        title="Vaga Rio Pendente — Teste",
+        city="Rio de Janeiro",
+        contact_phone="+55 21 90000-0011",
+        status=JobStatus.pending,
+    )
+    db_session.add_all([sao_paulo, pending_rio])
+    await db_session.flush()
+
+    resp = await client.get("/api/v1/public/jobs")
+    assert resp.status_code == 200
+    body = resp.json()
+
+    assert body["available_cities"] == ["sao-paulo", "remoto"]
+    assert set(body.keys()) >= {"items", "page", "limit", "total", "available_cities"}
+    for item in body["items"]:
+        assert "contact_email" not in item
+        assert "contact_phone" not in item
+

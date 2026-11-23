@@ -373,3 +373,26 @@ async def test_filtered_payload_has_no_contact_fields(db_session, client):
         assert "contact_email" not in item
         assert "contact_phone" not in item
 
+
+async def test_available_cities_are_independent_of_q_and_city_filters(
+    db_session, client
+):
+    await _insert(db_session, title="Analista Dados", city=SAO_PAULO)
+    await _insert(db_session, title="Dev Backend", city="Remoto")
+    await _insert(
+        db_session,
+        title="Vaga Rio Pendente",
+        city=RIO,
+        status=JobStatus.pending,
+    )
+
+    resp = await client.get(
+        "/api/v1/public/jobs", params={"q": "analista", "city": "sao-paulo"}
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+
+    assert body["total"] == 1
+    assert body["available_cities"] == ["sao-paulo", "remoto"]
+    assert "rio-de-janeiro" not in body["available_cities"]
+
