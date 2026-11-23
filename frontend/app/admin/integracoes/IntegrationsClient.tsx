@@ -14,6 +14,7 @@ import {
   startMetaOAuth,
   verifyMetaIntegration,
   type MetaIntegrationStatus,
+  type MetaInstagramReadiness,
   type MetaPendingPage,
 } from "@/lib/api";
 
@@ -41,6 +42,74 @@ function isStatusPayload(
       v.status === "disconnected") &&
     typeof v.pending_selection === "boolean"
   );
+}
+
+type InstagramPanelAction = "verify" | "reconnect";
+
+function getInstagramPanel(
+  instagram: MetaInstagramReadiness | null | undefined,
+  fbStatus: MetaIntegrationStatus["status"],
+): {
+  heading: string;
+  message: string;
+  action: InstagramPanelAction;
+  tone: "success" | "warning" | "error" | "info";
+} {
+  const state = instagram?.state ?? "unknown";
+  const igUserId = instagram?.ig_user_id ?? null;
+  const igUsername = instagram?.ig_username ?? null;
+
+  if (state === "ready") {
+    return {
+      heading: "Instagram pronto para publicação",
+      message: igUsername
+        ? `Conta Instagram vinculada: @${igUsername}`
+        : igUserId
+          ? `Conta Instagram vinculada (ID: ${igUserId}).`
+          : instagram?.message || "Conta Instagram vinculada.",
+      action: "verify",
+      tone: "success",
+    };
+  }
+
+  if (state === "missing_linkage") {
+    return {
+      heading: "Instagram não vinculado",
+      message:
+        "Nenhuma conta Instagram Business/Creator vinculada a esta Página.",
+      action: "reconnect",
+      tone: "warning",
+    };
+  }
+
+  if (state === "missing_permissions") {
+    return {
+      heading: "Permissões do Instagram ausentes",
+      message:
+        "Permissões do Instagram ausentes. Reconecte para autorizar o Instagram.",
+      action: "reconnect",
+      tone: "warning",
+    };
+  }
+
+  if (state === "needs_reconnect") {
+    return {
+      heading: "Reconexão necessária para o Instagram",
+      message:
+        "A conexão do Instagram precisa ser renovada. Reconecte para continuar.",
+      action: "reconnect",
+      tone: "warning",
+    };
+  }
+
+  const reconnectAction =
+    fbStatus === "needs_reconnect" ? "reconnect" : "verify";
+  return {
+    heading: "Prontidão do Instagram indisponível",
+    message: "Não foi possível confirmar a prontidão do Instagram agora.",
+    action: reconnectAction,
+    tone: "info",
+  };
 }
 
 export function IntegrationsClient() {
@@ -195,6 +264,18 @@ export function IntegrationsClient() {
         setStatus(data);
         toast("Verificação concluída.", "success");
       } else {
+        setStatus((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            status: data.status ?? prev.status,
+            pending_selection:
+              typeof data.pending_selection === "boolean"
+                ? data.pending_selection
+                : prev.pending_selection,
+            instagram: data.instagram ?? prev.instagram,
+          };
+        });
         await refresh({ keepLoading: true });
         toast("Verificação concluída.", "success");
       }
@@ -291,6 +372,18 @@ export function IntegrationsClient() {
         : "border-line bg-surface text-fg";
 
   if (!token) return null;
+
+  const instagramPanel =
+    status && (status.status === "connected" || status.status === "needs_reconnect")
+      ? getInstagramPanel(status.instagram, status.status)
+      : null;
+
+  const instagramPanelClass =
+    instagramPanel?.tone === "success"
+      ? "border-accent bg-[rgba(139,92,246,0.08)]"
+      : instagramPanel?.tone === "warning"
+        ? "border-danger bg-[rgba(248,113,113,0.08)]"
+        : "border-line bg-canvas";
 
   return (
     <div className="mt-6 space-y-4">
@@ -407,6 +500,35 @@ export function IntegrationsClient() {
                 {transientVerifyMessage}
               </div>
             )}
+            {instagramPanel && (
+              <div className={`rounded-[12px] border px-4 py-4 ${instagramPanelClass}`}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-base font-semibold text-fg">{instagramPanel.heading}</h3>
+                    <p className="mt-1 text-sm text-fg-muted">{instagramPanel.message}</p>
+                  </div>
+                  {instagramPanel.action === "reconnect" ? (
+                    <button
+                      type="button"
+                      onClick={handleStart}
+                      disabled={actionLoading !== null}
+                      className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-[12px] bg-accent px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {actionLoading === "start" ? "Conectando..." : "Reconectar"}
+                    </button>
+                  ) : instagramPanel.tone === "info" ? (
+                    <button
+                      type="button"
+                      onClick={handleVerify}
+                      disabled={actionLoading !== null}
+                      className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-[12px] border border-line px-4 py-2 text-sm font-semibold text-fg hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {actionLoading === "verify" ? "Verificando conexão..." : "Verificar agora"}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -442,6 +564,26 @@ export function IntegrationsClient() {
                 {status.alert.message}
               </div>
             )}
+            {instagramPanel && (
+              <div className={`rounded-[12px] border px-4 py-4 ${instagramPanelClass}`}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-base font-semibold text-fg">{instagramPanel.heading}</h3>
+                    <p className="mt-1 text-sm text-fg-muted">{instagramPanel.message}</p>
+                  </div>
+                  {instagramPanel.action === "verify" ? (
+                    <button
+                      type="button"
+                      onClick={handleVerify}
+                      disabled={actionLoading !== null}
+                      className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-[12px] border border-line px-4 py-2 text-sm font-semibold text-fg hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {actionLoading === "verify" ? "Verificando conexão..." : "Verificar agora"}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -466,7 +608,7 @@ export function IntegrationsClient() {
             <div>
               <h2 className="text-xl font-semibold">Nenhuma Página do Facebook conectada</h2>
               <p className="mt-1 text-base text-fg-muted">
-                Conecte uma Página para habilitar a publicação automática de vagas no Facebook. Você será redirecionado para o Meta em uma etapa segura no servidor.
+                Conecte uma Página para habilitar a integração. Após conectar, você verá aqui a prontidão do Instagram para publicação.
               </p>
             </div>
             <button
@@ -496,7 +638,7 @@ export function IntegrationsClient() {
         >
           <h3 className="text-xl font-semibold">Desconectar</h3>
           <p className="text-sm text-fg-muted">
-            Tem certeza de que deseja desconectar esta Página do Facebook? A publicação automática ficará indisponível até você conectar novamente.
+            Tem certeza de que deseja desconectar esta Página do Facebook? A publicação automática do Facebook e a prontidão do Instagram ficarão indisponíveis até você conectar novamente.
           </p>
           <div className="flex flex-wrap justify-end gap-2">
             <button

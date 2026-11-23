@@ -555,6 +555,23 @@ export interface MetaIntegrationAlert {
   message: string;
 }
 
+export type MetaInstagramReadinessState =
+  | "ready"
+  | "not_connected"
+  | "missing_linkage"
+  | "missing_permissions"
+  | "needs_reconnect"
+  | "unknown";
+
+export interface MetaInstagramReadiness {
+  ready: boolean;
+  ig_user_id: string | null;
+  ig_username: string | null;
+  state: MetaInstagramReadinessState;
+  message: string | null;
+  checked_at?: string | null;
+}
+
 export interface MetaIntegrationStatus {
   provider: "facebook";
   status: "connected" | "needs_reconnect" | "disconnected";
@@ -564,6 +581,7 @@ export interface MetaIntegrationStatus {
   token_checked_at: string | null;
   pending_selection: boolean;
   alert: MetaIntegrationAlert | null;
+  instagram?: MetaInstagramReadiness | null;
 }
 
 export interface MetaPendingPage {
@@ -589,6 +607,7 @@ export interface MetaActionResponse {
   status: "connected" | "needs_reconnect" | "disconnected";
   message?: string | null;
   pending_selection?: boolean | null;
+  instagram?: MetaInstagramReadiness | null;
 }
 
 export async function getMetaIntegrationStatus(

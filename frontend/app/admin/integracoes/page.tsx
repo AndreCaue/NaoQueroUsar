@@ -8,8 +8,8 @@ export default function Page() {
         Integrações
       </h1>
       <p className="mt-2 text-fg-muted">
-        Conecte sua Página do Facebook para publicar vagas automaticamente
-        quando a integração estiver ativa.
+        Conecte sua Página do Facebook para gerenciar a integração e acompanhar
+        a prontidão do Instagram.
       </p>
 
       <Suspense
