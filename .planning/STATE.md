@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
 status: executing
-stopped_at: Phase 28 UI-SPEC approved
-last_updated: "2026-11-23T00:59:42.507Z"
-last_activity: 2026-11-23 -- Phase 28 planning complete
+stopped_at: Completed 28-01-PLAN.md
+last_updated: "2026-11-22T22:10:07-03:00"
+last_activity: 2026-11-22 -- Completed 28-01 available_cities board contract
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 6
-  completed_plans: 3
-  percent: 50
+  completed_plans: 4
+  percent: 67
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-22)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 28 — polimento ux da home
+**Current focus:** Phase 28 — polimento-ux-da-home
 
 ## Current Position
 
-Phase: 28
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-11-23 -- Phase 28 planning complete
+Phase: 28 (polimento-ux-da-home) — EXECUTING
+Plan: 1 of 3 complete
+Status: Executing Phase 28
+Last activity: 2026-11-22 -- Completed 28-01 available_cities board contract
 
 Progress: [██████░░░░] 67%
 

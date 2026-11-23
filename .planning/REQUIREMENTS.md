@@ -9,7 +9,7 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 
 ### Filtro de Cidades
 
-- [ ] **CITY-01**: Usuário vê no filtro de cidades da home apenas cidades que possuem vagas publicadas/ativas no momento
+- [x] **CITY-01**: Usuário vê no filtro de cidades da home apenas cidades que possuem vagas publicadas/ativas no momento
 
 ### Acesso Admin
 
@@ -47,7 +47,7 @@ Requirements for milestone v1.4 Polimento UX e Admin. Each maps to roadmap phase
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CITY-01 | Phase 28 | Pending |
+| CITY-01 | Phase 28 | Complete |
 | ADMN-01 | Phase 26 | Complete |
 | ADMN-02 | Phase 26 | Complete |
 | ADS-01 | Phase 27 | Complete |

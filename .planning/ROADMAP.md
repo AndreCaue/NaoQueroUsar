@@ -67,8 +67,13 @@ Plans:
   2. Usuário recebe feedback visual de hover ao passar o mouse sobre opções do dropdown recentes/antigos.
   3. Usuário recebe feedback visual de hover ao passar o mouse sobre cards de vaga.
   4. Usuário recebe feedback visual de hover ao passar o mouse sobre filtros de cidades.
-**Plans**: TBD
+**Plans:** 1/3 plans executed
 **UI hint**: yes
+
+Plans:
+- [x] 28-01-PLAN.md - Contrato backend de cidades ativas no board público
+- [ ] 28-02-PLAN.md - TBD
+- [ ] 28-03-PLAN.md - TBD
 
 ## Progress
 
