@@ -112,7 +112,7 @@
 | 26. Acesso Admin Dedicado | v1.4 | 2/2 | Complete | 2026-11-22 |
 | 27. Controles por Ambiente | v1.4 | 1/1 | Complete | 2026-11-22 |
 | 28. Polimento UX da Home | v1.4 | 3/3 | Complete | 2026-11-23 |
-| 29. Meta/IG Readiness & Media Foundation | v1.5 | 3/3 | Complete   | 2026-11-23 |
+| 29. Meta/IG Readiness & Media Foundation | v1.5 | 3/3 | Complete    | 2026-11-23 |
 | 30. Instagram Review Experience | v1.5 | 0/TBD | Not started | - |
 | 31. Independent Publish Pipeline | v1.5 | 0/TBD | Not started | - |
 | 32. Hardening, Regression & Operations | v1.5 | 0/TBD | Not started | - |

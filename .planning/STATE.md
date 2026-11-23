@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
-status: verifying
-stopped_at: Completed 29-03-PLAN.md
-last_updated: "2026-11-23T16:49:43.264Z"
+status: ready_to_plan
+stopped_at: Phase 29 complete (3/3) — ready to discuss Phase 30
+last_updated: 2026-11-23T17:45:19.139Z
 last_activity: 2026-11-23
 progress:
   total_phases: 4
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-23)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 29 — Meta/IG Readiness & Media Foundation
+**Current focus:** Phase 30 — instagram review experience
 
 ## Current Position
 
-Phase: 29 (Meta/IG Readiness & Media Foundation) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Phase: 30
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-11-23
 
 Progress: [██████████] 100%
