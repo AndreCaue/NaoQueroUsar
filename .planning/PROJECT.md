@@ -14,11 +14,33 @@
 
 **Known accepted residuals (v1.4):** Phase 26 live Turnstile+backend browser smoke pending (`26-HUMAN-UAT.md`, `26-VERIFICATION.md` human_needed; code paths verified). Phase 28 VERIFICATION frontmatter human_needed but human UAT acknowledged (2026-11-22, 5/5 passed). Integration warning: `frontend/app/admin/integracoes/IntegrationsClient.tsx` missing 401 handler clearing `nqu_admin_token` and redirecting via `buildAdminLoginHref(path+search)`. Nyquist partial in Phases 26/27/28. Known deferred items at close: 7 (see `STATE.md` Deferred Items), including v1.3 CL-02 quick-task heuristic residuals.
 
-## Next Milestone
+## Current Milestone: v1.5 Integração Instagram na Revisão
 
-**Status:** Not started. Run `/gsd-new-milestone` to define scope, requirements, and roadmap.
+**Goal:** Permitir publicar cada vaga aprovada também no Instagram, com legenda configurada na etapa de revisão, reaproveitando a base Meta/Facebook existente e mantendo as publicações independentes.
 
-**Candidate carry-over (evaluate during next milestone scoping):**
+**Target features:**
+- Seção Instagram na etapa de revisão ao lado do Facebook: toggle por vaga, legenda editável pré-preenchida, contador 2.200, aviso >30 hashtags, preview de imagem e status por plataforma
+- Imagem obrigatória para Instagram: origem a definir (logo/card gerado/upload); fallback card padrão 1080x1080 ou 1080x1350 JPEG servido por URL pública acessível pela Meta
+- Publicação via Instagram Graph API (Content Publishing) em 2 passos (container + publish), com checagem de status quando necessário; obter/armazenar `ig-user-id` a partir da Página Facebook vinculada, reaproveitando token existente
+- Pipeline assíncrono, retry/backoff e idempotência, desacoplado do Facebook (falha de um não bloqueia o outro)
+- Persistência/observabilidade: legenda usada, post id, permalink, status, erro, timestamps; tratamento de rate limit e limite diário; tokens/IDs via env; logs sem tokens; tratar expiração de token
+- Qualidade: testes unitários/integração mockada, checklist manual Meta documentado; sem regressão no fluxo Facebook
+
+**Out of scope (v1.5):** Stories/Reels/carrossel, agendamento, métricas/analytics, responder comentários/DMs, múltiplas contas Instagram.
+
+**Constraints/guardrails:**
+- Conta Instagram Business/Creator vinculada à Página Facebook
+- Links na legenda não são clicáveis (CTA tipo "link na bio")
+- Antes de implementar, confirmar documentação/permissões/limites Meta atuais; mapear permissões/App Review (ex.: instagram_basic, instagram_content_publish, pages_show_list, pages_read_engagement)
+- Reaproveitar padrões existentes (app Meta, tokens, service, fila/jobs, modelo, review UI, erros/logs); sem novas abstrações desnecessárias
+
+**Decisões em aberto (resolver no discuss-phase):**
+- Origem da imagem (logo da empresa / card gerado a partir da vaga / upload na revisão)
+- Formato/template/armazenamento/serving do card gerado (proporção, onde armazenar e servir)
+- Biblioteca/estratégia de geração de imagem, se aplicável
+- Estratégia de renovação ou alerta de expiração do token
+
+**Candidate carry-over (evaluate during scoping/execution):**
 - v1.4 tech debt: IntegrationsClient 401 recovery alignment (ADMN-01 robustness), Phase 26 live smoke, Nyquist partial 26/27/28.
 - v1.3 residuals: CL-02 audit-open heuristic residual, D-14/WR-02 focus trap, runtime/browser deferments by item, Nyquist 21/22/23/25 partial, `23-06/23-07` PLANs without SUMMARYs.
 - v1.2 carry-over: `PUB-01..08` traceability reconciliation, `TEST-04/DOC-01/AUD-05` handoffs.
@@ -56,7 +78,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Active
 
-None yet — define in next milestone via `/gsd-new-milestone`.
+None yet — requirements for v1.5 will be defined in `.planning/REQUIREMENTS.md` during milestone initialization.
 
 ### Out of Scope
 
@@ -128,4 +150,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-23 after v1.4 milestone completion (audit tech_debt accepted)*
+*Last updated: 2026-11-23 after v1.5 milestone start (Integração Instagram na Revisão)*
