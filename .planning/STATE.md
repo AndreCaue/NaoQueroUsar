@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Polimento UX e Admin
-status: milestone_complete
-stopped_at: Milestone complete (Phase 28 was final phase)
-last_updated: 2026-11-23T01:40:04.536Z
-last_activity: 2026-11-22 -- Completed 28-03 accessible sort dropdown and card hover polish
+status: Awaiting next milestone
+stopped_at: Completed 28-03-PLAN.md
+last_updated: "2026-11-23T02:24:53.989Z"
+last_activity: 2026-11-23 — Milestone v1.4 completed and archived
 progress:
   total_phases: 3
   completed_phases: 3
@@ -18,19 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-22)
+See: .planning/PROJECT.md (updated 2026-11-23)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Milestone complete
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 28
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-11-23
-
-Progress: [██████████] 100%
+Phase: Milestone v1.4 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-11-23 — Milestone v1.4 completed and archived
 
 ## Performance Metrics
 
@@ -84,6 +82,20 @@ None.
 - **Process debt:** `23-06-PLAN.md` and `23-07-PLAN.md` exist without SUMMARYs (stale gap-closure drafts superseded by Phases 24/25).
 - **Carry-over (out of v1.3 scope):** v1.2 PUB-01..08 traceability, TEST-04/DOC-01/AUD-05 handoffs; v1.1 EXTR/PUBL/SRCH/UIUX caveats, canonical live smoke, DB-backed test reproducibility.
 
+### Deferred Items
+
+Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
+
+| Category | Item | Status |
+|----------|------|--------|
+| quick_task | 261110-u28-bloquear-a-expressao-jacira-chavare-ao-c | missing (known v1.3 CL-02 heuristic residual; formally accepted) |
+| quick_task | 261110-uik-remover-jacira-chavare-do-texto-colado-s | missing (known v1.3 CL-02 heuristic residual; formally accepted) |
+| quick_task | 261111-krt-atualizar-next-16-4-6-eslint-9 | missing (known v1.3 CL-02 heuristic residual; formally accepted) |
+| quick_task | 261112-ttk-escape-hatch-turnstile-teste-em-prod | missing (known v1.3 CL-02 heuristic residual; PLAN-only deferred, formally accepted) |
+| uat_gap | Phase 26 26-HUMAN-UAT.md | partial (1 pending: live Turnstile/backend browser smoke) |
+| verification_gap | Phase 26 26-VERIFICATION.md | human_needed (live smoke pending; no code gaps) |
+| verification_gap | Phase 28 28-VERIFICATION.md | human_needed (human UAT acknowledged 2026-11-22, 5/5 passed) |
+
 ### Quick Tasks Completed
 
 | Task | Disposition | Evidence |
@@ -98,3 +110,7 @@ None.
 Last session: 2026-11-22T22:24:51Z
 Stopped at: Completed 28-03-PLAN.md
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

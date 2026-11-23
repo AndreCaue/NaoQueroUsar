@@ -2,35 +2,27 @@
 
 ## Current State
 
-**Latest shipped milestone:** v1.3 Chatbot Inteligente de Busca de Vagas — **shipped 2026-11-22** (audit `tech_debt`, 17/17 requirements satisfied, no critical blockers; accepted residuals documented).
-**Archives:** `.planning/milestones/v1.3-ROADMAP.md`, `.planning/milestones/v1.3-REQUIREMENTS.md`, `.planning/milestones/v1.3-MILESTONE-AUDIT.md`
+**Latest shipped milestone:** v1.4 Polimento UX e Admin — **shipped 2026-11-23** (audit `tech_debt`, 6/6 requirements satisfied, 3/3 phases, 4/4 E2E flows, no critical blockers; tech debt accepted).
+**Archives:** `.planning/milestones/v1.4-ROADMAP.md`, `.planning/milestones/v1.4-REQUIREMENTS.md`, `.planning/milestones/v1.4-MILESTONE-AUDIT.md`
 
 **Previous milestones:**
+- v1.3 Chatbot Inteligente de Busca de Vagas — shipped 2026-11-22 (`.planning/milestones/v1.3-ROADMAP.md`, `.planning/milestones/v1.3-REQUIREMENTS.md`, `.planning/milestones/v1.3-MILESTONE-AUDIT.md`)
 - v1.2 Integração com Facebook Pages — shipped 2026-11-17 (`.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`)
 - v1.1 EmpregaNoix — shipped 2026-11-15 (`.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`)
 
-**v1.3 delivered:** Chatbot público NL→busca em pt-BR no board, sem login/fricção. Extração de intenção estrita + mapeamento determinístico seguro para busca existente (`q`, cidade whitelist SP/RJ/BH/Remoto, `sort`), endpoint público `POST /api/v1/public/chat-search` com `JobPublic` (sem contatos), proteções/fallback controlado, UI chat drawer/modal com interpretação transparente e apply-to-board canônico, testes/hardening operacional (kill-switch, logs sem PII), e fechamento de auditoria com residuals aceitos.
+**v1.4 delivered:** Polimento de UX pública e fluxo admin sem perder fricção zero: login admin dedicado em `/admin/login` com redirect seguro/guard/logout/401 alinhados e entrada discreta na Política de Privacidade; controles por ambiente para anúncios e doações com validação segura; e home com `available_cities` dinâmico (published/non-expired, independente de filtros), chips de cidade ativos, limpeza de cidade obsoleta, dropdown de ordenação acessível e hover visual consistente em chips/cards/dropdown.
 
-**Known accepted residuals (v1.3):** CL-02 audit-open heuristic `[missing]` limitado aos 4 quick tasks conhecidos (u28/uik/krt/ttk, ttk PLAN-only deferred sem execução fabricada); D-14/WR-02 focus trap completo do chat; deferimentos runtime/browser por item; Nyquist parcial/desvio aceito em 21/22/23/25; dívida de processo `23-06/23-07` PLANs sem SUMMARYs.
+**Known accepted residuals (v1.4):** Phase 26 live Turnstile+backend browser smoke pending (`26-HUMAN-UAT.md`, `26-VERIFICATION.md` human_needed; code paths verified). Phase 28 VERIFICATION frontmatter human_needed but human UAT acknowledged (2026-11-22, 5/5 passed). Integration warning: `frontend/app/admin/integracoes/IntegrationsClient.tsx` missing 401 handler clearing `nqu_admin_token` and redirecting via `buildAdminLoginHref(path+search)`. Nyquist partial in Phases 26/27/28. Known deferred items at close: 7 (see `STATE.md` Deferred Items), including v1.3 CL-02 quick-task heuristic residuals.
 
-## Current Milestone: v1.4 Polimento UX e Admin
+## Next Milestone
 
-**Goal:** Melhorar a experiência pública e o fluxo admin com ajustes de UX, controle por ambiente e acesso admin dedicado — sem perder a fricção zero do candidato.
+**Status:** Not started. Run `/gsd-new-milestone` to define scope, requirements, and roadmap.
 
-**Status:** Phase 28 (Polimento UX da Home) complete 2026-11-23 — 3/3 plans executed, verifier human_needed (4/4 automated must-haves). Human UAT pending in `.planning/phases/28-polimento-ux-da-home/28-HUMAN-UAT.md`; Phase 26 human smoke also pending in `.planning/phases/26-acesso-admin-dedicado/26-HUMAN-UAT.md`. Next: milestone audit/completion for v1.4.
-
-**Target features:**
-- **Filtros de cidade na home:** exibir somente cidades com vagas publicadas/ativas no momento
-- **Login admin dedicado:** separar login da página de paste; reservar página dedicada para login admin
-- **Anúncios controlados por env:** remover temporariamente espaços publicitários via flag única no `.env`
-- **Hover/feedback visual:** adicionar hover em dropdown recentes/antigos, cards e filtros de cidades
-- **Entrada admin discreta:** criar link discreto na página de Política de Privacidade apontando para a nova página de login admin
-- **Doação funcional por env:** ajustar botão de Doações para usar link configurado no `.env` (abrir quando configurado)
-
-**Candidate carry-over (out of v1.4 scope unless selected during requirements):**
-- Reconciliação `PUB-01..08` e handoffs `TEST-04/DOC-01/AUD-05` (v1.2)
-- Lacunas v1.1 aceitas (EXTR/PUBL/SRCH/UIUX) e débitos operacionais/testes
-- Residuals v1.3 aceitos: D-14/WR-02 focus trap, deferimentos runtime/browser, Nyquist 21/22/23/25, CL-02 heuristic residual
+**Candidate carry-over (evaluate during next milestone scoping):**
+- v1.4 tech debt: IntegrationsClient 401 recovery alignment (ADMN-01 robustness), Phase 26 live smoke, Nyquist partial 26/27/28.
+- v1.3 residuals: CL-02 audit-open heuristic residual, D-14/WR-02 focus trap, runtime/browser deferments by item, Nyquist 21/22/23/25 partial, `23-06/23-07` PLANs without SUMMARYs.
+- v1.2 carry-over: `PUB-01..08` traceability reconciliation, `TEST-04/DOC-01/AUD-05` handoffs.
+- v1.1 carry-over: EXTR/PUBL/SRCH/UIUX caveats, canonical live smoke, DB-backed test reproducibility.
 
 ## What This Is
 
@@ -46,24 +38,25 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 
 ### Validated
 
-- [x] Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1 (ADMN-01/02/03)
-- [x] Fundação social de integração Facebook (modelos/migração `social_*`, crypto Fernet de tokens, contrato `SocialPublisher`/stub Facebook, config/env `.env.example`) — Validated in Phase 14 (SOC-01..SOC-06)
-- [x] OAuth Meta e Integrações no admin (conectar/desconectar/status, `state` anti-CSRF, troca/validação de tokens, seleção de página única, alertas de reconexão) — Validated in Phase 15 (META-01..META-06)
-- [x] Geração, revisão e aprovação do post social (draft LLM/fallback, edição/regeneração/preview, agendamento BRT, approve site-first com registro social best-effort/imutável, política/link público) — Validated in Phase 16 (POST-01..POST-06; human/UAT items noted)
-- [x] Pipeline assíncrono de publicação social com status/retry no admin (worker/cron, claim/lock, retry/backoff, idempotência, visibilidade/ações operacionais) — Implemented in Phase 17 (UI-01..UI-02 complete; `PUB-01..08` traceability reconciliation pending in archive)
-- [x] Contrato de intenção pt-BR + mapeamento determinístico seguro para busca pública (`q`, cidade whitelist, sort explícito), classificação auditável por campo e seam Groq isolado com fallback seguro — Validated in Phase 19 (INT-01/02/03)
-- [x] Endpoint público de chat-search resiliente (`POST /api/v1/public/chat-search`) com interpretação transparente, busca determinística equivalente (`list_published`/`JobPublic`, sem contatos), proteções (rate limit/validação/timeout) e fallback 200 degradado seguro com sinalização de suporte parcial — Validated in Phase 20 (API-01/02/03)
-- [x] Interface de chat no board público (drawer/modal mobile-first), sem login, com interpretação/parâmetros/limitações, resultados públicos com detalhe/reveal canônico e apply-to-board canônico — Validated in Phase 21 (UI-01/02/03), UAT reconciliado
-- [x] Qualidade/hardening/validação operacional do chatbot: exemplos MVP validados/documentados, testes automatizados com LLM mockado + UI viável, kill-switch/status/logging sem PII sensível, 22-SECURITY.md — Validated in Phase 22 (QA-01/02/03) com deferimentos runtime/browser aceitos por item
-- [x] Fechamento de auditoria v1.3: CL-01..CL-05 reconciliados com evidência/aceite formal; CR-01/WR-03/WR-01 viável fechados; audit `tech_debt` sem blockers críticos — Validated in Phases 23-25 (CL-01..05)
-- [x] Login admin dedicado em `/admin/login`, separado do paste/revisão, com redirect seguro `next`, guard/logout/401 alinhados para `/admin/login` — Validated in Phase 26 (ADMN-01; human smoke recorded in 26-HUMAN-UAT.md)
-- [x] Entrada admin discreta na Política de Privacidade apontando para `/admin/login` — Validated in Phase 26 (ADMN-02; human smoke recorded in 26-HUMAN-UAT.md)
-- [x] Controles por ambiente para anúncios e doações (flag única de ads + URL de doação http/https com fallback seguro para `/doacoes`) — Validated in Phase 27 (ADS-01, DONA-01)
+- ✓ Admin solo acessa área protegida por senha (via `.env`) / JWT — Validated in Phase 1 (ADMN-01/02/03)
+- ✓ Fundação social de integração Facebook (modelos/migração `social_*`, crypto Fernet de tokens, contrato `SocialPublisher`/stub Facebook, config/env `.env.example`) — Validated in Phase 14 (SOC-01..SOC-06)
+- ✓ OAuth Meta e Integrações no admin (conectar/desconectar/status, `state` anti-CSRF, troca/validação de tokens, seleção de página única, alertas de reconexão) — Validated in Phase 15 (META-01..META-06)
+- ✓ Geração, revisão e aprovação do post social (draft LLM/fallback, edição/regeneração/preview, agendamento BRT, approve site-first com registro social best-effort/imutável, política/link público) — Validated in Phase 16 (POST-01..POST-06; human/UAT items noted)
+- ✓ Pipeline assíncrono de publicação social com status/retry no admin (worker/cron, claim/lock, retry/backoff, idempotência, visibilidade/ações operacionais) — Implemented in Phase 17 (UI-01..UI-02 complete; `PUB-01..08` traceability reconciliation pending in archive)
+- ✓ Contrato de intenção pt-BR + mapeamento determinístico seguro para busca pública (`q`, cidade whitelist SP/RJ/BH/Remoto, `sort`), classificação auditável por campo e seam Groq isolado com fallback seguro — Validated in Phase 19 (INT-01/02/03)
+- ✓ Endpoint público de chat-search resiliente (`POST /api/v1/public/chat-search`) com interpretação transparente, busca determinística equivalente (`list_published`/`JobPublic`, sem contatos), proteções (rate limit/validação/timeout) e fallback 200 degradado seguro com sinalização de suporte parcial — Validated in Phase 20 (API-01/02/03)
+- ✓ Interface de chat no board público (drawer/modal mobile-first), sem login, com interpretação/parâmetros/limitações, resultados públicos com detalhe/reveal canônico e apply-to-board canônico — Validated in Phase 21 (UI-01/02/03), UAT reconciliado
+- ✓ Qualidade/hardening/validação operacional do chatbot: exemplos MVP validados/documentados, testes automatizados com LLM mockado + UI viável, kill-switch/status/logging sem PII sensível, 22-SECURITY.md — Validated in Phase 22 (QA-01/02/03) com deferimentos runtime/browser aceitos por item
+- ✓ Fechamento de auditoria v1.3: CL-01..CL-05 reconciliados com evidência/aceite formal; CR-01/WR-03/WR-01 viável fechados; audit `tech_debt` sem blockers críticos — Validated in Phases 23-25 (CL-01..05)
+- ✓ Login admin dedicado em `/admin/login`, separado do paste/revisão, com redirect seguro `next`, guard/logout/401 alinhados para `/admin/login` — Validated in Phase 26 (ADMN-01; human smoke recorded in 26-HUMAN-UAT.md)
+- ✓ Entrada admin discreta na Política de Privacidade apontando para `/admin/login` — Validated in Phase 26 (ADMN-02; human smoke recorded in 26-HUMAN-UAT.md)
+- ✓ Controles por ambiente para anúncios e doações (flag única de ads + URL de doação http/https com fallback seguro para `/doacoes`) — Validated in Phase 27 (ADS-01, DONA-01)
+- ✓ Filtro de cidades na home mostra apenas cidades com vagas publicadas/ativas no momento — Validated in Phase 28 (CITY-01)
+- ✓ Hover/feedback visual em dropdown recentes/antigos, cards e filtros de cidades — Validated in Phase 28 (UIUX-01)
 
 ### Active
 
-- [ ] **CITY-01**: Filtro de cidades na home mostra apenas cidades com vagas publicadas/ativas
-- [ ] **UIUX-01**: Hover/feedback visual em dropdown recentes/antigos, cards e filtros de cidades
+None yet — define in next milestone via `/gsd-new-milestone`.
 
 ### Out of Scope
 
@@ -87,7 +80,7 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - **Custo:** operar próximo de zero usando tiers gratuitos (Neon Postgres, Groq, Vercel, Cloudflare Turnstile).
 - **Público:** candidatos brasileiros (foco inicial em SP, RJ, BH e Remoto), majoritariamente mobile.
 - **Motivação central:** a principal frustração com sites de emprego atuais é a burocracia de cadastro/login para sequer ver uma vaga.
-- **Riscos conhecidos / estado atual:** revisão manual do master como gate de qualidade; mitigação de scraping via ocultação + Turnstile; pendências operacionais/evidências carry-over (v1.1/v1.2) e residuals v1.3 aceitos documentados nos archives/audits.
+- **Riscos conhecidos / estado atual:** revisão manual do master como gate de qualidade; mitigação de scraping via ocultação + Turnstile; pendências operacionais/evidências carry-over (v1.1/v1.2/v1.3) e residuals v1.4 aceitos documentados nos archives/audits.
 
 ## Constraints
 
@@ -135,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-23 after Phase 28 execution (human_needed, 4/4 automated must-haves; UAT pending)*
+*Last updated: 2026-11-23 after v1.4 milestone completion (audit tech_debt accepted)*
