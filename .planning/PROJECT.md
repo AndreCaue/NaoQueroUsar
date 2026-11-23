@@ -5,6 +5,8 @@
 **Latest shipped milestone:** v1.4 Polimento UX e Admin — **shipped 2026-11-23** (audit `tech_debt`, 6/6 requirements satisfied, 3/3 phases, 4/4 E2E flows, no critical blockers; tech debt accepted).
 **Archives:** `.planning/milestones/v1.4-ROADMAP.md`, `.planning/milestones/v1.4-REQUIREMENTS.md`, `.planning/milestones/v1.4-MILESTONE-AUDIT.md`
 
+**v1.5 in progress:** Phase 29 (Meta/IG Readiness & Media Foundation) complete — 3/3 plans, automated verification 5/5, human UAT pending (3 itens). Next: Phase 30 (Instagram Review Experience).
+
 **Previous milestones:**
 - v1.3 Chatbot Inteligente de Busca de Vagas — shipped 2026-11-22 (`.planning/milestones/v1.3-ROADMAP.md`, `.planning/milestones/v1.3-REQUIREMENTS.md`, `.planning/milestones/v1.3-MILESTONE-AUDIT.md`)
 - v1.2 Integração com Facebook Pages — shipped 2026-11-17 (`.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`)
@@ -75,6 +77,12 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - ✓ Controles por ambiente para anúncios e doações (flag única de ads + URL de doação http/https com fallback seguro para `/doacoes`) — Validated in Phase 27 (ADS-01, DONA-01)
 - ✓ Filtro de cidades na home mostra apenas cidades com vagas publicadas/ativas no momento — Validated in Phase 28 (CITY-01)
 - ✓ Hover/feedback visual em dropdown recentes/antigos, cards e filtros de cidades — Validated in Phase 28 (UIUX-01)
+- ✓ Prontidão Instagram confirmável em Integrações (conta IG vinculada, `ig-user-id`, estados acionáveis de reconexão/correção) — Validated in Phase 29 (META-01)
+- ✓ Backend resolve/persiste `ig-user-id` reaproveitando fluxo/token Meta com erro seguro sem quebrar Facebook — Validated in Phase 29 (META-02)
+- ✓ Documentação/checklist operacional Meta/Instagram (permissões/escopos, App Review/roles/tasks, setup/verificação) — Validated in Phase 29 (META-03)
+- ✓ Contrato de validação/preparação de imagem Instagram com feedback pt-BR, bloqueio aplicável só ao Instagram (enforcement review/publish em 30/31) — Validated in Phase 29 (IMAG-01)
+- ✓ Card fallback determinístico 1080x1350 JPEG compatível com Instagram, proveniência/versionamento — Validated in Phase 29 (IMAG-02)
+- ✓ Imagem por URL pública HTTPS estável/acessível pela Meta, com validação/preview/proveniência — Validated in Phase 29 (IMAG-03)
 
 ### Active
 
@@ -150,4 +158,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-23 after v1.5 milestone start (Integração Instagram na Revisão)*
+*Last updated: 2026-11-23 after Phase 29 execution (Meta/IG Readiness & Media Foundation) — automated verification passed, 3 human UAT items pending*
