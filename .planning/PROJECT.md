@@ -17,7 +17,7 @@
 
 **Goal:** Melhorar a experiência pública e o fluxo admin com ajustes de UX, controle por ambiente e acesso admin dedicado — sem perder a fricção zero do candidato.
 
-**Status:** Phase 27 (Controles por Ambiente) complete 2026-11-22 — automated checks passed, verifier 6/6. Human smoke pending for Phase 26 in `.planning/phases/26-acesso-admin-dedicado/26-HUMAN-UAT.md`. Next: Phase 28 (Polimento UX da Home).
+**Status:** Phase 28 (Polimento UX da Home) complete 2026-11-23 — 3/3 plans executed, verifier human_needed (4/4 automated must-haves). Human UAT pending in `.planning/phases/28-polimento-ux-da-home/28-HUMAN-UAT.md`; Phase 26 human smoke also pending in `.planning/phases/26-acesso-admin-dedicado/26-HUMAN-UAT.md`. Next: milestone audit/completion for v1.4.
 
 **Target features:**
 - **Filtros de cidade na home:** exibir somente cidades com vagas publicadas/ativas no momento
@@ -135,4 +135,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-22 after Phase 27 execution (verified, 6/6 must-haves)*
+*Last updated: 2026-11-23 after Phase 28 execution (human_needed, 4/4 automated must-haves; UAT pending)*
