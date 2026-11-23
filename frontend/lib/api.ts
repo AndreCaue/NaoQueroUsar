@@ -80,6 +80,7 @@ export interface JobListResponse {
   page: number;
   limit: number;
   total: number;
+  available_cities: string[];
 }
 
 /**

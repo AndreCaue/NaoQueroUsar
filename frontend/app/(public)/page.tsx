@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { AdSlot } from "@/components/board/AdSlot";
 import { isAdsEnabled } from "@/lib/publicEnv";
@@ -51,6 +52,11 @@ export default async function Page({
     ? await Promise.all([fetchBoard(filters), fetchJob(vaga)])
     : [await fetchBoard(filters), null];
 
+  const availableCities = data.available_cities ?? [];
+  if (filters.city && !availableCities.includes(filters.city)) {
+    redirect(buildBoardHref({ ...filters, city: null, page: 1, vaga: null }));
+  }
+
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE));
   const filtersActive = hasActiveFilters(filters);
   const adsEnabled = isAdsEnabled();
@@ -86,7 +92,11 @@ export default async function Page({
           </p>
 
           <div className="mt-6">
-            <BoardToolbar filters={filters} total={data.total} />
+            <BoardToolbar
+              filters={filters}
+              total={data.total}
+              availableCities={availableCities}
+            />
 
             {/* Server-rendered not-found panel (B-04): malformed and
             valid-but-missing ids both land here, and a plain board visit never
