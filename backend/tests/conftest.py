@@ -109,8 +109,6 @@ def pytest_collection_modifyitems(config, items):
             "test_intent_parser.py",
             "test_intent_client.py",
             "test_ig_media_card.py",
-            "test_ig_media_validation.py",
-            "test_public_ig_media.py",
         }
         for item in items:
             path = str(getattr(item, "fspath", "")).replace("\\", "/")
