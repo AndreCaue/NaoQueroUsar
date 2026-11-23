@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
 status: planning
-last_updated: "2026-11-23T11:02:46.726Z"
+last_updated: "2026-11-23T12:00:00Z"
 last_activity: 2026-11-23
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-23)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Planning next milestone
+**Current focus:** v1.5 roadmap created — ready to plan Phase 29
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 29 of 32 (Meta/IG Readiness & Media Foundation)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-11-23 — Milestone v1.5 started
+Status: Ready to plan
+Last activity: 2026-11-23 — v1.5 roadmap created (phases 29-32, 17/17 requirements mapped)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -60,16 +62,15 @@ Last activity: 2026-11-23 — Milestone v1.5 started
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting next work:
+Recent decisions affecting current work:
 
-- v1.3 shipped with audit `tech_debt` (no critical blockers). Accepted residuals: CL-02 audit-open heuristic for 4 known quick tasks; D-14/WR-02 focus trap; runtime/browser deferments by item; Nyquist partial in 21/22/23/25.
-- LLM extracts only parameters; deterministic search reuses `list_published`/`JobPublic`; chat never exposes contacts.
-- Non-native chat fields remain limited/approximate and explicitly signaled.
-- v1.4 roadmap: 3 phases (26-28), coarse granularity; ADMN-02 depends on ADMN-01 within Phase 26.
-- Phase 28-02: Obsolete selected city cleaned in RSC via redirect to broad board URL when absent from available_cities.
-- Phase 28-02: BoardToolbar renders only active city chips from board payload with token-based hover classes (no layout shift).
-- Phase 28-03: SortDropdown uses custom button+listbox with aria-activedescendant, keyboard/outside-click/Escape handling, and focus return to trigger.
-- Phase 28-03: Home hover feedback stays token-consistent (accent border/text + subtle accent/10 tint) with no layout-shifting hover styles.
+- v1.5 roadmap: 4 phases (29-32), coarse granularity, continuing numbering from v1.4. All 17 v1.5 requirements mapped (META/IMAG/REVW/PUBL/HARD).
+- Research SUMMARY.md suggested 4 phases; adopted with same dependency chain and explicit discuss-phase decision callouts.
+- Instagram publish must remain independent from Facebook (no regression, no coupling). Site-first/best-effort social patterns from v1.2 remain relevant.
+- Open decisions (resolve in discuss-phase/plan-time, not silently assumed): image origin (logo/card gerado/upload), card format/storage/serving, image generation strategy, token renewal/alert strategy.
+- Meta permission/App Review/Advanced Access assumptions must be confirmed before live rollout; keep Graph API version config-driven.
+- Ambiguous IG publish outcomes must never trigger blind auto-retry; rate-limit handling must avoid retry storms and treat `content_publishing_limit` as runtime authority.
+- v1.3/v1.4 accepted residuals remain accepted carry-over unless explicitly pulled into scope.
 
 ### Pending Todos
 
@@ -77,9 +78,11 @@ None.
 
 ### Blockers/Concerns
 
+- **v1.5 open decisions:** Image origin, card format/storage/serving, image generation strategy, and token renewal/alert strategy must be resolved during discuss/plan phases.
+- **Meta platform verification:** Permissions/scopes/App Review/roles/tasks/Page↔IG linkage assumptions need confirmation against current Meta dashboard/app mode before live rollout.
 - **v1.3 accepted residuals:** CL-02 audit-open heuristic may report u28/uik/krt/ttk `[missing]` (formally accepted, scoped; ttk PLAN-only deferred). D-14/WR-02 focus trap completo deferred. Runtime/browser/Nyquist residuals accepted per evidence.
 - **Process debt:** `23-06-PLAN.md` and `23-07-PLAN.md` exist without SUMMARYs (stale gap-closure drafts superseded by Phases 24/25).
-- **Carry-over (out of v1.3 scope):** v1.2 PUB-01..08 traceability, TEST-04/DOC-01/AUD-05 handoffs; v1.1 EXTR/PUBL/SRCH/UIUX caveats, canonical live smoke, DB-backed test reproducibility.
+- **Carry-over (out of v1.5 scope unless pulled in):** v1.4 IntegrationsClient 401 recovery alignment, Phase 26 live smoke, Nyquist partial 26/27/28; v1.2 PUB-01..08 traceability, TEST-04/DOC-01/AUD-05 handoffs; v1.1 EXTR/PUBL/SRCH/UIUX caveats, canonical live smoke, DB-backed test reproducibility.
 
 ### Deferred Items
 
@@ -106,10 +109,7 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 
 ## Session Continuity
 
-Last session: 2026-11-22T22:24:51Z
-Stopped at: Completed 28-03-PLAN.md
+Last session: 2026-11-23
+Stopped at: Roadmap created for v1.5
 Resume file: None
-
-## Operator Next Steps
-
-- Start the next milestone with /gsd-new-milestone
+Next: `/gsd-discuss-phase 29` or `/gsd-plan-phase 29`

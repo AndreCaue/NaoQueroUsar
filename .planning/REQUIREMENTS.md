@@ -70,29 +70,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| META-01 | Pending | Pending |
-| META-02 | Pending | Pending |
-| META-03 | Pending | Pending |
-| IMAG-01 | Pending | Pending |
-| IMAG-02 | Pending | Pending |
-| IMAG-03 | Pending | Pending |
-| REVW-01 | Pending | Pending |
-| REVW-02 | Pending | Pending |
-| REVW-03 | Pending | Pending |
-| REVW-04 | Pending | Pending |
-| PUBL-01 | Pending | Pending |
-| PUBL-02 | Pending | Pending |
-| PUBL-03 | Pending | Pending |
-| PUBL-04 | Pending | Pending |
-| PUBL-05 | Pending | Pending |
-| HARD-01 | Pending | Pending |
-| HARD-02 | Pending | Pending |
+| META-01 | Phase 29 | Pending |
+| META-02 | Phase 29 | Pending |
+| META-03 | Phase 29 | Pending |
+| IMAG-01 | Phase 29 | Pending |
+| IMAG-02 | Phase 29 | Pending |
+| IMAG-03 | Phase 29 | Pending |
+| REVW-01 | Phase 30 | Pending |
+| REVW-02 | Phase 30 | Pending |
+| REVW-03 | Phase 30 | Pending |
+| REVW-04 | Phase 30 | Pending |
+| PUBL-01 | Phase 31 | Pending |
+| PUBL-02 | Phase 31 | Pending |
+| PUBL-03 | Phase 31 | Pending |
+| PUBL-04 | Phase 31 | Pending |
+| PUBL-05 | Phase 31 | Pending |
+| HARD-01 | Phase 32 | Pending |
+| HARD-02 | Phase 32 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-23*
-*Last updated: 2026-11-23 after initial definition*
+*Last updated: 2026-11-23 after v1.5 roadmap creation (phases 29-32)*
