@@ -224,10 +224,12 @@ def compute_social_retry_state(
     *,
     now: datetime | None = None,
 ) -> tuple[bool, str | None]:
-    """Retorna (can_retry, retry_block_reason) conforme D-15/UI-SPEC."""
+    """Retorna (can_retry, retry_block_reason) conforme D-15/UI-SPEC e Phase 31."""
     now = now or datetime.now(timezone.utc)
     if post is None:
         return False, None
+
+    provider = (post.provider or "facebook").strip().lower()
 
     if post.status == SocialPostStatus.published or post.external_post_id:
         return False, "Post já publicado"
@@ -245,8 +247,20 @@ def compute_social_retry_state(
     if post.status != SocialPostStatus.failed:
         return False, "Tentativa automática indisponível. Verifique o erro antes de prosseguir."
 
+    # Phase 31: IG rate-limit/content-publishing-limit is blocked actionable, no auto-retry.
+    ig_error_code = str(getattr(post, "ig_last_publish_error_code", "") or "").strip().lower()
+    ig_recon_required = bool(getattr(post, "ig_reconciliation_required", False))
+    ig_recon_state = str(getattr(post, "ig_reconciliation_state", "") or "").strip().lower()
+    if provider == "instagram" and ig_error_code in {"ig_rate_limit_blocked", "ig_content_publishing_limit"}:
+        return (
+            False,
+            "Publicação bloqueada por limite/rate limit do Instagram. Aguarde a janela da plataforma e tente novamente mais tarde.",
+        )
+
+    # Existing FB ambiguous block behavior (no blind retry).
     if (
-        post.next_retry_at is None
+        provider == "facebook"
+        and post.next_retry_at is None
         and post.last_error
         == "Não foi possível confirmar a publicação. Verifique antes de tentar novamente para evitar duplicidade."
     ):
@@ -255,7 +269,17 @@ def compute_social_retry_state(
             "Verifique a publicação no Facebook antes de tentar novamente para evitar duplicidade.",
         )
 
+    # Phase 31 D-17/D-19: IG ambiguous/reconciliation-required allows manual retry with reconciliation.
+    if provider == "instagram" and (ig_recon_required or ig_recon_state == "needs_reconciliation"):
+        return (
+            True,
+            "Será feita reconciliação segura no Instagram antes de qualquer nova publicação.",
+        )
+
     if account_status != SocialAccountStatus.connected:
+        # For Instagram, account_status passed by some callers may be None; pipeline preflight handles readiness.
+        if provider == "instagram":
+            return True, None
         return False, "Reconexão necessária"
 
     return True, None
@@ -287,19 +311,30 @@ def build_social_status_item(
             published_at=None,
             can_retry=False,
             retry_block_reason=None,
+            published_permalink=None,
+            ig_container_id=None,
+            ig_media_id=None,
+            reconciliation_required=False,
+            reconciliation_state=None,
+            ig_last_reconciled_at=None,
         )
 
     status_value = post.status.value if isinstance(post.status, SocialPostStatus) else str(post.status)
     status_label = _STATUS_LABELS_PT.get(status_value, status_value)
     can_retry, retry_block_reason = compute_social_retry_state(post, account_status, now=now)
+    post_provider = (post.provider or "facebook").strip().lower()
+    ig_permalink = getattr(post, "ig_permalink", None)
+    published_url = _safe_published_url(post.external_post_id)
+    if post_provider == "instagram" and ig_permalink:
+        published_url = str(ig_permalink)
     return SocialPostStatusItem(
         job_id=post.job_id,
         job_title=job_title,
-        provider=post.provider or "facebook",
+        provider=post_provider,  # type: ignore[arg-type]
         status=status_value,  # type: ignore[arg-type]
         status_label=status_label,
         last_error=post.last_error,
-        published_url=_safe_published_url(post.external_post_id),
+        published_url=published_url,
         external_post_id=post.external_post_id,
         attempts=int(post.attempts or 0),
         next_retry_at=post.next_retry_at,
@@ -307,6 +342,12 @@ def build_social_status_item(
         published_at=post.published_at,
         can_retry=can_retry,
         retry_block_reason=retry_block_reason,
+        published_permalink=ig_permalink,
+        ig_container_id=getattr(post, "ig_container_id", None),
+        ig_media_id=getattr(post, "ig_media_id", None),
+        reconciliation_required=bool(getattr(post, "ig_reconciliation_required", False)),
+        reconciliation_state=getattr(post, "ig_reconciliation_state", None),
+        ig_last_reconciled_at=getattr(post, "ig_last_reconciled_at", None),
     )
 
 
