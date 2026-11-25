@@ -300,23 +300,27 @@ City tag normalization examples (pt-BR): “São Paulo” → `#saopaulo`, “Ri
 **Deprecated/outdated:**
 - None identified; this is additive work building on Phase 29 outputs.
 
-## Open Questions (for planner/implementer)
-1. **Persistence model for “Publicar no Instagram desta vaga” (D-04 toggle)**
+## Open Questions (RESOLVED)
+1. **[RESOLVED] Persistence model for “Publicar no Instagram desta vaga” (D-04 toggle)**
    - What we know: Facebook uses `SocialPost` rows per job/provider with status/frozen semantics. D-04 says “toggle Publish to Instagram for this job”.
    - Options: (a) Create/update an IG `SocialPost` (provider='instagram') when enabled (draft) and delete/cancel when disabled; (b) Add an explicit boolean field (e.g. `instagram_enabled`) to `Job` or to a new mapping table.
    - Recommendation: Prefer (a) for consistency (one source of truth per provider). If disabled, keep row optional or set a specific state — but need to be careful with “frozen after approval/publish” in Phase 31. Planner should define the contract.
+   - **Resolution (30-01/30-02):** Add `social_posts.publish_enabled` boolean (default `true`, migration 0007). IG toggle on/off persists via IG draft `publish_enabled`; toggle-off must be durably persisted to DB (not local-only) so the D-07 approve escape hatch works. Deleting rows is not used for toggle-off.
 
-2. **Exact API surface for IG draft/status**
+2. **[RESOLVED] Exact API surface for IG draft/status**
    - Options: (a) New routes `/admin/jobs/{id}/instagram/social-post` (+ generate/PUT) and `/admin/jobs/{id}/instagram/social-status`; (b) Extend existing routes with `provider` query/body.
    - Recommendation: (a) is explicit and lowers regression risk in current Facebook-only frontend/tests.
+   - **Resolution (30-01):** Use explicit Instagram endpoints: `GET/POST .../instagram/social-post/generate`, `PUT .../instagram/social-post`, `GET .../instagram/social-status`. Facebook endpoints unchanged.
 
-3. **Where to generate template C (caption prefill)**
+3. **[RESOLVED] Where to generate template C (caption prefill)**
    - Options: (a) Frontend-only generation from job fields (no backend call) — fast, offline-ish, but logic duplicated later? (b) Backend endpoint (generate IG draft) returning template C — consistent, testable, allows future LLM swap.
    - Recommendation: Backend endpoint (mirrors Facebook pattern) for consistency; can be deterministic template C now.
+   - **Resolution (30-01):** Server-side deterministic `generate_instagram_draft_for_job` (no LLM), Instagram-tuned template C with CTA always “link na bio” and suggested hashtags `#vagas #emprego #<cidade> #oportunidade`.
 
-4. **IG status in ReviewQueue list (REVW-01 mentions “status independente por plataforma”)**
+4. **[RESOLVED] IG status in ReviewQueue list (REVW-01 mentions “status independente por plataforma”)**
    - What we know: `ReviewRow` currently shows a single social status badge derived from Facebook `socialStatus` prop. REVW-01 says “exibe seção Instagram ao lado do Facebook com toggle por vaga e status independente por plataforma.” (in review dialog context). The CONTEXT says “foca em REVW-01..04 no diálogo/experiência de revisão conforme escopo.” and code_context notes “ReviewRow.tsx — pode precisar refletir status IG independente no futuro, mas Phase 30 foca em…” 
-   - Recommendation: For Phase 30, **prioritize EditJobDialog** (section + toggle + caption + preview + readiness). Status badge per platform in the queue row can be deferred unless trivial; planner should confirm scope (REVW-01 text says “Diálogo de revisão exibe seção…” so primary is dialog; queue badges may be a small enhancement). 
+   - Recommendation: For Phase 30, **prioritize EditJobDialog** (section + toggle + caption + preview + readiness). Status badge per platform in the queue row can be deferred unless trivial; planner should confirm scope (REVW-01 text says “Diálogo de revisão exibe seção…” so primary is dialog; queue badges may be a small enhancement).
+   - **Resolution (30-01/30-02):** Phase 30 scope is EditJobDialog-first (REVW-01..04). Add IG status endpoint and show independent IG status in dialog; ReviewQueue row badges remain Facebook-focused unless trivial, no queue regression. 
 
 ## Environment Availability
 
@@ -418,22 +422,11 @@ Step 2.6: SKIPPED (no external dependencies identified beyond existing backend/f
 
 **If this table is empty:** N/A
 
-## Open Questions
+## Open Questions (RESOLVED — duplicate section consolidated)
 
-1. **Toggle persistence (“Publicar no Instagram desta vaga”)**
-   - What we know: D-04 requires a per-job toggle; Facebook uses `SocialPost` records.
-   - What's unclear: Should enabling IG create an IG `SocialPost` draft immediately (empty/template) or only mark intent? Should disabling delete the IG draft row?
-   - Recommendation: Create/update IG `SocialPost` with `provider='instagram'` when toggled on (seed with template C if none). When toggled off, either set a local UI state only? No — must persist. Recommend: if user turns off, keep the draft row but treat as “disabled for publishing” via a field or by convention (e.g. a separate flag). But `SocialPost` has no `enabled` flag today. Simplest: store enabled state implicitly? Or add `enabled_for_instagram` to Job? Or add a column to `social_posts` (e.g. `publish_enabled`). This needs a planner decision; flag as **needs decision**.
-
-2. **IG social status endpoint shape**
-   - What we know: REVW-01 wants “status independente por plataforma” in review context. Current `GET /admin/jobs/{id}/social-status` returns Facebook item only.
-   - What's unclear: Add `GET /admin/jobs/{id}/instagram/social-status`, or change response to include both providers?
-   - Recommendation: Add a dedicated IG status endpoint for clarity in Phase 30; Phase 31 can unify if desired.
-
-3. **Server-side enforcement of 2200 char limit and hashtag warning**
-   - What we know: D-08 says “não permitir salvar/aprovar legenda acima do limite (2200). Validação também no backend quando aplicável.” Hashtag warning is “não bloqueante”.
-   - What's unclear: Exact backend error shape/message for IG caption too long.
-   - Recommendation: Mirror Facebook draft save validation style; return 422 with pt-BR message like “Legenda do Instagram deve ter no máximo 2200 caracteres.” 
+1. **[RESOLVED] Toggle persistence (“Publicar no Instagram desta vaga”)** — Resolved by 30-01/30-02: `social_posts.publish_enabled` boolean (default `true`), migration 0007; IG toggle persists durably to DB; no local-only toggle-off state.
+2. **[RESOLVED] IG social status endpoint shape** — Resolved by 30-01: explicit `GET /admin/jobs/{id}/instagram/social-status` endpoint; Facebook status endpoint unchanged.
+3. **[RESOLVED] Server-side enforcement of 2200 char limit and hashtag warning** — Resolved by 30-01/30-02: server rejects >2200 with 422 `"Legenda do Instagram deve ter no máximo 2200 caracteres."`; >30 hashtags is UI-only non-blocking warning. 
 
 ## Security Domain (duplicate short note)
 See “Security Domain” section above. Key points: keep IG admin endpoints behind `require_admin`, validate caption length server-side, reuse safe error messages, no new secret storage.
