@@ -92,6 +92,27 @@ class SocialPostStatusListResponse(BaseModel):
     total: int
 
 
+class SocialPostLogItem(BaseModel):
+    """Item seguro de auditoria do post social (sem tokens/payload bruto)."""
+
+    attempt_number: int = 0
+    result: str
+    http_status: int | None = None
+    error_message: str | None = None
+    response_summary: str | None = None
+    external_post_id: str | None = None
+    created_at: datetime
+
+
+class SocialPostLogsResponse(BaseModel):
+    """Histórico seguro de tentativas/publicação por vaga+provider."""
+
+    job_id: uuid.UUID
+    provider: Literal["facebook", "instagram"]
+    items: list[SocialPostLogItem]
+    total: int
+
+
 class SocialRetryResponse(BaseModel):
     """Resposta idempotente/segura de retry manual."""
 

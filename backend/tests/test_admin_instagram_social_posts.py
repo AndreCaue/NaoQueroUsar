@@ -280,3 +280,194 @@ async def test_approve_blocked_by_invalid_instagram_then_allowed_when_disabled(
     body = approve_resp.json()
     assert body["job"]["status"] == "published"
     assert body["social"]["status"] in {"registered", "warning", "skipped"}
+
+
+@pytest.mark.asyncio
+async def test_instagram_status_and_logs_expose_safe_reconciliation_fields(
+    client, db_session, admin_password
+):
+    token = await _login(client, admin_password)
+    job = await _seed_job(db_session)
+    ig = SocialPost(
+        job_id=job.id,
+        provider="instagram",
+        text="IG",
+        status=SocialPostStatus.failed,
+        attempts=1,
+        last_error="Não foi possível confirmar a publicação no Instagram. A reconciliação será verificada antes de qualquer nova tentativa.",
+        ig_container_id="container_1",
+        ig_media_id="media_1",
+        ig_permalink="https://instagram.com/p/safe",
+        ig_reconciliation_required=True,
+        ig_reconciliation_state="needs_reconciliation",
+        ig_last_reconciled_at=datetime.now(timezone.utc),
+    )
+    db_session.add(ig)
+    await db_session.flush()
+
+    from app.models.social_post_log import SocialPostLog
+
+    db_session.add(
+        SocialPostLog(
+            social_post_id=ig.id,
+            attempt_number=1,
+            result="ambiguous",
+            http_status=200,
+            error_message="Erro seguro",
+            response_summary="ig_ambiguous_needs_reconciliation",
+            external_post_id="container_1",
+        )
+    )
+    await db_session.flush()
+
+    status_resp = await client.get(
+        f"/api/v1/admin/jobs/{job.id}/instagram/social-status",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert status_resp.status_code == 200, status_resp.text
+    item = status_resp.json()
+    assert item["provider"] == "instagram"
+    assert item["reconciliation_required"] is True
+    assert item["published_permalink"] == "https://instagram.com/p/safe"
+    assert item["can_retry"] is True
+    assert "reconcil" in (item["retry_block_reason"] or "").lower()
+    assert "access_token" not in str(item).lower()
+
+    logs_resp = await client.get(
+        f"/api/v1/admin/jobs/{job.id}/social-post/logs?provider=instagram",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert logs_resp.status_code == 200, logs_resp.text
+    logs = logs_resp.json()
+    assert logs["total"] == 1
+    assert logs["items"][0]["external_post_id"] == "container_1"
+    assert "access_token" not in str(logs).lower()
+
+
+@pytest.mark.asyncio
+async def test_instagram_retry_uses_reconciliation_aware_pipeline(
+    client, db_session, admin_password, monkeypatch
+):
+    token = await _login(client, admin_password)
+    job = await _seed_job(db_session)
+    ig = SocialPost(
+        job_id=job.id,
+        provider="instagram",
+        text="IG",
+        status=SocialPostStatus.failed,
+        attempts=1,
+        last_error="Não foi possível confirmar a publicação no Instagram. A reconciliação será verificada antes de qualquer nova tentativa.",
+        ig_container_id="container_1",
+        ig_reconciliation_required=True,
+        ig_reconciliation_state="needs_reconciliation",
+    )
+    db_session.add(ig)
+    await db_session.flush()
+
+    called = {}
+
+    async def fake_cycle(*, post_id=None, limit=20):
+        called["post_id"] = str(post_id) if post_id is not None else None
+        called["limit"] = limit
+        return {
+            "claimed": 1,
+            "processed": 1,
+            "published": 0,
+            "retried": 1,
+            "failed_final": 0,
+            "skipped": 0,
+            "idempotent": 0,
+            "by_provider": {},
+        }
+
+    monkeypatch.setattr("app.api.v1.admin.run_social_publish_cycle", fake_cycle)
+
+    resp = await client.post(
+        f"/api/v1/admin/jobs/{job.id}/social-post/retry?provider=instagram",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["item"]["provider"] == "instagram"
+    assert called["post_id"] == str(ig.id)
+    assert called["limit"] == 1
+
+
+@pytest.mark.asyncio
+async def test_instagram_social_status_exposes_safe_reconciliation_fields(
+    client, db_session, admin_password
+):
+    token = await _login(client, admin_password)
+    job = await _seed_job(db_session)
+    post = SocialPost(
+        job_id=job.id,
+        provider="instagram",
+        text="Legenda IG",
+        status=SocialPostStatus.failed,
+        attempts=1,
+        last_error="Não foi possível confirmar a publicação no Instagram. A reconciliação será verificada antes de qualquer nova tentativa.",
+        ig_reconciliation_required=True,
+        ig_reconciliation_state="needs_reconciliation",
+        ig_container_id="container-1",
+        ig_media_id=None,
+        ig_permalink=None,
+    )
+    db_session.add(post)
+    await db_session.flush()
+
+    resp = await client.get(
+        f"/api/v1/admin/jobs/{job.id}/instagram/social-status",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["provider"] == "instagram"
+    assert body["reconciliation_required"] is True
+    assert body["ig_container_id"] == "container-1"
+    assert body["can_retry"] is True
+    assert "access_token" not in str(body).lower()
+    assert "page_access_token" not in str(body).lower()
+
+
+@pytest.mark.asyncio
+async def test_social_post_logs_endpoint_returns_safe_audit_history(
+    client, db_session, admin_password
+):
+    from app.models.social_post_log import SocialPostLog
+
+    token = await _login(client, admin_password)
+    job = await _seed_job(db_session)
+    post = SocialPost(
+        job_id=job.id,
+        provider="instagram",
+        text="Legenda IG",
+        status=SocialPostStatus.failed,
+        attempts=1,
+    )
+    db_session.add(post)
+    await db_session.flush()
+    db_session.add(
+        SocialPostLog(
+            social_post_id=post.id,
+            attempt_number=1,
+            result="ambiguous",
+            http_status=200,
+            error_message="mensagem segura",
+            response_summary="ig_publish_ambiguous",
+            external_post_id=None,
+        )
+    )
+    await db_session.flush()
+
+    resp = await client.get(
+        f"/api/v1/admin/jobs/{job.id}/social-post/logs?provider=instagram",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["provider"] == "instagram"
+    assert body["total"] == 1
+    item = body["items"][0]
+    assert item["attempt_number"] == 1
+    assert item["result"] == "ambiguous"
+    assert "access_token" not in str(body).lower()

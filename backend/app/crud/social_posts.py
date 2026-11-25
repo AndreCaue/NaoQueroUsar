@@ -14,7 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.job import Job
 from app.models.social_account import SocialAccountStatus
 from app.models.social_post import SocialPost, SocialPostStatus
-from app.schemas.social_posts import SocialPostStatusItem
+from app.models.social_post_log import SocialPostLog
+from app.schemas.social_posts import SocialPostLogItem, SocialPostStatusItem
 
 
 async def get_by_job_provider(
@@ -384,7 +385,7 @@ async def list_social_status_items(
     session: AsyncSession,
     *,
     account_status: SocialAccountStatus | None = None,
-    provider: str = "facebook",
+    provider: str | None = "facebook",
     limit: int = 200,
     now: datetime | None = None,
 ) -> list[SocialPostStatusItem]:
@@ -393,21 +394,65 @@ async def list_social_status_items(
     stmt = (
         select(SocialPost, Job)
         .join(Job, Job.id == SocialPost.job_id)
-        .where(SocialPost.provider == provider)
         .order_by(SocialPost.updated_at.desc(), SocialPost.created_at.desc())
         .limit(limit)
     )
+    if provider is None:
+        stmt = stmt.where(SocialPost.provider.in_(["facebook", "instagram"]))
+    else:
+        stmt = stmt.where(SocialPost.provider == provider)
     result = await session.execute(stmt)
     items: list[SocialPostStatusItem] = []
     for post, job in result.all():
+        post_provider = (getattr(post, "provider", None) or "facebook").strip().lower()
+        item_account_status = account_status if post_provider == "facebook" else None
         items.append(
             build_social_status_item(
                 job_id=job.id,
                 job_title=getattr(job, "title", None),
                 post=post,
-                account_status=account_status,
+                account_status=item_account_status,
                 now=now,
-                provider=provider,
+                provider=post_provider,
             )
         )
     return items
+
+
+async def list_social_post_logs(
+    session: AsyncSession,
+    *,
+    job_id: uuid.UUID | str,
+    provider: str = "facebook",
+    limit: int = 50,
+) -> tuple[list[SocialPostLogItem], bool, bool]:
+    """Retorna (items, job_exists, post_exists) para auditoria segura."""
+    job_uuid = _as_job_uuid(job_id)
+    if job_uuid is None:
+        return [], False, False
+    job = await session.get(Job, job_uuid)
+    if job is None:
+        return [], False, False
+    post = await get_by_job_provider(session, job_uuid, provider=provider)
+    if post is None:
+        return [], True, False
+    stmt = (
+        select(SocialPostLog)
+        .where(SocialPostLog.social_post_id == post.id)
+        .order_by(SocialPostLog.created_at.desc(), SocialPostLog.id.desc())
+        .limit(limit)
+    )
+    result = await session.scalars(stmt)
+    items = [
+        SocialPostLogItem(
+            attempt_number=int(getattr(row, "attempt_number", 0) or 0),
+            result=str(getattr(row, "result", "") or ""),
+            http_status=getattr(row, "http_status", None),
+            error_message=getattr(row, "error_message", None),
+            response_summary=getattr(row, "response_summary", None),
+            external_post_id=getattr(row, "external_post_id", None),
+            created_at=row.created_at,
+        )
+        for row in result.all()
+    ]
+    return items, True, True

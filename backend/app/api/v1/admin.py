@@ -18,6 +18,7 @@ from app.crud.social_accounts import get_facebook_account
 from app.crud.social_posts import (
     get_by_job_provider,
     get_job_social_status_item,
+    list_social_post_logs,
     list_social_status_items,
     mark_scheduled,
     upsert_draft,
@@ -31,6 +32,8 @@ from app.schemas.social_posts import (
     SocialApproveOutcome,
     SocialPostDraftRequest,
     SocialPostDraftResponse,
+    SocialPostLogItem,
+    SocialPostLogsResponse,
     SocialPostStatusItem,
     SocialPostStatusListResponse,
     SocialRetryResponse,
@@ -205,7 +208,7 @@ async def approve(
         code="no_draft",
         message="Nenhum rascunho social salvo",
     )
-    dispatch_post_id: uuid.UUID | None = None
+    dispatch_post_ids: list[uuid.UUID] = []
 
     try:
         draft = await get_by_job_provider(
@@ -228,7 +231,7 @@ async def approve(
                 message=None,
             )
             if draft.scheduled_at is not None and draft.scheduled_at <= now_utc():
-                dispatch_post_id = draft.id
+                dispatch_post_ids.append(draft.id)
 
         elif draft.status == SocialPostStatus.draft:
             final_scheduled_at = (
@@ -252,7 +255,7 @@ async def approve(
             )
 
             if final_scheduled_at <= now_utc():
-                dispatch_post_id = draft.id
+                dispatch_post_ids.append(draft.id)
 
         else:
             social_outcome = SocialApproveOutcome(
@@ -272,9 +275,42 @@ async def approve(
             code="social_registration_failed",
             message="Não foi possível registrar o post social agora",
         )
-        dispatch_post_id = None
 
-    if social_outcome.status == "registered" and dispatch_post_id is not None:
+    # IG independent dispatch (D-06, PUBL-01): never affects FB/site outcome.
+    try:
+        ig_draft = await get_by_job_provider(
+            session,
+            job_id,
+            provider="instagram",
+        )
+        if ig_draft is not None:
+            if ig_draft.status == SocialPostStatus.scheduled:
+                if ig_draft.scheduled_at is not None and ig_draft.scheduled_at <= now_utc():
+                    dispatch_post_ids.append(ig_draft.id)
+            elif ig_draft.status == SocialPostStatus.draft and bool(
+                getattr(ig_draft, "publish_enabled", True)
+            ):
+                final_ig_scheduled_at = (
+                    ig_draft.scheduled_at
+                    if ig_draft.scheduled_at is not None
+                    else now_utc()
+                )
+                await mark_scheduled(
+                    session,
+                    ig_draft,
+                    text=ig_draft.text,
+                    scheduled_at=final_ig_scheduled_at,
+                )
+                await session.commit()
+                if final_ig_scheduled_at <= now_utc():
+                    dispatch_post_ids.append(ig_draft.id)
+    except Exception:
+        try:
+            await session.rollback()
+        except Exception:
+            pass
+
+    for dispatch_post_id in dispatch_post_ids:
         try:
             background_tasks.add_task(
                 process_social_post_safe,
@@ -365,7 +401,7 @@ async def social_worker(
     """Processa lote de posts sociais elegíveis (cron Render, idempotente)."""
     # `session` injetada para consistência de dependências; pipeline usa sessões próprias.
     _ = session
-    counters = await run_social_publish_cycle()
+    counters = await run_social_publish_cycle() or {}
     defaults = {
         "claimed": 0,
         "processed": 0,
@@ -375,22 +411,24 @@ async def social_worker(
         "skipped": 0,
         "idempotent": 0,
     }
-    defaults.update({k: int(v) for k, v in (counters or {}).items() if k in defaults})
-    return SocialWorkerResponse(status="ok", **defaults)
+    defaults.update({k: int(v) for k, v in counters.items() if k in defaults})
+    by_provider = counters.get("by_provider")
+    return SocialWorkerResponse(status="ok", **defaults, by_provider=by_provider)
 
 
 @router.get("/social-posts", response_model=SocialPostStatusListResponse)
 async def list_social_posts(
+    provider: Literal["facebook", "instagram"] | None = Query(None),
     session: AsyncSession = Depends(get_session),
     claims: dict = Depends(require_admin),
 ) -> SocialPostStatusListResponse:
-    """Lista visão operacional simples de posts/vagas sociais."""
+    """Lista visão operacional simples de posts/vagas sociais (provider-aware)."""
     _ = claims
     account = await get_facebook_account(session)
     items = await list_social_status_items(
         session,
         account_status=_facebook_account_status_value(account),
-        provider="facebook",
+        provider=provider,
     )
     return SocialPostStatusListResponse(items=items, total=len(items))
 
@@ -415,35 +453,85 @@ async def get_job_social_status(
     return item
 
 
-@router.post("/jobs/{job_id}/social-post/retry", response_model=SocialRetryResponse)
-async def retry_job_social_post(
+def _safe_retry_provider(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = str(value).strip().lower()
+    if normalized in {"facebook", "instagram"}:
+        return normalized
+    return "__invalid__"
+
+
+async def _retry_job_social_post_impl(
+    *,
     job_id: uuid.UUID,
-    session: AsyncSession = Depends(get_session),
-    claims: dict = Depends(require_admin),
+    provider: str | None,
+    session: AsyncSession,
 ) -> SocialRetryResponse:
-    """Retry manual idempotente para post social elegível da vaga."""
-    _ = claims
-    account = await get_facebook_account(session)
-    account_status = _facebook_account_status_value(account)
-
-    item, job_exists = await get_job_social_status_item(
-        session,
-        job_id,
-        account_status=account_status,
-        provider="facebook",
-    )
-    if not job_exists or item is None:
-        raise HTTPException(status_code=404, detail="Vaga não encontrada")
-
-    post = await get_by_job_provider(session, job_id, provider="facebook")
-    if post is None:
+    fb_post = await get_by_job_provider(session, job_id, provider="facebook")
+    ig_post = await get_by_job_provider(session, job_id, provider="instagram")
+    existing = [p for p in (fb_post, ig_post) if p is not None]
+    if not existing:
+        job = await get_job(session, job_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail="Vaga não encontrada")
+        # Keep legacy-safe shape: no post => not eligible, no mutation.
+        fb_account = await get_facebook_account(session)
+        item, _ = await get_job_social_status_item(
+            session,
+            job_id,
+            account_status=_facebook_account_status_value(fb_account),
+            provider="facebook",
+        )
         return SocialRetryResponse(
             outcome="not_eligible",
             item=item,
             message="Nenhum post social registrado para esta vaga.",
         )
 
-    # Idempotência/no-op: estados não elegíveis não disparam duplicata
+    provider_norm = _safe_retry_provider(provider)
+    if provider_norm == "__invalid__":
+        raise HTTPException(status_code=400, detail="Provedor social inválido.")
+
+    # Deterministic target resolution by post_id (job social_post row) and its provider.
+    if len(existing) == 1:
+        target_post = existing[0]
+    else:
+        if provider_norm is None:
+            raise HTTPException(
+                status_code=409,
+                detail="Há publicações sociais para mais de um provedor nesta vaga. Informe o provedor para tentar novamente.",
+            )
+        target_post = fb_post if provider_norm == "facebook" else ig_post
+        if target_post is None:
+            raise HTTPException(
+                status_code=409,
+                detail="A publicação social solicitada não foi encontrada para este provedor.",
+            )
+
+    target_provider = (getattr(target_post, "provider", "") or "").strip().lower()
+    if provider_norm is not None and provider_norm != target_provider:
+        raise HTTPException(
+            status_code=409,
+            detail="O provedor informado não corresponde à publicação social resolvida. Nenhuma tentativa foi executada.",
+        )
+    if provider_norm is None and target_provider != "facebook":
+        raise HTTPException(
+            status_code=409,
+            detail="Informe o provedor da publicação social para tentar novamente com segurança.",
+        )
+
+    fb_account = await get_facebook_account(session)
+    account_status = _facebook_account_status_value(fb_account) if target_provider == "facebook" else None
+    item, job_exists = await get_job_social_status_item(
+        session,
+        job_id,
+        account_status=account_status,
+        provider=target_provider,
+    )
+    if not job_exists or item is None:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
     if item.status in {"published", "publishing"} or not item.can_retry:
         outcome = "noop" if item.status in {"published", "publishing"} else "not_eligible"
         return SocialRetryResponse(
@@ -452,13 +540,14 @@ async def retry_job_social_post(
             message=item.retry_block_reason or "Nenhuma nova tentativa necessária.",
         )
 
-    counters = await run_social_publish_cycle(post_id=post.id, limit=1) or {}
-    # Recarregar estado atualizado após processamento direcionado
+    # D-17/PUBL-04: IG reconciliation-required posts reuse this same retry action;
+    # pipeline performs reconciliation-before-publish (ig_reconciliation_required).
+    counters = await run_social_publish_cycle(post_id=target_post.id, limit=1) or {}
     refreshed_item, _ = await get_job_social_status_item(
         session,
         job_id,
-        account_status=_facebook_account_status_value(await get_facebook_account(session)),
-        provider="facebook",
+        account_status=_facebook_account_status_value(await get_facebook_account(session)) if target_provider == "facebook" else None,
+        provider=target_provider,
     )
     if refreshed_item is None:
         refreshed_item = item
@@ -471,9 +560,69 @@ async def retry_job_social_post(
         message = "Nova tentativa iniciada/processada."
     else:
         outcome = "not_eligible"
-        message = refreshed_item.retry_block_reason or item.retry_block_reason or "Post não elegível para retry."
+        message = (
+            refreshed_item.retry_block_reason
+            or item.retry_block_reason
+            or "Post não elegível para retry."
+        )
 
     return SocialRetryResponse(outcome=outcome, item=refreshed_item, message=message)
+
+
+@router.post("/jobs/{job_id}/social-post/retry", response_model=SocialRetryResponse)
+async def retry_job_social_post(
+    job_id: uuid.UUID,
+    provider: Literal["facebook", "instagram"] | None = Query(None),
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+) -> SocialRetryResponse:
+    """Retry manual idempotente para post social elegível da vaga (provider-aware)."""
+    _ = claims
+    return await _retry_job_social_post_impl(
+        job_id=job_id,
+        provider=provider,
+        session=session,
+    )
+
+
+@router.post("/jobs/{job_id}/instagram/social-post/retry", response_model=SocialRetryResponse)
+async def retry_job_instagram_social_post(
+    job_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+) -> SocialRetryResponse:
+    """Wrapper IG do retry provider-aware (compat/additive)."""
+    _ = claims
+    return await _retry_job_social_post_impl(
+        job_id=job_id,
+        provider="instagram",
+        session=session,
+    )
+
+
+@router.get("/jobs/{job_id}/social-post/logs", response_model=SocialPostLogsResponse)
+async def get_job_social_post_logs(
+    job_id: uuid.UUID,
+    provider: Literal["facebook", "instagram"] = Query("facebook"),
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+) -> SocialPostLogsResponse:
+    """Retorna histórico seguro de auditoria do post social por vaga/provider."""
+    _ = claims
+    items, job_exists, _post_exists = await list_social_post_logs(
+        session,
+        job_id=job_id,
+        provider=provider,
+        limit=50,
+    )
+    if not job_exists:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+    return SocialPostLogsResponse(
+        job_id=job_id,
+        provider=provider,
+        items=items,
+        total=len(items),
+    )
 
 
 # ---------------------------------------------------------------------------
