@@ -1585,6 +1585,108 @@ export function EditJobDialog({
                 ) : (
                   <div className="mt-4 space-y-4">
                     <div className="rounded-lg border border-line bg-canvas p-4">
+                      <h4 className="text-[16px] font-semibold text-fg">
+                        Status da publicação no Instagram
+                      </h4>
+
+                      {igStatusLoading ? (
+                        <p className="mt-2 text-[14px] text-fg-muted">Carregando...</p>
+                      ) : !igStatus ? (
+                        <div className="mt-2 space-y-2">
+                          <span className="inline-flex items-center rounded-full border border-line bg-canvas px-3 py-1 text-[14px] text-fg-muted">
+                            Sem rascunho
+                          </span>
+                          <p className="text-[14px] text-fg-muted">
+                            Nenhum post social registrado para esta vaga.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="mt-2 space-y-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[14px] ${
+                                igStatus.status === "failed"
+                                  ? "border border-danger bg-[rgba(248,113,113,0.12)] text-danger-soft"
+                                  : igStatus.status === "published"
+                                    ? "border border-accent bg-[rgba(139,92,246,0.12)] text-fg"
+                                    : igStatus.status === "publishing"
+                                      ? "border border-accent/40 bg-[rgba(139,92,246,0.08)] text-fg"
+                                      : igStatus.status === "scheduled"
+                                        ? "border border-accent/40 bg-[rgba(139,92,246,0.08)] text-fg"
+                                        : "border border-line bg-canvas text-fg-muted"
+                              }`}
+                            >
+                              {igStatus.status === "publishing" ? (
+                                <span
+                                  className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-accent-soft border-t-transparent"
+                                  aria-hidden="true"
+                                />
+                              ) : null}
+                              {igStatus.status_label}
+                            </span>
+                          </div>
+
+                          {igStatus.status === "scheduled" ? (
+                            <p className="text-[14px] text-fg-muted">
+                              {igStatus.scheduled_at
+                                ? `Publicação agendada para ${formatBrtDateTime(igStatus.scheduled_at)} (America/Sao_Paulo).`
+                                : "Publicação agendada."}
+                            </p>
+                          ) : null}
+
+                          {igStatus.status === "publishing" ? (
+                            <p className="text-[14px] text-fg-muted">
+                              Publicação em andamento. Atualize em instantes para ver o resultado.
+                            </p>
+                          ) : null}
+
+                          {igStatus.status === "published" ? (
+                            <div className="space-y-1">
+                              <p className="text-[14px] text-fg">Publicado no Instagram.</p>
+                              {igStatus.published_url ? (
+                                <a
+                                  href={igStatus.published_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex min-h-11 items-center text-[14px] font-medium text-accent-soft underline-offset-4 hover:text-accent hover:underline"
+                                >
+                                  Ver post no Instagram
+                                </a>
+                              ) : (
+                                <p className="text-[14px] text-fg-muted">
+                                  Publicado no Instagram. Link indisponível.
+                                </p>
+                              )}
+                            </div>
+                          ) : null}
+
+                          {igStatus.status === "failed" ? (
+                            <p className="text-[14px] text-danger-soft">
+                              {igStatus.last_error ||
+                                "Não foi possível publicar este post. Tente novamente quando estiver disponível."}
+                            </p>
+                          ) : null}
+
+                          {igStatus.status !== "failed" &&
+                          igStatus.status !== "published" &&
+                          igStatus.status !== "publishing" &&
+                          igStatus.status !== "scheduled" &&
+                          igStatus.status === "draft" ? (
+                            <p className="text-[14px] text-fg-muted">
+                              Rascunho salvo. Aprove a vaga para agendar ou publicar.
+                            </p>
+                          ) : null}
+
+                          {igStatus.retry_block_reason ? (
+                            <p className="text-[14px] text-fg-muted">
+                              {igStatus.retry_block_reason}
+                            </p>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rounded-lg border border-line bg-canvas p-4">
                       <label className="flex min-h-11 cursor-pointer items-start gap-3">
                         <input
                           type="checkbox"
