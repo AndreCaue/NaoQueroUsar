@@ -27,6 +27,7 @@ class SocialPostDraftRequest(BaseModel):
 
     text: str | None = None
     publish_mode: SocialPublishMode = "publish_now"
+    publish_enabled: bool | None = None
     scheduled_date: str | None = None
     scheduled_time: str | None = None
 
@@ -37,10 +38,11 @@ class SocialPostDraftResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     job_id: uuid.UUID
-    provider: Literal["facebook"] = "facebook"
+    provider: Literal["facebook", "instagram"] = "facebook"
     status: SocialPostStatusLiteral
     text: str
     publish_mode: Literal["publish_now", "schedule"] | None = None
+    publish_enabled: bool = True
     scheduled_at: datetime | None = None
     origin: Literal["llm", "template_fallback"]
     saved: bool
@@ -63,7 +65,7 @@ class SocialPostStatusItem(BaseModel):
 
     job_id: uuid.UUID
     job_title: str | None = None
-    provider: Literal["facebook"] = "facebook"
+    provider: Literal["facebook", "instagram"] = "facebook"
     status: SocialPostUiStatusLiteral
     status_label: str
     last_error: str | None = None

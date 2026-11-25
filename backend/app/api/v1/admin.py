@@ -471,10 +471,11 @@ def _draft_response(
     frozen = post.status != SocialPostStatus.draft
     return SocialPostDraftResponse(
         job_id=post.job_id,
-        provider="facebook",
+        provider=post.provider or "facebook",
         status=post.status.value,
         text=post.text,
         publish_mode=_draft_publish_mode(post),
+        publish_enabled=bool(getattr(post, "publish_enabled", True)),
         scheduled_at=post.scheduled_at,
         origin=origin,
         saved=True,

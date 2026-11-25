@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Enum as SAEnum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Enum as SAEnum, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy import text as sql_text
 from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -38,6 +38,11 @@ class SocialPost(Base):
         SAEnum(SocialPostStatus, name="social_post_status", native_enum=True),
         nullable=False,
         server_default=sql_text("'draft'"),
+    )
+    publish_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=sql_text("true"),
     )
     scheduled_at: Mapped[datetime | None] = mapped_column(
         TIMESTAMP(timezone=True),

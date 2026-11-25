@@ -36,6 +36,7 @@ async def upsert_draft(
     text: str,
     scheduled_at,
     provider: str = "facebook",
+    publish_enabled: bool | None = None,
 ) -> SocialPost:
     """Cria ou atualiza rascunho por (job_id, provider)."""
     post = await get_by_job_provider(session, job_id, provider=provider)
@@ -46,6 +47,7 @@ async def upsert_draft(
             text=text,
             status=SocialPostStatus.draft,
             scheduled_at=scheduled_at,
+            publish_enabled=True if publish_enabled is None else bool(publish_enabled),
         )
         session.add(post)
         await session.flush()
@@ -56,6 +58,8 @@ async def upsert_draft(
 
     post.text = text
     post.scheduled_at = scheduled_at
+    if publish_enabled is not None:
+        post.publish_enabled = bool(publish_enabled)
     await session.flush()
     return post
 
@@ -261,13 +265,14 @@ def build_social_status_item(
     post: SocialPost | None,
     account_status: SocialAccountStatus | None,
     now: datetime | None = None,
+    provider: str = "facebook",
 ) -> SocialPostStatusItem:
     now = now or datetime.now(timezone.utc)
     if post is None:
         return SocialPostStatusItem(
             job_id=job_id,
             job_title=job_title,
-            provider="facebook",
+            provider=provider,
             status="none",
             status_label=_STATUS_LABELS_PT["none"],
             last_error=None,
@@ -325,6 +330,7 @@ async def get_job_social_status_item(
             post=post,
             account_status=account_status,
             now=now,
+            provider=provider,
         ),
         True,
     )
@@ -357,6 +363,7 @@ async def list_social_status_items(
                 post=post,
                 account_status=account_status,
                 now=now,
+                provider=provider,
             )
         )
     return items
