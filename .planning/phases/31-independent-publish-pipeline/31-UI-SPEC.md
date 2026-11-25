@@ -42,7 +42,7 @@ Declared values (multiples of 4):
 | 2xl | 48px | Page-level vertical rhythm (rare in admin dialog) |
 | 3xl | 64px | Reserved, avoid in dense admin surfaces |
 
-Exceptions: `min-h-11` (44px) touch targets for buttons/links/inputs; 12px/16px radius already tokenized as `--radius-card`/`--radius-dialog`; spinner `h-3.5 w-3.5` existing pattern.
+Exceptions: `min-h-11` (44px) touch targets for buttons/links/inputs; 12px/16px radius already tokenized as `--radius-card`/`--radius-dialog`; spinner `h-4 w-4` (16px) aligned to scale.
 
 ---
 
@@ -105,7 +105,7 @@ Semantic mapping (existing, preserve):
 | IG not ready / needs reconnect (PUBL-01/D-07) | Reuse existing readiness/reconnect messaging: actionable reason + link `Abrir Integrações` to `/admin/integracoes`. |
 | Audit history heading | `Histórico de tentativas` |
 | Audit empty | `Nenhuma tentativa registrada.` |
-| Audit load error | `Não foi possível carregar o histórico de tentativas.` |
+| Audit load error | `Não foi possível carregar o histórico de tentativas. Tente novamente em alguns instantes.` |
 | Unknown/unavailable field | `Indisponível` (never expose raw internal error/token). |
 
 All user-facing strings must be pt-BR. No tokens, secrets, raw Graph payloads, stack traces, or internal IDs beyond safe operational IDs explicitly allowed by PUBL-03 (external post ID, container/media IDs, permalink).
