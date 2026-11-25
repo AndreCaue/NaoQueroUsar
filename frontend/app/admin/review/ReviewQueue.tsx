@@ -226,16 +226,16 @@ export function ReviewQueue() {
       const socialStatus = result.social?.status;
       if (socialStatus === "skipped") {
         toast(
-          "Vaga publicada no site. Nenhum rascunho social salvo — publicação no Facebook não foi registrada.",
+          "Vaga publicada no site. Nenhum rascunho social do Facebook salvo — publicação no Facebook não foi registrada.",
           "error",
         );
       } else if (socialStatus === "warning") {
         toast(
-          "Vaga publicada no site. Não foi possível registrar o post social agora.",
+          "Vaga publicada no site. Não foi possível registrar o post social do Facebook agora.",
           "error",
         );
       } else {
-        toast("Vaga publicada no site. Post social registrado para envio.", "success");
+        toast("Vaga publicada no site. Post social do Facebook registrado para envio.", "success");
       }
       if (snapshot.length === 1 && page > 1) {
         setPage((prev) => prev - 1);

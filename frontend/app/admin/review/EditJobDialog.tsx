@@ -284,6 +284,8 @@ export function EditJobDialog({
   const [socialStatusError, setSocialStatusError] = useState<string | null>(null);
   const [retryingSocial, setRetryingSocial] = useState(false);
   const retryInFlightRef = useRef(false);
+  const [retryingInstagram, setRetryingInstagram] = useState(false);
+  const retryInstagramInFlightRef = useRef(false);
 
   // Instagram review state (Phase 30)
   const [igReadiness, setIgReadiness] = useState<MetaInstagramReadiness | null | undefined>(
@@ -320,6 +322,8 @@ export function EditJobDialog({
     setIgMediaLoading(false);
     setIgMediaError(null);
     igPrepareInFlightRef.current = false;
+    setRetryingInstagram(false);
+    retryInstagramInFlightRef.current = false;
   };
 
   const resetSocialState = () => {
@@ -586,9 +590,9 @@ export function EditJobDialog({
       if (item) setSocialStatus(item);
       const outcome = res.outcome;
       if (outcome === "noop" || outcome === "not_eligible") {
-        toast("Nenhuma nova tentativa foi necessária. Status atualizado.", "success");
+        toast(res.message || "Nenhuma nova tentativa foi necessária. Status atualizado.", "success");
       } else {
-        toast("Nova tentativa iniciada.", "success");
+        toast(res.message || "Nova tentativa iniciada.", "success");
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -603,6 +607,42 @@ export function EditJobDialog({
     } finally {
       setRetryingSocial(false);
       retryInFlightRef.current = false;
+    }
+  };
+
+  const handleRetryInstagram = async () => {
+    if (!token || !job || !igStatus?.can_retry) return;
+    if (retryInstagramInFlightRef.current) return;
+    retryInstagramInFlightRef.current = true;
+    setRetryingInstagram(true);
+    try {
+      const res = await retrySocialPost(token, job.id, "instagram");
+      const item = res.item ?? (await getInstagramSocialStatus(token, job.id));
+      if (item) setIgStatus(item);
+      const outcome = res.outcome;
+      if (outcome === "noop" || outcome === "not_eligible") {
+        toast(res.message || "Nenhuma nova tentativa foi necessária. Status atualizado.", "success");
+      } else {
+        toast(res.message || "Nova tentativa iniciada.", "success");
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        handleAuthExpired();
+        return;
+      }
+      toast(
+        "Não foi possível iniciar a nova tentativa. Tente novamente em alguns instantes.",
+        "error",
+      );
+      try {
+        const refreshed = await getInstagramSocialStatus(token, job.id);
+        if (refreshed) setIgStatus(refreshed);
+      } catch {
+        // ignore refresh failure; status card keeps last known state
+      }
+    } finally {
+      setRetryingInstagram(false);
+      retryInstagramInFlightRef.current = false;
     }
   };
 
@@ -1626,6 +1666,8 @@ export function EditJobDialog({
                             </span>
                           </div>
 
+                          <p className="text-[14px] text-fg-muted">Tentativas: {igStatus.attempts}</p>
+
                           {igStatus.status === "scheduled" ? (
                             <p className="text-[14px] text-fg-muted">
                               {igStatus.scheduled_at
@@ -1643,9 +1685,14 @@ export function EditJobDialog({
                           {igStatus.status === "published" ? (
                             <div className="space-y-1">
                               <p className="text-[14px] text-fg">Publicado no Instagram.</p>
-                              {igStatus.published_url ? (
+                              {igStatus.published_at ? (
+                                <p className="text-[14px] text-fg-muted">
+                                  Publicado em {formatBrtDateTime(igStatus.published_at)} (America/Sao_Paulo).
+                                </p>
+                              ) : null}
+                              {igStatus.published_permalink || igStatus.published_url ? (
                                 <a
-                                  href={igStatus.published_url}
+                                  href={(igStatus.published_permalink || igStatus.published_url) ?? "#"}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="inline-flex min-h-11 items-center text-[14px] font-medium text-accent-soft underline-offset-4 hover:text-accent hover:underline"
@@ -1678,9 +1725,41 @@ export function EditJobDialog({
                           ) : null}
 
                           {igStatus.retry_block_reason ? (
-                            <p className="text-[14px] text-fg-muted">
+                            <p className={igStatus.reconciliation_required ? "text-[14px] text-accent-soft" : "text-[14px] text-fg-muted"}>
                               {igStatus.retry_block_reason}
                             </p>
+                          ) : null}
+
+                          {igStatus.reconciliation_required ? (
+                            <p className="text-[14px] text-fg-muted">
+                              Reconciliação necessária: ao tentar novamente, o sistema verifica status/IDs conhecidos no Instagram antes de qualquer nova publicação.
+                            </p>
+                          ) : null}
+
+                          {igStatus.external_post_id ? (
+                            <p className="text-[14px] text-fg-muted [overflow-wrap:anywhere]">ID externo: {igStatus.external_post_id}</p>
+                          ) : null}
+                          {igStatus.ig_container_id ? (
+                            <p className="text-[14px] text-fg-muted [overflow-wrap:anywhere]">Container IG: {igStatus.ig_container_id}</p>
+                          ) : null}
+                          {igStatus.ig_media_id ? (
+                            <p className="text-[14px] text-fg-muted [overflow-wrap:anywhere]">Mídia IG: {igStatus.ig_media_id}</p>
+                          ) : null}
+                          {igStatus.ig_last_reconciled_at ? (
+                            <p className="text-[14px] text-fg-muted">
+                              Última reconciliação IG: {formatBrtDateTime(igStatus.ig_last_reconciled_at)} (America/Sao_Paulo).
+                            </p>
+                          ) : null}
+
+                          {igStatus.can_retry ? (
+                            <button
+                              type="button"
+                              onClick={() => void handleRetryInstagram()}
+                              disabled={retryingInstagram}
+                              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-strong-hover disabled:opacity-50"
+                            >
+                              {retryingInstagram ? "Tentando novamente..." : "Tentar novamente"}
+                            </button>
                           ) : null}
                         </div>
                       )}

@@ -838,6 +838,29 @@ export interface SocialPostStatusItem {
   published_at: string | null;
   can_retry: boolean;
   retry_block_reason: string | null;
+  published_permalink?: string | null;
+  ig_container_id?: string | null;
+  ig_media_id?: string | null;
+  reconciliation_required?: boolean;
+  reconciliation_state?: string | null;
+  ig_last_reconciled_at?: string | null;
+}
+
+export interface SocialPostLogItem {
+  attempt_number: number;
+  result: string;
+  http_status: number | null;
+  error_message: string | null;
+  response_summary: string | null;
+  external_post_id: string | null;
+  created_at: string;
+}
+
+export interface SocialPostLogsResponse {
+  job_id: string;
+  provider: "facebook" | "instagram";
+  items: SocialPostLogItem[];
+  total: number;
 }
 
 export interface SocialPostStatusListResponse {
@@ -870,11 +893,12 @@ export async function getSocialStatus(
 
 export async function getAdminSocialPosts(
   token: string,
-  params?: { page?: number; limit?: number },
+  params?: { page?: number; limit?: number; provider?: "facebook" | "instagram" },
 ): Promise<SocialPostStatusListResponse> {
   const url = new URL(`${API}/api/v1/admin/social-posts`);
   if (params?.page !== undefined) url.searchParams.set("page", String(params.page));
   if (params?.limit !== undefined) url.searchParams.set("limit", String(params.limit));
+  if (params?.provider) url.searchParams.set("provider", params.provider);
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -887,8 +911,11 @@ export async function getAdminSocialPosts(
 export async function retrySocialPost(
   token: string,
   jobId: string,
+  provider?: "facebook" | "instagram",
 ): Promise<SocialRetryResponse> {
-  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/social-post/retry`, {
+  const url = new URL(`${API}/api/v1/admin/jobs/${jobId}/social-post/retry`);
+  if (provider) url.searchParams.set("provider", provider);
+  const res = await fetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -896,6 +923,22 @@ export async function retrySocialPost(
     throw new ApiError(await readError(res), res.status);
   }
   return (await res.json()) as SocialRetryResponse;
+}
+
+export async function getSocialPostLogs(
+  token: string,
+  jobId: string,
+  provider: "facebook" | "instagram",
+): Promise<SocialPostLogsResponse> {
+  const url = new URL(`${API}/api/v1/admin/jobs/${jobId}/social-post/logs`);
+  url.searchParams.set("provider", provider);
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostLogsResponse;
 }
 
 /** --- Public chat search (Phase 21) --- */
