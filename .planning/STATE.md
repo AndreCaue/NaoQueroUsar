@@ -4,8 +4,8 @@ milestone: v1.5
 milestone_name: Integração Instagram na Revisão
 status: executing
 stopped_at: Phase 31 context gathered
-last_updated: "2026-11-25T22:42:28.039Z"
-last_activity: 2026-11-25 -- Phase 31 planning complete
+last_updated: "2026-11-25T22:47:01.283Z"
+last_activity: 2026-11-25 -- Phase 31 execution started
 progress:
   total_phases: 4
   completed_phases: 2
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-23)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Phase 30 — instagram-review-experience
+**Current focus:** Phase 31 — independent-publish-pipeline
 
 ## Current Position
 
-Phase: 30 (instagram-review-experience) — EXECUTING
-Plan: 3 of 3 (gap closure 30-03 complete)
-Status: Ready to execute
-Last activity: 2026-11-25 -- Phase 31 planning complete
+Phase: 31 (independent-publish-pipeline) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 31
+Last activity: 2026-11-25 -- Phase 31 execution started
 
 Progress: [██████████] 100%
 
