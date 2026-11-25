@@ -345,22 +345,25 @@ return "ambiguous_blocked"
 | A3 | Existing `GET /admin/social-posts` and frontend SocialPostsClient are the minimum PUBL-03 admin audit/status surface to extend; no new page required. | PUBL-03 UI | If product expects a richer audit screen, Phase 31 may need follow-up UI polish, but requirement can be met by extending existing surfaces. |
 | A4 | Phase 31 should add IG registration/dispatch on approve for enabled IG drafts, because PUBL-01 says approve/publication processes IG independently and D-06 requires dispatch per eligible post/provider. Current approve path only handles Facebook. | Integration points | If IG dispatch is intended elsewhere, duplicate scheduling/dispatch could occur; plan must define single source of truth. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **How should PUBL-05 "blocked by limit" be represented?**
    - What we know: D-12 uses `failed` + reconciliation for ambiguity; PUBL-05 needs actionable admin state and no retry storm. `SocialPostStatus` has no `blocked` enum. [VERIFIED]
    - What's unclear: whether to add enum value, or represent as `failed` with specific error code/retry_block_reason and `next_retry_at=null`.
    - Recommendation: prefer `failed` + explicit safe error/reason code metadata (or dedicated columns) to avoid enum migration ripple; expose clear "bloqueado por limite/rate limit" state in UI.
+   - **RESOLVED:** Represent PUBL-05 limit/rate blocking as `failed` with explicit actionable pt-BR error and reconciliation/rate-limit metadata (no new enum), `next_retry_at=null` when blocked by limit, and no retry storm. Admin status/UI surfaces the blocked-by-limit state clearly and safely.
 
 2. **Should IG publish be dispatched on approve or only by worker?**
    - What we know: D-06 says dispatch immediate independent per eligible post/provider; approve currently dispatches FB due posts. [VERIFIED]
    - What's unclear: Phase 30 did not add IG approve dispatch.
    - Recommendation: extend approve to register/schedule/dispatch IG draft independently when enabled and due, mirroring FB but isolated.
+   - **RESOLVED:** Approve flow owns IG dispatch registration for eligible/enabled IG drafts, dispatching per `post_id` independently from Facebook (mirroring FB isolation). Worker/retry paths remain provider-aware for scheduled/claimed processing and safe reconciliation.
 
 3. **Where should audit "history" live for PUBL-03?**
    - What we know: `social_post_logs` exists per attempt; UI currently shows current status only. [VERIFIED]
    - What's unclear: required depth of "histórico/auditoria" in admin UI.
    - Recommendation: add admin endpoint to fetch logs for a `social_post`/job+provider and show compact attempt history in SocialPostsClient or detail drawer; keep payload safe.
+   - **RESOLVED:** Expose safe attempt history through an admin social-post logs/status endpoint backed by `social_post_logs`, and render a compact audit/history view in existing admin social surfaces (SocialPostsClient/detail or equivalent) with IDs/permalink/timestamps/safe pt-BR errors only, no secrets/tokens/raw Graph payloads.
 
 ## Environment Availability
 
