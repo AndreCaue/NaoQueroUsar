@@ -8,6 +8,7 @@
 **v1.5 in progress:** Phase 29 (Meta/IG Readiness & Media Foundation) complete — 3/3 plans, automated verification 5/5, human UAT pending (3 itens). Next: Phase 30 (Instagram Review Experience).
 
 **Previous milestones:**
+
 - v1.3 Chatbot Inteligente de Busca de Vagas — shipped 2026-11-22 (`.planning/milestones/v1.3-ROADMAP.md`, `.planning/milestones/v1.3-REQUIREMENTS.md`, `.planning/milestones/v1.3-MILESTONE-AUDIT.md`)
 - v1.2 Integração com Facebook Pages — shipped 2026-11-17 (`.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`)
 - v1.1 EmpregaNoix — shipped 2026-11-15 (`.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`)
@@ -21,6 +22,7 @@
 **Goal:** Permitir publicar cada vaga aprovada também no Instagram, com legenda configurada na etapa de revisão, reaproveitando a base Meta/Facebook existente e mantendo as publicações independentes.
 
 **Target features:**
+
 - Seção Instagram na etapa de revisão ao lado do Facebook: toggle por vaga, legenda editável pré-preenchida, contador 2.200, aviso >30 hashtags, preview de imagem e status por plataforma
 - Imagem obrigatória para Instagram: origem a definir (logo/card gerado/upload); fallback card padrão 1080x1080 ou 1080x1350 JPEG servido por URL pública acessível pela Meta
 - Publicação via Instagram Graph API (Content Publishing) em 2 passos (container + publish), com checagem de status quando necessário; obter/armazenar `ig-user-id` a partir da Página Facebook vinculada, reaproveitando token existente
@@ -31,18 +33,21 @@
 **Out of scope (v1.5):** Stories/Reels/carrossel, agendamento, métricas/analytics, responder comentários/DMs, múltiplas contas Instagram.
 
 **Constraints/guardrails:**
+
 - Conta Instagram Business/Creator vinculada à Página Facebook
 - Links na legenda não são clicáveis (CTA tipo "link na bio")
 - Antes de implementar, confirmar documentação/permissões/limites Meta atuais; mapear permissões/App Review (ex.: instagram_basic, instagram_content_publish, pages_show_list, pages_read_engagement)
 - Reaproveitar padrões existentes (app Meta, tokens, service, fila/jobs, modelo, review UI, erros/logs); sem novas abstrações desnecessárias
 
 **Decisões em aberto (resolver no discuss-phase):**
+
 - Origem da imagem (logo da empresa / card gerado a partir da vaga / upload na revisão)
 - Formato/template/armazenamento/serving do card gerado (proporção, onde armazenar e servir)
 - Biblioteca/estratégia de geração de imagem, se aplicável
 - Estratégia de renovação ou alerta de expiração do token
 
 **Candidate carry-over (evaluate during scoping/execution):**
+
 - v1.4 tech debt: IntegrationsClient 401 recovery alignment (ADMN-01 robustness), Phase 26 live smoke, Nyquist partial 26/27/28.
 - v1.3 residuals: CL-02 audit-open heuristic residual, D-14/WR-02 focus trap, runtime/browser deferments by item, Nyquist 21/22/23/25 partial, `23-06/23-07` PLANs without SUMMARYs.
 - v1.2 carry-over: `PUB-01..08` traceability reconciliation, `TEST-04/DOC-01/AUD-05` handoffs.
@@ -52,7 +57,7 @@
 
 Plataforma pública de busca de emprego cujo diferencial é eliminar a burocracia de cadastro: qualquer pessoa vê as vagas e o contato **sem criar conta, sem login e sem etapas intermediárias**. Um board enxuto, dark mode e mobile-first, curado manualmente por um único administrador (o master), que transforma textos brutos de grupos de vagas em cards estruturados.
 
-Slogan: "Procurar um emprego, não deve dar trabalho"
+Slogan: "A Oportunidade é Nossa!"
 
 ## Core Value
 
@@ -126,25 +131,26 @@ None yet — requirements for v1.5 will be defined in `.planning/REQUIREMENTS.md
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Sem cadastro/login para ver vagas e contato | Elimina a maior frustração com sites atuais (burocracia) | ✓ Good (core value mantido) |
-| Hard delete após 14 dias | Mantém o board limpo e o custo de armazenamento baixo | ⚠️ Revisit (contrato/semântica reconciliados em v1.1; validar operação em produção canônica) |
-| Extração via LLM (Groq) + revisão manual obrigatória | Automação do trabalho pesado sem abrir mão do controle de qualidade | ⚠️ Revisit (aceitação EXTR-10/11/12 não fechada no audit v1.1) |
-| Repo git dedicado no diretório do projeto | O diretório está dentro do repo da home; isolamento evita poluir histórico | ✓ Good |
-| Contato revelado no clique (client-side) | Reduz scraping com fricção mínima ao usuário | ⚠️ Revisit (v1.1 endureceu reveal server-side/Turnstile; evidências runtime/browser ainda caveatadas) |
-| Servir contato via endpoint dedicado (não no payload público) | Ocultação client-side sozinha não protege contra scraping; exigido Turnstile server-side no reveal | ✓ Good (direção implementada/reconciliada; validar em runtime canônico) |
-| Substituir Llama aposentados por Groq `gpt-oss` | `llama-3.1-8b-instant`/`llama-3.3-70b` desativados em 2026-08-16; `openai/gpt-oss-*` suporta structured outputs estritos | ✓ Good |
-| Usar `bcrypt` direto (sem passlib) para hash de senha | `passlib` 1.7.4 é incompatível com o `bcrypt` 5.0.0 travado; a decisão de auth permite bcrypt diretamente | ✓ Good |
-| Chat NL usa LLM só para extração de parâmetros; busca determinística reutiliza `list_published`/`JobPublic` | Evita custo/latência/alucinação de enviar corpus ao LLM; preserva contrato público sem contatos | ✓ Good (v1.3) |
-| Campos não nativos no chat tratados como limitado/aproximado e sinalizado | Evita afirmar filtragem inexistente e mantém honestidade de produto | ✓ Good (v1.3) |
-| Residuals de fechamento v1.3 aceitos explicitamente (CL-02 heuristic, D-14/WR-02, deferimentos runtime/Nyquist parcial) | Fecha milestone com rastreabilidade sem fabricar evidência | ⚠️ Revisit (acompanhar em milestone futuro se necessário) |
+| Decision                                                                                                                | Rationale                                                                                                                | Outcome                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Sem cadastro/login para ver vagas e contato                                                                             | Elimina a maior frustração com sites atuais (burocracia)                                                                 | ✓ Good (core value mantido)                                                                           |
+| Hard delete após 14 dias                                                                                                | Mantém o board limpo e o custo de armazenamento baixo                                                                    | ⚠️ Revisit (contrato/semântica reconciliados em v1.1; validar operação em produção canônica)          |
+| Extração via LLM (Groq) + revisão manual obrigatória                                                                    | Automação do trabalho pesado sem abrir mão do controle de qualidade                                                      | ⚠️ Revisit (aceitação EXTR-10/11/12 não fechada no audit v1.1)                                        |
+| Repo git dedicado no diretório do projeto                                                                               | O diretório está dentro do repo da home; isolamento evita poluir histórico                                               | ✓ Good                                                                                                |
+| Contato revelado no clique (client-side)                                                                                | Reduz scraping com fricção mínima ao usuário                                                                             | ⚠️ Revisit (v1.1 endureceu reveal server-side/Turnstile; evidências runtime/browser ainda caveatadas) |
+| Servir contato via endpoint dedicado (não no payload público)                                                           | Ocultação client-side sozinha não protege contra scraping; exigido Turnstile server-side no reveal                       | ✓ Good (direção implementada/reconciliada; validar em runtime canônico)                               |
+| Substituir Llama aposentados por Groq `gpt-oss`                                                                         | `llama-3.1-8b-instant`/`llama-3.3-70b` desativados em 2026-08-16; `openai/gpt-oss-*` suporta structured outputs estritos | ✓ Good                                                                                                |
+| Usar `bcrypt` direto (sem passlib) para hash de senha                                                                   | `passlib` 1.7.4 é incompatível com o `bcrypt` 5.0.0 travado; a decisão de auth permite bcrypt diretamente                | ✓ Good                                                                                                |
+| Chat NL usa LLM só para extração de parâmetros; busca determinística reutiliza `list_published`/`JobPublic`             | Evita custo/latência/alucinação de enviar corpus ao LLM; preserva contrato público sem contatos                          | ✓ Good (v1.3)                                                                                         |
+| Campos não nativos no chat tratados como limitado/aproximado e sinalizado                                               | Evita afirmar filtragem inexistente e mantém honestidade de produto                                                      | ✓ Good (v1.3)                                                                                         |
+| Residuals de fechamento v1.3 aceitos explicitamente (CL-02 heuristic, D-14/WR-02, deferimentos runtime/Nyquist parcial) | Fecha milestone com rastreabilidade sem fabricar evidência                                                               | ⚠️ Revisit (acompanhar em milestone futuro se necessário)                                             |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 **After each phase transition** (via `/gsd-transition`):
+
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
@@ -152,10 +158,12 @@ This document evolves at phase transitions and milestone boundaries.
 5. "What This Is" still accurate? → Update if drifted
 
 **After each milestone** (via `/gsd-complete-milestone`):
+
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-23 after Phase 29 execution (Meta/IG Readiness & Media Foundation) — automated verification passed, 3 human UAT items pending*
+
+_Last updated: 2026-11-23 after Phase 29 execution (Meta/IG Readiness & Media Foundation) — automated verification passed, 3 human UAT items pending_
