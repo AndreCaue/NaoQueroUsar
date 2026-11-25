@@ -1,10 +1,11 @@
 ---
 phase: 31
 slug: independent-publish-pipeline
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-11-25
+reviewed_at: 2026-11-25
 ---
 
 # Phase 31 — UI Design Contract
