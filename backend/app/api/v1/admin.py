@@ -44,6 +44,7 @@ from app.services.social.post_generation import (
     brt_wall_time_to_utc,
     build_public_job_link,
     generate_draft_for_job,
+    generate_instagram_draft_for_job,
     now_utc,
     sanitize_and_enforce_policy,
 )
@@ -156,6 +157,7 @@ async def approve(
     background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
     claims: dict = Depends(require_admin),
+    settings: Settings = Depends(get_settings),
 ) -> JobApproveResponse:
     """Approve a reviewable job: publica vaga no site e registra social best-effort."""
     job = await get_job(session, job_id)
@@ -167,6 +169,28 @@ async def approve(
             status_code=409,
             detail="Vaga não está na fila de revisão",
         )
+
+    ig_post = await get_by_job_provider(session, job_id, provider="instagram")
+    if ig_post is not None and bool(getattr(ig_post, "publish_enabled", True)):
+        ig_caption = (ig_post.text or "").strip()
+        if len(ig_caption) > IG_CAPTION_MAX_CHARS:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "A legenda do Instagram excede 2200 caracteres. "
+                    "Corrija ou desative a publicação no Instagram desta vaga para aprovar."
+                ),
+            )
+        ig_media = await prepare_instagram_media(session, job_id, settings=settings)
+        if not ig_media.validation.valid:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "A imagem do Instagram é inválida ou não está disponível. "
+                    "Corrija ou desative a publicação no Instagram desta vaga para aprovar. "
+                    "O Facebook e o site não são bloqueados."
+                ),
+            )
 
     # Site-first: sucesso da vaga independe do registro/dispatch social.
     await approve_job(session, job)
@@ -507,6 +531,33 @@ def _resolve_draft_schedule(
     raise HTTPException(status_code=422, detail="Modo de publicação inválido.")
 
 
+IG_CAPTION_MAX_CHARS = 2200
+IG_CAPTION_TOO_LONG_DETAIL = "Legenda do Instagram deve ter no máximo 2200 caracteres."
+IG_IMAGE_INVALID_DETAIL = (
+    "Corrija a imagem do Instagram ou desative a publicação no Instagram desta vaga. "
+    "O Facebook e o site não são bloqueados."
+)
+
+
+async def _validate_instagram_publish_ready(
+    session: AsyncSession,
+    job_id: uuid.UUID,
+    settings: Settings,
+    *,
+    caption: str,
+    publish_enabled: bool,
+) -> None:
+    if len(caption) > IG_CAPTION_MAX_CHARS:
+        raise HTTPException(status_code=422, detail=IG_CAPTION_TOO_LONG_DETAIL)
+    if publish_enabled:
+        result = await prepare_instagram_media(session, job_id, settings)
+        if not result.validation.valid:
+            raise HTTPException(
+                status_code=422,
+                detail=result.validation.message or IG_IMAGE_INVALID_DETAIL,
+            )
+
+
 @router.get("/jobs/{job_id}/social-post", response_model=SocialPostDraftResponse)
 async def get_job_social_post(
     job_id: uuid.UUID,
@@ -623,6 +674,176 @@ async def save_job_social_post(
     await session.commit()
     await session.refresh(post)
     return _draft_response(post)
+
+
+@router.get(
+    "/jobs/{job_id}/instagram/social-post",
+    response_model=SocialPostDraftResponse,
+)
+async def get_job_instagram_social_post(
+    job_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+) -> SocialPostDraftResponse:
+    """Consulta rascunho social Instagram salvo por vaga/provider (instagram)."""
+    _ = claims
+    job = await get_job(session, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+    post = await get_by_job_provider(session, job_id, provider="instagram")
+    if post is None:
+        raise HTTPException(status_code=404, detail="Rascunho social não encontrado")
+    return _draft_response(post)
+
+
+@router.post(
+    "/jobs/{job_id}/instagram/social-post/generate",
+    response_model=SocialPostDraftResponse,
+)
+async def generate_job_instagram_social_post(
+    job_id: uuid.UUID,
+    payload: SocialPostDraftRequest | None = None,
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+    settings: Settings = Depends(get_settings),
+) -> SocialPostDraftResponse:
+    """Gera rascunho Instagram determinístico (template C) para revisão (D-01/D-02)."""
+    _ = claims
+    job = await get_job(session, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
+    existing = await get_by_job_provider(session, job_id, provider="instagram")
+    if existing is not None and existing.status != SocialPostStatus.draft:
+        raise HTTPException(status_code=409, detail="Texto aprovado e bloqueado para envio.")
+
+    req = payload or SocialPostDraftRequest()
+    scheduled_at = _resolve_draft_schedule(
+        req.publish_mode, req.scheduled_date, req.scheduled_time
+    )
+    if req.publish_enabled is not None:
+        effective_publish_enabled = bool(req.publish_enabled)
+    elif existing is not None:
+        effective_publish_enabled = bool(getattr(existing, "publish_enabled", True))
+    else:
+        effective_publish_enabled = False
+
+    generated = await generate_instagram_draft_for_job(job, settings=settings)
+    await _validate_instagram_publish_ready(
+        session,
+        job_id,
+        settings,
+        caption=generated.text,
+        publish_enabled=effective_publish_enabled,
+    )
+
+    try:
+        post = await upsert_draft(
+            session,
+            job_id,
+            text=generated.text,
+            scheduled_at=scheduled_at,
+            provider="instagram",
+            publish_enabled=effective_publish_enabled,
+        )
+    except ValueError as exc:
+        if str(exc) == "frozen":
+            raise HTTPException(
+                status_code=409, detail="Texto aprovado e bloqueado para envio."
+            ) from exc
+        raise
+
+    await session.commit()
+    await session.refresh(post)
+    return _draft_response(post, origin=generated.origin, warning=generated.warning)
+
+
+@router.put(
+    "/jobs/{job_id}/instagram/social-post",
+    response_model=SocialPostDraftResponse,
+)
+async def save_job_instagram_social_post(
+    job_id: uuid.UUID,
+    payload: SocialPostDraftRequest,
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+    settings: Settings = Depends(get_settings),
+) -> SocialPostDraftResponse:
+    """Salva rascunho Instagram com validações de revisão (D-07/D-08/D-09)."""
+    _ = claims
+    job = await get_job(session, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+
+    existing = await get_by_job_provider(session, job_id, provider="instagram")
+    if existing is not None and existing.status != SocialPostStatus.draft:
+        raise HTTPException(status_code=409, detail="Texto aprovado e bloqueado para envio.")
+
+    text = (payload.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="Texto do rascunho é obrigatório.")
+    if len(text) > IG_CAPTION_MAX_CHARS:
+        raise HTTPException(status_code=422, detail=IG_CAPTION_TOO_LONG_DETAIL)
+
+    scheduled_at = _resolve_draft_schedule(
+        payload.publish_mode, payload.scheduled_date, payload.scheduled_time
+    )
+    if payload.publish_enabled is not None:
+        effective_publish_enabled = bool(payload.publish_enabled)
+    elif existing is not None:
+        effective_publish_enabled = bool(getattr(existing, "publish_enabled", True))
+    else:
+        effective_publish_enabled = False
+
+    await _validate_instagram_publish_ready(
+        session,
+        job_id,
+        settings,
+        caption=text,
+        publish_enabled=effective_publish_enabled,
+    )
+
+    try:
+        post = await upsert_draft(
+            session,
+            job_id,
+            text=text,
+            scheduled_at=scheduled_at,
+            provider="instagram",
+            publish_enabled=effective_publish_enabled,
+        )
+    except ValueError as exc:
+        if str(exc) == "frozen":
+            raise HTTPException(
+                status_code=409, detail="Texto aprovado e bloqueado para envio."
+            ) from exc
+        raise
+
+    await session.commit()
+    await session.refresh(post)
+    return _draft_response(post)
+
+
+@router.get(
+    "/jobs/{job_id}/instagram/social-status",
+    response_model=SocialPostStatusItem,
+)
+async def get_job_instagram_social_status(
+    job_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+    claims: dict = Depends(require_admin),
+) -> SocialPostStatusItem:
+    """Retorna status social Instagram por vaga para revisão/admin."""
+    _ = claims
+    item, job_exists = await get_job_social_status_item(
+        session,
+        job_id,
+        account_status=None,
+        provider="instagram",
+    )
+    if not job_exists or item is None:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+    return item
 
 
 # ---------------------------------------------------------------------------

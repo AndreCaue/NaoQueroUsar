@@ -282,6 +282,55 @@ async def generate_draft_for_job(
         )
 
 
+def _normalize_instagram_city_hashtag(city: str | None) -> str:
+    value = _clean_text(city)
+    if not value or value.casefold() == "remoto".casefold():
+        return "#remoto"
+    normalized = unicodedata.normalize("NFKD", value)
+    ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+    token = re.sub(r"[^A-Za-z0-9]+", "", ascii_text).lower()
+    return f"#{token}" if token else "#cidade"
+
+
+def generate_instagram_template(job: Any) -> str:
+    title = _clean_text(getattr(job, "title", None)) or "Vaga"
+    company = _clean_text(getattr(job, "company", None))
+    city = _clean_text(getattr(job, "city", None))
+    employment_type = _clean_text(
+        getattr(job, "employment_type", None)
+        or getattr(job, "contract_type", None)
+        or getattr(job, "type", None)
+    )
+    salary = _clean_text(getattr(job, "salary", None))
+
+    lines: list[str] = [f"💼 {title}"]
+    if company and company.casefold() not in {"empresa confidencial", "confidencial"}:
+        lines.append(f"🏢 {company}")
+    lines.append(f"📍 {city}" if city else "📍 Local a confirmar")
+    if employment_type:
+        lines.append(f"📝 {employment_type}")
+    if salary:
+        lines.append(f"💰 {salary}")
+    lines.append("")
+    lines.append("Confira os detalhes e candidate-se: link na bio")
+    lines.append("")
+    lines.append(
+        f"#vagas #emprego {_normalize_instagram_city_hashtag(city)} #oportunidade"
+    )
+    return "\n".join(lines).strip()[:2200]
+
+
+async def generate_instagram_draft_for_job(
+    job: Any, settings: Any | None = None
+) -> DraftGenerationResult:
+    _ = settings
+    return DraftGenerationResult(
+        text=generate_instagram_template(job)[:2200],
+        origin="template_fallback",
+        warning=None,
+    )
+
+
 __all__ = [
     "ACTIONABLE_SITE_URL_ERROR",
     "FALLBACK_WARNING",
@@ -290,6 +339,8 @@ __all__ = [
     "brt_wall_time_to_utc",
     "build_public_job_link",
     "generate_draft_for_job",
+    "generate_instagram_draft_for_job",
+    "generate_instagram_template",
     "generate_template_fallback",
     "now_utc",
     "resolve_scheduled_at",
