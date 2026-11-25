@@ -1555,21 +1555,25 @@ export function EditJobDialog({
                 {!igReady ? (
                   <div className="mt-4 rounded-lg border border-line bg-canvas p-4">
                     <p className="text-[14px] font-semibold text-fg">
-                      {igReadiness?.state === "missing_linkage"
-                        ? "Instagram não vinculado"
-                        : igReadiness?.state === "missing_permissions"
-                          ? "Permissões do Instagram ausentes"
-                          : igReadiness?.state === "needs_reconnect"
-                            ? "Reconexão necessária para o Instagram"
-                            : "Instagram não está pronto para publicação"}
+                      {igReadiness === undefined
+                        ? "Verificando prontidão do Instagram"
+                        : igReadiness?.state === "missing_linkage"
+                          ? "Instagram não vinculado"
+                          : igReadiness?.state === "missing_permissions"
+                            ? "Permissões do Instagram ausentes"
+                            : igReadiness?.state === "needs_reconnect"
+                              ? "Reconexão necessária para o Instagram"
+                              : "Instagram não está pronto para publicação"}
                     </p>
                     <p className="mt-2 text-[14px] text-fg-muted">
                       A seção está visível, mas a publicação no Instagram fica desabilitada até a integração estar pronta.
                     </p>
                     <p className="mt-2 text-[14px] text-fg-muted">
-                      {igReadinessError ??
-                        igReadiness?.message ??
-                        "Não foi possível confirmar a prontidão do Instagram agora."}
+                      {igReadiness === undefined
+                        ? "Carregando status da integração do Instagram..."
+                        : igReadinessError ??
+                          igReadiness?.message ??
+                          "Não foi possível confirmar a prontidão do Instagram agora."}
                     </p>
                     <a
                       href="/admin/integracoes"
