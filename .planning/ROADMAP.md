@@ -114,5 +114,5 @@
 | 28. Polimento UX da Home | v1.4 | 3/3 | Complete | 2026-11-23 |
 | 29. Meta/IG Readiness & Media Foundation | v1.5 | 3/3 | Complete    | 2026-11-23 |
 | 30. Instagram Review Experience | v1.5 | 2/2 | Complete   | 2026-11-25 |
-| 31. Independent Publish Pipeline | v1.5 | 0/TBD | Not started | - |
+| 31. Independent Publish Pipeline | v1.5 | 1/2 | In Progress|  |
 | 32. Hardening, Regression & Operations | v1.5 | 0/TBD | Not started | - |
