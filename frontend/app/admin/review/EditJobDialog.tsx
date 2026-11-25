@@ -13,14 +13,22 @@ import { useToast } from "@/components/admin/ToastProvider";
 import { X } from "@/components/admin/icons";
 import {
   ApiError,
+  generateInstagramSocialDraft,
   generateSocialDraft,
+  getInstagramSocialDraft,
+  getInstagramSocialStatus,
+  getMetaIntegrationStatus,
   getSocialDraft,
   getSocialStatus,
+  prepareInstagramMedia,
   retrySocialPost,
+  saveInstagramSocialDraft,
   saveSocialDraft,
   updateJob,
+  type InstagramMediaPrepareResponse,
   type JobAdmin,
   type JobUpdate,
+  type MetaInstagramReadiness,
   type SocialPostDraft,
   type SocialPostStatusItem,
   type SocialPublishMode,
@@ -46,6 +54,7 @@ type FormErrors = Partial<
 >;
 
 type SocialAction = "load" | "generate" | "save" | null;
+type IgAction = "load" | "generate" | "save" | "prepare" | null;
 
 const SITE_PUBLIC_URL_ERROR =
   "Link público indisponível: configure SITE_PUBLIC_URL no servidor para gerar o rascunho com link da vaga.";
@@ -276,6 +285,43 @@ export function EditJobDialog({
   const [retryingSocial, setRetryingSocial] = useState(false);
   const retryInFlightRef = useRef(false);
 
+  // Instagram review state (Phase 30)
+  const [igReadiness, setIgReadiness] = useState<MetaInstagramReadiness | null | undefined>(
+    undefined,
+  );
+  const [igReadinessError, setIgReadinessError] = useState<string | null>(null);
+  const [igEnabled, setIgEnabled] = useState(false);
+  const [igDraft, setIgDraft] = useState<SocialPostDraft | null>(null);
+  const [igCaption, setIgCaption] = useState("");
+  const [igStatus, setIgStatus] = useState<SocialPostStatusItem | null>(null);
+  const [igStatusLoading, setIgStatusLoading] = useState(false);
+  const [igAction, setIgAction] = useState<IgAction>(null);
+  const [igActionError, setIgActionError] = useState<string | null>(null);
+  const [igLoadError, setIgLoadError] = useState<string | null>(null);
+  const [igSaved, setIgSaved] = useState(false);
+  const [igMedia, setIgMedia] = useState<InstagramMediaPrepareResponse | null>(null);
+  const [igMediaLoading, setIgMediaLoading] = useState(false);
+  const [igMediaError, setIgMediaError] = useState<string | null>(null);
+  const igPrepareInFlightRef = useRef(false);
+
+  const resetIgState = () => {
+    setIgReadiness(undefined);
+    setIgReadinessError(null);
+    setIgEnabled(false);
+    setIgDraft(null);
+    setIgCaption("");
+    setIgStatus(null);
+    setIgStatusLoading(false);
+    setIgAction(null);
+    setIgActionError(null);
+    setIgLoadError(null);
+    setIgSaved(false);
+    setIgMedia(null);
+    setIgMediaLoading(false);
+    setIgMediaError(null);
+    igPrepareInFlightRef.current = false;
+  };
+
   const resetSocialState = () => {
     setSocialDraft(null);
     setSocialText("");
@@ -328,6 +374,7 @@ export function EditJobDialog({
     setForm(toFormState(job));
     setErrors({});
     resetSocialState();
+    resetIgState();
   }, [job, open]);
 
   const handleAuthExpired = () => {
@@ -412,6 +459,121 @@ export function EditJobDialog({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, job?.id, token]);
+
+  const prepareIgMedia = async (authToken: string, jobId: string) => {
+    if (igPrepareInFlightRef.current) return;
+    igPrepareInFlightRef.current = true;
+    setIgMediaLoading(true);
+    setIgMediaError(null);
+    try {
+      const media = await prepareInstagramMedia(authToken, jobId);
+      setIgMedia(media);
+      if (!media.validation?.valid) {
+        setIgMediaError(
+          media.validation?.message ??
+            "A imagem do Instagram é inválida ou não está disponível. Corrija antes de publicar no Instagram.",
+        );
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        handleAuthExpired();
+        return;
+      }
+      setIgMedia(null);
+      setIgMediaError("Não foi possível preparar a imagem do Instagram. Tente novamente.");
+    } finally {
+      setIgMediaLoading(false);
+      igPrepareInFlightRef.current = false;
+    }
+  };
+
+  // Load Instagram readiness/draft/status when dialog opens.
+  useEffect(() => {
+    if (!open || !job || !token) return;
+    let cancelled = false;
+    setIgAction("load");
+    setIgLoadError(null);
+    setIgReadinessError(null);
+    setIgStatusLoading(true);
+
+    Promise.all([
+      getMetaIntegrationStatus(token)
+        .then((status) => {
+          if (cancelled) return;
+          setIgReadiness(status.instagram ?? null);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (err instanceof ApiError && err.status === 401) {
+            handleAuthExpired();
+            return;
+          }
+          setIgReadiness(null);
+          setIgReadinessError(
+            "Não foi possível carregar a prontidão do Instagram. Tente novamente em alguns instantes.",
+          );
+        }),
+      getInstagramSocialDraft(token, job.id)
+        .then((draft) => {
+          if (cancelled) return;
+          if (draft) {
+            setIgDraft(draft);
+            setIgCaption(draft.text ?? "");
+            setIgEnabled(Boolean(draft.publish_enabled));
+            setIgSaved(Boolean(draft.saved));
+          } else {
+            setIgDraft(null);
+            setIgCaption("");
+            setIgEnabled(false);
+            setIgSaved(false);
+          }
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (err instanceof ApiError && err.status === 401) {
+            handleAuthExpired();
+            return;
+          }
+          setIgLoadError(
+            err instanceof ApiError
+              ? err.message
+              : "Não foi possível carregar o rascunho do Instagram.",
+          );
+        }),
+      getInstagramSocialStatus(token, job.id)
+        .then((status) => {
+          if (cancelled) return;
+          setIgStatus(status);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (err instanceof ApiError && err.status === 401) {
+            handleAuthExpired();
+            return;
+          }
+          setIgStatus(null);
+        }),
+    ]).finally(() => {
+      if (cancelled) return;
+      setIgAction(null);
+      setIgStatusLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, job?.id, token]);
+
+  // D-06: auto-prepare when dialog opens with IG enabled+ready, or when toggled on.
+  useEffect(() => {
+    if (!open || !job || !token) return;
+    if (!igEnabled) return;
+    if (igReadiness?.state !== "ready") return;
+    if (igMedia || igMediaLoading || igPrepareInFlightRef.current) return;
+    void prepareIgMedia(token, job.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, job?.id, token, igEnabled, igReadiness?.state]);
 
   const handleRetrySocial = async () => {
     if (!token || !job || !socialStatus?.can_retry) return;
@@ -501,6 +663,17 @@ export function EditJobDialog({
     socialTime,
     lastSavedSnapshot,
   ]);
+
+  const countHashtags = (text: string) => (text.match(/(?:^|\s)#[^\s#]+/g) ?? []).length;
+  const igCharCount = igCaption.length;
+  const igOverLimit = igCharCount > 2200;
+  const igHashtagCount = countHashtags(igCaption);
+  const igHashtagWarning = igHashtagCount > 30;
+  const igReady = igReadiness?.state === "ready";
+  const igFrozen = Boolean(igDraft?.frozen || (igDraft && igDraft.status !== "draft"));
+  const igImageInvalid = igEnabled && (!igMedia || !igMedia.validation?.valid || !igMedia.image_url);
+  const igBusy = igAction !== null;
+  const igCanSave = igReady && igEnabled && !igOverLimit && !igImageInvalid && !busy && !igFrozen && !igBusy;
 
   const close = () => {
     if (showRegenConfirm) return;
@@ -652,6 +825,157 @@ export function EditJobDialog({
       toast(`Erro: ${message}`, "error");
     } finally {
       setSocialAction(null);
+    }
+  };
+
+  const handleIgGenerate = async (publishEnabledOverride?: boolean) => {
+    if (!token || !job || !igReady || igFrozen || busy || igBusy) return;
+    const publishEnabled = publishEnabledOverride ?? igEnabled;
+    setIgAction("generate");
+    setIgActionError(null);
+    try {
+      const draft = await generateInstagramSocialDraft(token, job.id, {
+        publish_mode: "publish_now",
+        publish_enabled: publishEnabled,
+      });
+      setIgDraft(draft);
+      setIgCaption(draft.text ?? "");
+      setIgEnabled(Boolean(draft.publish_enabled));
+      setIgSaved(Boolean(draft.saved));
+      if (draft.publish_enabled) {
+        await prepareIgMedia(token, job.id);
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        handleAuthExpired();
+        return;
+      }
+      setIgActionError(
+        err instanceof ApiError
+          ? err.message
+          : "Não foi possível gerar a legenda do Instagram.",
+      );
+    } finally {
+      setIgAction(null);
+    }
+  };
+
+  const handleIgSave = async () => {
+    if (!token || !job || !igReady || igFrozen || busy || igBusy) return;
+    if (igOverLimit) {
+      setIgActionError("A legenda do Instagram deve ter no máximo 2200 caracteres.");
+      return;
+    }
+    if (igEnabled && igImageInvalid) {
+      setIgActionError(
+        "Corrija a legenda ou a imagem do Instagram antes de salvar/publicar com Instagram ativado. O Facebook e o site não são bloqueados.",
+      );
+      return;
+    }
+    setIgAction("save");
+    setIgActionError(null);
+    try {
+      const draft = await saveInstagramSocialDraft(token, job.id, {
+        text: igCaption,
+        publish_mode: "publish_now",
+        publish_enabled: igEnabled,
+      });
+      setIgDraft(draft);
+      setIgCaption(draft.text ?? "");
+      setIgEnabled(Boolean(draft.publish_enabled));
+      setIgSaved(Boolean(draft.saved));
+      toast("Rascunho salvo.", "success");
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        handleAuthExpired();
+        return;
+      }
+      setIgActionError(
+        err instanceof ApiError
+          ? err.message
+          : "Não foi possível salvar o rascunho do Instagram.",
+      );
+    } finally {
+      setIgAction(null);
+    }
+  };
+
+  const handleIgToggle = async (nextEnabled: boolean) => {
+    if (!token || !job || !igReady || igFrozen || busy || igBusy) return;
+    setIgActionError(null);
+
+    if (nextEnabled) {
+      setIgEnabled(true);
+      setIgSaved(false);
+      if (!igDraft && !igCaption.trim()) {
+        await handleIgGenerate(true);
+        return;
+      }
+      if (igDraft) {
+        setIgAction("save");
+        try {
+          const draft = await saveInstagramSocialDraft(token, job.id, {
+            text: igCaption || igDraft.text,
+            publish_mode: "publish_now",
+            publish_enabled: true,
+          });
+          setIgDraft(draft);
+          setIgCaption(draft.text ?? "");
+          setIgEnabled(Boolean(draft.publish_enabled));
+          setIgSaved(Boolean(draft.saved));
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 401) {
+            handleAuthExpired();
+            return;
+          }
+          setIgEnabled(false);
+          setIgActionError(
+            err instanceof ApiError
+              ? err.message
+              : "Não foi possível ativar a publicação no Instagram.",
+          );
+          return;
+        } finally {
+          setIgAction(null);
+        }
+      }
+      if (!igMedia && !igMediaLoading && !igPrepareInFlightRef.current) {
+        void prepareIgMedia(token, job.id);
+      }
+      return;
+    }
+
+    // Toggle off: persist durably when draft exists (D-04/Plan 30-02 Task 2)
+    setIgEnabled(false);
+    setIgSaved(false);
+    setIgMedia(null);
+    setIgMediaError(null);
+    if (igDraft) {
+      setIgAction("save");
+      try {
+        const draft = await saveInstagramSocialDraft(token, job.id, {
+          text: igCaption || igDraft.text,
+          publish_mode: "publish_now",
+          publish_enabled: false,
+        });
+        setIgDraft(draft);
+        setIgCaption(draft.text ?? "");
+        setIgEnabled(Boolean(draft.publish_enabled));
+        setIgSaved(Boolean(draft.saved));
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          handleAuthExpired();
+          return;
+        }
+        setIgEnabled(true);
+        setIgActionError(
+          err instanceof ApiError
+            ? err.message
+            : "Não foi possível desativar a publicação no Instagram. Tente novamente.",
+        );
+      } finally {
+        setIgAction(null);
+      }
     }
   };
 
@@ -1210,6 +1534,197 @@ export function EditJobDialog({
                     {SITE_PUBLIC_URL_ERROR}
                   </p>
                 ) : null}
+              </section>
+
+              {/* Post para Instagram (Phase 30, REVW-01..04, D-01..D-09) */}
+              <section className="mt-6 border-t border-line pt-6">
+                <h3 className="text-[20px] font-semibold leading-tight text-fg">
+                  Post para Instagram
+                </h3>
+
+                {igAction === "load" ? (
+                  <p className="mt-3 text-[14px] text-fg-muted">Carregando...</p>
+                ) : null}
+
+                {igLoadError ? (
+                  <p role="alert" className="mt-3 text-[14px] text-danger-soft">
+                    {igLoadError}
+                  </p>
+                ) : null}
+
+                {!igReady ? (
+                  <div className="mt-4 rounded-lg border border-line bg-canvas p-4">
+                    <p className="text-[14px] font-semibold text-fg">
+                      {igReadiness?.state === "missing_linkage"
+                        ? "Instagram não vinculado"
+                        : igReadiness?.state === "missing_permissions"
+                          ? "Permissões do Instagram ausentes"
+                          : igReadiness?.state === "needs_reconnect"
+                            ? "Reconexão necessária para o Instagram"
+                            : "Instagram não está pronto para publicação"}
+                    </p>
+                    <p className="mt-2 text-[14px] text-fg-muted">
+                      A seção está visível, mas a publicação no Instagram fica desabilitada até a integração estar pronta.
+                    </p>
+                    <p className="mt-2 text-[14px] text-fg-muted">
+                      {igReadinessError ??
+                        igReadiness?.message ??
+                        "Não foi possível confirmar a prontidão do Instagram agora."}
+                    </p>
+                    <a
+                      href="/admin/integracoes"
+                      className="mt-2 inline-flex min-h-11 items-center text-[14px] font-medium text-accent-soft underline underline-offset-4 hover:text-accent"
+                    >
+                      Abrir Integrações
+                    </a>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-4">
+                    <div className="rounded-lg border border-line bg-canvas p-4">
+                      <label className="flex min-h-11 cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={igEnabled}
+                          disabled={busy || igBusy || igFrozen}
+                          onChange={(e) => {
+                            void handleIgToggle(e.target.checked);
+                          }}
+                          className="mt-1 h-5 w-5 rounded border-line-strong bg-canvas text-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        <span>
+                          <span className="block text-[14px] font-semibold text-fg">
+                            Publicar no Instagram desta vaga
+                          </span>
+                          <span className="mt-1 block text-[14px] text-fg-muted">
+                            {igEnabled
+                              ? "Revise a legenda e a imagem do Instagram antes de aprovar com Instagram ativado."
+                              : "Ative para editar a legenda e revisar a imagem do Instagram desta vaga."}
+                          </span>
+                        </span>
+                      </label>
+                      {igFrozen ? (
+                        <p className="mt-3 text-[14px] text-fg-muted">
+                          Texto bloqueado após aprovação. Este conteúdo não pode ser editado.
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {igEnabled ? (
+                      <>
+                        <div>
+                          <label
+                            htmlFor="ig-caption"
+                            className="mb-1 block text-[14px] font-semibold text-fg"
+                          >
+                            Legenda do Instagram
+                          </label>
+                          <textarea
+                            id="ig-caption"
+                            value={igCaption}
+                            disabled={busy || igBusy || igFrozen}
+                            onChange={(e) => {
+                              setIgCaption(e.target.value);
+                              setIgSaved(false);
+                              setIgActionError(null);
+                            }}
+                            className="min-h-40 w-full resize-y rounded-lg border border-line-strong bg-canvas px-3 py-2 text-base text-fg placeholder:text-fg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-soft disabled:cursor-not-allowed disabled:opacity-50"
+                          />
+                          <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[14px]">
+                            <span className="text-fg-muted">
+                              {/* Acceptance: Links na legenda não são clicáveis. Use "link na bio" como CTA. */}
+                              Links na legenda não são clicáveis. Use &quot;link na bio&quot; como CTA.
+                            </span>
+                            <span className={igOverLimit ? "text-danger-soft" : "text-fg-muted"}>
+                              {igCharCount}/2200 caracteres
+                            </span>
+                          </div>
+                          {igOverLimit ? (
+                            <p role="alert" className="mt-2 text-[14px] text-danger-soft">
+                              A legenda do Instagram deve ter no máximo 2200 caracteres.
+                            </p>
+                          ) : null}
+                          {igHashtagWarning ? (
+                            <p className="mt-2 rounded-lg border border-accent/40 bg-[rgba(139,92,246,0.08)] p-3 text-[14px] text-fg-muted">
+                              Você usou mais de 30 hashtags. Considere reduzir para melhorar a clareza da publicação.
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => void handleIgSave()}
+                            disabled={!igCanSave}
+                            className="min-h-11 rounded-lg bg-accent-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-accent-strong-hover disabled:opacity-50"
+                          >
+                            {igAction === "save" ? "Salvando rascunho..." : "Salvar rascunho"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleIgGenerate()}
+                            disabled={!igReady || busy || igBusy || igFrozen}
+                            className="min-h-11 rounded-lg border border-line-strong px-4 text-sm font-semibold text-fg transition-colors hover:border-accent hover:text-accent-soft disabled:opacity-50"
+                          >
+                            {igAction === "generate"
+                              ? "Gerando legenda..."
+                              : igDraft
+                                ? "Regenerar legenda"
+                                : "Gerar legenda"}
+                          </button>
+                        </div>
+
+                        {igSaved && !igActionError ? (
+                          <p className="text-[14px] text-fg-muted">Rascunho salvo.</p>
+                        ) : null}
+
+                        {igActionError ? (
+                          <p role="alert" className="text-[14px] text-danger-soft">
+                            {igActionError}
+                          </p>
+                        ) : null}
+
+                        <div>
+                          <h4 className="mb-2 text-[14px] font-semibold text-fg">
+                            Prévia da imagem do Instagram
+                          </h4>
+                          <div className="rounded-lg border border-line bg-canvas p-3">
+                            {igMediaLoading ? (
+                              <p className="text-[14px] text-fg-muted">
+                                Preparando imagem do Instagram...
+                              </p>
+                            ) : igMediaError ? (
+                              <p role="alert" className="text-[14px] text-danger-soft">
+                                {igMediaError}
+                              </p>
+                            ) : igMedia?.validation?.valid && igMedia.image_url ? (
+                              <img
+                                src={igMedia.image_url}
+                                alt="Prévia da imagem do Instagram"
+                                className="h-auto w-full max-w-[360px] rounded-lg border border-line"
+                              />
+                            ) : (
+                              <p className="text-[14px] text-fg-muted">
+                                Nenhuma prévia disponível. Ative a publicação no Instagram para preparar a imagem.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {igEnabled && igImageInvalid ? (
+                          <p role="alert" className="text-[14px] text-danger-soft">
+                            Corrija a legenda ou a imagem do Instagram antes de salvar/publicar com Instagram ativado. O Facebook e o site não são bloqueados.
+                          </p>
+                        ) : null}
+
+                        {igEnabled && (igOverLimit || igImageInvalid) ? (
+                          <p className="text-[14px] text-fg-muted">
+                            Corrija a legenda ou a imagem do Instagram antes de aprovar com Instagram ativado, ou desative a publicação no Instagram desta vaga. O Facebook e o site não são bloqueados.
+                          </p>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                )}
               </section>
             </div>
 
