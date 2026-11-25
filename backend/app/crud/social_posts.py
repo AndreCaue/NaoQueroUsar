@@ -115,7 +115,10 @@ async def list_due_for_claim(
 ) -> list[SocialPost]:
     """Seleciona posts elegíveis para claim com lock (D-04/D-12)."""
     now = now or datetime.now(timezone.utc)
-    stmt = select(SocialPost).where(SocialPost.provider == provider)
+    stmt = select(SocialPost).where(
+        SocialPost.provider == provider,
+        SocialPost.publish_enabled.is_(True),
+    )
     if post_id is not None:
         stmt = stmt.where(SocialPost.id == _as_uuid(post_id))
         # Alvo específico: permitir claim do post em estado elegível/idempotente;

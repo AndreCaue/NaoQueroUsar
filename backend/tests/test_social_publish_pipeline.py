@@ -306,3 +306,23 @@ async def test_run_social_publish_cycle_recovers_post_claim_exception_without_le
     can_retry, reason = compute_social_retry_state(post, SocialAccountStatus.connected)
     assert can_retry is False
     assert reason == "Verifique a publicação no Facebook antes de tentar novamente para evitar duplicidade."
+
+@pytest.mark.asyncio
+async def test_list_due_for_claim_filters_publish_enabled_false(monkeypatch):
+    from app.crud.social_posts import list_due_for_claim
+
+    captured = {}
+
+    class Result:
+        def all(self):
+            return []
+
+    class FakeSession:
+        async def scalars(self, stmt):
+            captured["stmt"] = stmt
+            return Result()
+
+    await list_due_for_claim(FakeSession(), provider="instagram", limit=10)
+    stmt = captured["stmt"]
+    compiled = str(stmt.compile(compile_kwargs={"literal_binds": False}))
+    assert "publish_enabled" in compiled

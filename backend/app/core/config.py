@@ -96,6 +96,11 @@ class Settings(BaseSettings):
     # --- Instagram / Mídia IG (Phase 29) ---
     # Base pública HTTPS explícita para mídia IG (D-12). Nunca inferir de host/request.
     MEDIA_PUBLIC_BASE_URL: str = ""
+    # Phase 31 (PUBL-02/PUBL-04): bounded IG publish/status polling budgets.
+    IG_PUBLISH_HTTP_TIMEOUT_SECONDS: float = 20.0
+    IG_STATUS_POLL_MAX_ATTEMPTS: int = 5
+    IG_STATUS_POLL_DELAY_SECONDS: float = 2.0
+    IG_PUBLISH_MAX_ATTEMPT_SECONDS: float = 45.0
 
     @model_validator(mode="after")
     def _validate_social_foundation(self) -> "Settings":
@@ -159,6 +164,18 @@ class Settings(BaseSettings):
                 )
             self.MEDIA_PUBLIC_BASE_URL = media_base.rstrip("/")
 
+        return self
+
+    @model_validator(mode="after")
+    def _validate_ig_publish_budgets(self) -> "Settings":
+        if float(self.IG_PUBLISH_HTTP_TIMEOUT_SECONDS) <= 0:
+            raise ValueError("IG_PUBLISH_HTTP_TIMEOUT_SECONDS deve ser > 0")
+        if int(self.IG_STATUS_POLL_MAX_ATTEMPTS) <= 0:
+            raise ValueError("IG_STATUS_POLL_MAX_ATTEMPTS deve ser > 0")
+        if float(self.IG_STATUS_POLL_DELAY_SECONDS) <= 0:
+            raise ValueError("IG_STATUS_POLL_DELAY_SECONDS deve ser > 0")
+        if float(self.IG_PUBLISH_MAX_ATTEMPT_SECONDS) <= 0:
+            raise ValueError("IG_PUBLISH_MAX_ATTEMPT_SECONDS deve ser > 0")
         return self
 
     @staticmethod

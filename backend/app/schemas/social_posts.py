@@ -77,6 +77,12 @@ class SocialPostStatusItem(BaseModel):
     published_at: datetime | None = None
     can_retry: bool = False
     retry_block_reason: str | None = None
+    published_permalink: str | None = None
+    ig_container_id: str | None = None
+    ig_media_id: str | None = None
+    reconciliation_required: bool = False
+    reconciliation_state: str | None = None
+    ig_last_reconciled_at: datetime | None = None
 
 
 class SocialPostStatusListResponse(BaseModel):
@@ -105,3 +111,4 @@ class SocialWorkerResponse(BaseModel):
     failed_final: int = 0
     skipped: int = 0
     idempotent: int = 0
+    by_provider: dict[str, dict[str, int]] | None = None

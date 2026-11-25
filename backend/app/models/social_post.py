@@ -63,6 +63,20 @@ class SocialPost(Base):
         TIMESTAMP(timezone=True),
         nullable=True,
     )
+    ig_container_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    ig_media_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    ig_permalink: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    ig_reconciliation_required: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=sql_text("false"),
+    )
+    ig_reconciliation_state: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ig_last_reconciled_at: Mapped[datetime | None] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=True,
+    )
+    ig_last_publish_error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         nullable=False,

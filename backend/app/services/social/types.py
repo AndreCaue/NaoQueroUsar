@@ -17,6 +17,10 @@ class PublishResult:
     external_post_id: str | None = None
     category: PublishFailureCategory | None = None
     error_message: str | None = None
+    container_id: str | None = None
+    published_media_id: str | None = None
+    permalink: str | None = None
+    error_code: str | None = None
 
 
 @dataclass(frozen=True)
@@ -27,3 +31,5 @@ class SocialPostPayload:
     link: str | None = None
     page_id: str | None = None
     page_access_token: str | None = None
+    image_url: str | None = None
+    ig_user_id: str | None = None
