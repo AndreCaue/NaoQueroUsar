@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
 status: executing
-stopped_at: Phase 30 UI-SPEC approved
-last_updated: "2026-11-25T13:39:25.056Z"
-last_activity: 2026-11-25 -- Phase 30 planning complete
+stopped_at: Phase 30 gap closure 30-03 complete; verification pending
+last_updated: "2026-11-25T16:25:00Z"
+last_activity: 2026-11-25 -- Phase 30 gap closure 30-03 executed (--gaps-only)
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 25
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-11-23)
 ## Current Position
 
 Phase: 30 (instagram-review-experience) — EXECUTING
-Plan: 1 of 2
-Status: Ready to execute
-Last activity: 2026-11-25 -- Phase 30 planning complete
+Plan: 3 of 3 (gap closure 30-03 complete)
+Status: Gap closure executed; phase verification pending
+Last activity: 2026-11-25 -- Phase 30 gap closure 30-03 executed (--gaps-only)
 
 Progress: [██████████] 100%
 
@@ -117,7 +117,7 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 
 ## Session Continuity
 
-Last session: 2026-11-24T10:41:44.719Z
-Stopped at: Phase 30 UI-SPEC approved
-Resume file: .planning/phases/30-instagram-review-experience/30-UI-SPEC.md
-Next: Phase 29 verification / Phase 30 planning
+Last session: 2026-11-25T16:25:00Z
+Stopped at: Phase 30 gap closure 30-03 complete; verification pending
+Resume file: .planning/phases/30-instagram-review-experience/30-03-SUMMARY.md
+Next: Re-verify Phase 30 (`/gsd-verify-work 30` or `/gsd-execute-phase 30` verification flow) then proceed to Phase 31 planning
