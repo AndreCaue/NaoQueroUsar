@@ -414,7 +414,7 @@ export type SocialApproveStatus = "registered" | "skipped" | "warning";
 
 export interface SocialPostDraft {
   job_id: string;
-  provider: "facebook";
+  provider: "facebook" | "instagram";
   status: "draft" | "scheduled" | "publishing" | "published" | "failed" | "cancelled";
   text: string;
   publish_mode: SocialPublishMode | null;
@@ -423,6 +423,7 @@ export interface SocialPostDraft {
   saved: boolean;
   frozen: boolean;
   warning: string | null;
+  publish_enabled: boolean;
 }
 
 export interface SocialApproveOutcome {
@@ -441,6 +442,7 @@ export interface SocialDraftGenerateRequest {
   scheduled_date?: string;
   scheduled_time?: string;
   text?: string;
+  publish_enabled?: boolean;
 }
 
 export interface SocialDraftSaveRequest {
@@ -448,6 +450,7 @@ export interface SocialDraftSaveRequest {
   scheduled_date?: string;
   scheduled_time?: string;
   text?: string;
+  publish_enabled?: boolean;
 }
 
 /** Approve a job by ID (PATCH /api/v1/admin/jobs/{id}/approve). */
@@ -516,6 +519,122 @@ export async function saveSocialDraft(
     throw new ApiError(await readError(res), res.status);
   }
   return (await res.json()) as SocialPostDraft;
+}
+
+export type InstagramMediaValidationCode =
+  | "missing_image"
+  | "invalid_image"
+  | "invalid_public_url"
+  | "media_not_ready";
+
+export interface InstagramMediaValidation {
+  valid: boolean;
+  code?: InstagramMediaValidationCode | null;
+  message?: string | null;
+}
+
+export interface InstagramMediaPrepareResponse {
+  job_id: string;
+  provider: "instagram";
+  version_hash: string;
+  template_version: string;
+  image_url: string | null;
+  mime_type: string;
+  width: number;
+  height: number;
+  byte_size: number | null;
+  validation: InstagramMediaValidation;
+  provenance: Record<string, unknown>;
+}
+
+export async function getInstagramSocialDraft(
+  token: string,
+  jobId: string,
+): Promise<SocialPostDraft | null> {
+  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/instagram/social-post`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostDraft;
+}
+
+export async function generateInstagramSocialDraft(
+  token: string,
+  jobId: string,
+  payload?: SocialDraftGenerateRequest,
+): Promise<SocialPostDraft> {
+  const res = await fetch(
+    `${API}/api/v1/admin/jobs/${jobId}/instagram/social-post/generate`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: payload ? JSON.stringify(payload) : undefined,
+    },
+  );
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostDraft;
+}
+
+export async function saveInstagramSocialDraft(
+  token: string,
+  jobId: string,
+  payload: SocialDraftSaveRequest,
+): Promise<SocialPostDraft> {
+  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/instagram/social-post`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostDraft;
+}
+
+export async function getInstagramSocialStatus(
+  token: string,
+  jobId: string,
+): Promise<SocialPostStatusItem | null> {
+  const res = await fetch(`${API}/api/v1/admin/jobs/${jobId}/instagram/social-status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as SocialPostStatusItem;
+}
+
+export async function prepareInstagramMedia(
+  token: string,
+  jobId: string,
+): Promise<InstagramMediaPrepareResponse> {
+  const res = await fetch(
+    `${API}/api/v1/admin/jobs/${encodeURIComponent(jobId)}/instagram/media/prepare`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  if (!res.ok) {
+    throw new ApiError(await readError(res), res.status);
+  }
+  return (await res.json()) as InstagramMediaPrepareResponse;
 }
 
 /** Update a job by ID (PUT /api/v1/admin/jobs/{id}). */
@@ -707,7 +826,7 @@ export type SocialStatusValue =
 export interface SocialPostStatusItem {
   job_id: string;
   job_title?: string | null;
-  provider: "facebook";
+  provider: "facebook" | "instagram";
   status: SocialStatusValue;
   status_label: string;
   last_error: string | null;
