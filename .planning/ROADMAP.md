@@ -37,7 +37,7 @@
 **Milestone Goal:** Permitir publicar cada vaga aprovada também no Instagram, com legenda configurada na etapa de revisão, reaproveitando a base Meta/Facebook existente e mantendo as publicações independentes.
 
 - [x] **Phase 29: Meta/IG Readiness & Media Foundation** - Prontidão Meta/Instagram e base de imagem pública segura para publicação (3/3 plans) (completed 2026-11-23)
-- [ ] **Phase 30: Instagram Review Experience** - Seção Instagram na revisão com controles, validações e preview
+- [x] **Phase 30: Instagram Review Experience** - Seção Instagram na revisão com controles, validações e preview (completed 2026-11-25)
 - [ ] **Phase 31: Independent Publish Pipeline** - Publicação assíncrona Instagram desacoplada do Facebook com segurança operacional
 - [ ] **Phase 32: Hardening, Regression & Operations** - Cobertura automatizada, regressão Facebook e documentação operacional
 
@@ -113,6 +113,6 @@
 | 27. Controles por Ambiente | v1.4 | 1/1 | Complete | 2026-11-22 |
 | 28. Polimento UX da Home | v1.4 | 3/3 | Complete | 2026-11-23 |
 | 29. Meta/IG Readiness & Media Foundation | v1.5 | 3/3 | Complete    | 2026-11-23 |
-| 30. Instagram Review Experience | v1.5 | 1/2 | In Progress|  |
+| 30. Instagram Review Experience | v1.5 | 2/2 | Complete   | 2026-11-25 |
 | 31. Independent Publish Pipeline | v1.5 | 0/TBD | Not started | - |
 | 32. Hardening, Regression & Operations | v1.5 | 0/TBD | Not started | - |
