@@ -299,22 +299,22 @@ assert "aguarde" in (result.error_message or "").lower()
 | A2 | "draft/validação Instagram" backend scope is satisfied by backend/schema/service/API tests; UI counter/warning behavior remains Phase 30 concern unless a critical already-testable gap is found. | HARD-01 gap analysis | Medium - planner may need one small backend contract test if a validation rule is only UI-enforced. |
 | A3 | Adding IG publish budget env vars to `backend/.env.example` is acceptable doc/config alignment (no behavior change) if they are already in config. | HARD-02 gaps | Low - env example is canonical documentation; verify with config semantics before editing. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Are IG publish HTTP/poll/budget env vars intentionally omitted from `.env.example`?**
    - What we know: `backend/app/core/config.py` defines `IG_PUBLISH_HTTP_TIMEOUT_SECONDS`, `IG_STATUS_POLL_MAX_ATTEMPTS`, `IG_STATUS_POLL_DELAY_SECONDS`, `IG_PUBLISH_MAX_ATTEMPT_SECONDS` with validation. [VERIFIED: config.py]
    - What's unclear: `.env.example` currently does not list them. [VERIFIED: backend/.env.example]
-   - Recommendation: HARD-02 should document them; planner should include a small, behavior-preserving `.env.example` alignment task if needed (D-11 requires canonical env alignment).
+   - RESOLVED: Treat as documentation/config-alignment gap, not intentional omission. HARD-02 must document these vars canonically (purpose, required/optional, format, safe default/behavior, security notes) and align `backend/.env.example` in a behavior-preserving way per D-11. No secret values.
 
 2. **What exact FB "full cycle" tests count as gate?**
    - What we know: D-02/D-16 require full cycle and explicit gate block. Existing tests cover pieces (publisher classification, pipeline retry/idempotency/ambiguous recovery, admin social publish/worker/status/retry). [VERIFIED: tests listed in codebase]
    - What's unclear: No single named gate selection exists yet.
-   - Recommendation: Planner should create an explicit gate list (test IDs/files) in plan and mirror it in 32-VERIFICATION; prefer extending `test_facebook_publisher.py`, `test_social_publish_pipeline.py`, and relevant admin/social tests.
+   - RESOLVED: Plans must name an explicit FB Regression Gate test set/command and mirror it in `32-VERIFICATION.md`. Gate covers full cycle FB via existing pytest files extended as needed: draft/generation and approval/site-first/admin dispatch (`test_admin_social_publish.py`, `test_social_publisher.py` where applicable), async publish/pipeline/worker (`test_facebook_publisher.py`, `test_social_publish_pipeline.py`, `test_social_worker_claim.py`, `test_social_publisher.py`), status/logs seguros (`test_admin_social_status_api.py`, `test_admin_social_retry_api.py`), retry/idempotency (`test_social_retry_policy.py`, `test_social_idempotency.py`, `test_admin_social_retry_api.py`), reconnect/safe error (`test_facebook_publisher.py`, `test_social_publish_pipeline.py`). Any file listed must be justified by actual FB coverage; do not claim FB draft coverage from IG-only test files.
 
 3. **Is there any backend enforcement gap for IG hashtag >30 / CTA "link na bio"?**
    - What we know: D-06 includes validations/rules applicable to draft/validation IG; Phase 30 D-09 framed >30 hashtags as warning and link-in-bio orientation in UI. [VERIFIED: 32-CONTEXT, 30-CONTEXT]
    - What's unclear: backend may not enforce >30 as hard rule (likely warning-only UI concern).
-   - Recommendation: Research/planner should treat as "verify and document" - if backend rule is not by design, HARD-01 should cover 2200/media/normalization/safe errors and explicitly justify >30 warning as UI contract outside HARD-01 backend scope.
+   - RESOLVED: HARD-01 backend scope covers backend/schemas/services/contracts and safe errors (2200 cap, normalization, media/URL validation, safe error mapping, no secrets). `>30 hashtags` is a Phase 30 D-09 UI warning contract, not a backend hard-block rule unless code evidence shows otherwise; plans/verification must explicitly record this boundary (automated backend tests for enforced rules + explicit justified gap/note for UI-only >30 warning). "Link na bio" CTA is copy/orientation in template/UI, not a clickable backend validation rule; plans should not invent backend enforcement.
 
 ## Environment Availability
 
