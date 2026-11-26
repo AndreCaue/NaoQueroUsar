@@ -5,7 +5,7 @@
 **Latest shipped milestone:** v1.4 Polimento UX e Admin — **shipped 2026-11-23** (audit `tech_debt`, 6/6 requirements satisfied, 3/3 phases, 4/4 E2E flows, no critical blockers; tech debt accepted).
 **Archives:** `.planning/milestones/v1.4-ROADMAP.md`, `.planning/milestones/v1.4-REQUIREMENTS.md`, `.planning/milestones/v1.4-MILESTONE-AUDIT.md`
 
-**v1.5 in progress:** Phases 29-31 complete (Meta/IG readiness, Instagram review experience, independent publish pipeline). Phase 31 verified passed (5/5, PUBL-01..05). Next: Phase 32 (Hardening, Regression & Operations).
+**v1.5 in progress:** Phases 29-32 executed. Phase 32 (Hardening, Regression & Operations) automated gates passed (HARD-01/HARD-02); status `human_needed` for 4 live Meta/App Review handoff items recorded in `32-HUMAN-UAT.md`. Next: human verification/approval, then milestone audit/completion.
 
 **Previous milestones:**
 
@@ -93,6 +93,8 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - ✓ Status/auditoria por plataforma com IDs/permalink/timestamps/erros seguros, sem tokens — Validated in Phase 31 (PUBL-03)
 - ✓ Ambiguidade/retry sem duplicação cega; reconciliação antes de nova tentativa automática — Validated in Phase 31 (PUBL-04)
 - ✓ Rate limit/limite diário Instagram tratados com segurança, estado acionável, sem retry storm — Validated in Phase 31 (PUBL-05)
+- ✓ Hardening automatizado Instagram/Facebook: cenários HARD-01 cobertos por pytest rastreável (draft/validação IG, idempotência, retry, ambiguidade, rate limit, mapeamento de erros, FB regression gate) — Validated in Phase 32 (HARD-01; automated gate green, live Meta handoff pending)
+- ✓ Documentação operacional Meta/Instagram/Facebook: env vars canônicas, checklist handoff Meta, expiração/reconexão/rotação, troubleshooting IG acionável — Validated in Phase 32 (HARD-02; doc/env/test evidence, live handoff pending)
 
 ### Active
 
@@ -171,4 +173,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-11-26 after Phase 31 execution (Independent Publish Pipeline) — verification passed 5/5 (PUBL-01..05), phase complete_
+_Last updated: 2026-11-26 after Phase 32 execution (Hardening, Regression & Operations) — automated verification 9/9, status human_needed (4 live Meta/App Review handoff items in 32-HUMAN-UAT.md)_
