@@ -109,3 +109,34 @@ updated: 2026-11-26
 ### User Decision
 
 - Selected: **"Mark UI gaps manual-only (Recommended)"** at audit gate.
+
+## Validation Audit 2026-11-26 (fix-all, gsd-nyquist-auditor)
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 4 |
+| Resolved | 0 (new automated tests) |
+| Escalated | 4 |
+
+### Findings
+
+- **REVW-01 (PARTIAL, manual-only):** Backend IG draft/status/provider isolation and readiness contracts remain green in `backend/tests/test_admin_instagram_social_posts.py`. UI gap remains: "Post para Instagram" below Facebook, independent toggle/status rendering, readiness-not-ready visible+disabled with `/admin/integracoes`.
+- **REVW-02 (PARTIAL, manual-only):** Server-side 2200-char rejection remains green (`test_instagram_caption_over_2200_rejected`); template C generation covered. UI gap remains: live `N/2200 caracteres` counter and UI save-block UX.
+- **REVW-03 (MISSING, manual-only):** UI-only by design: >30 hashtag non-blocking warning and "Links na legenda não são clicáveis. Use \"link na bio\" como CTA." guidance. No frontend UI harness.
+- **REVW-04 (PARTIAL, manual-only):** D-07/IMAG-01 guard covered by backend tests (`test_instagram_enabled_requires_valid_image_on_save`, `test_approve_blocked_by_invalid_instagram_then_allowed_when_disabled`) and Phase 29 media tests (`test_public_ig_media.py`, `test_ig_media_validation.py`). UI gap remains: preview auto-load/loading/error/invalid/valid states, exact prepared image render, IG-only block message.
+
+### Feasibility (frontend automation)
+
+- `frontend/package.json`: `vitest@^2.1.9`, no `@testing-library/react`, no `@testing-library/user-event`, no `jsdom`/`happy-dom`.
+- `frontend/vitest.config.ts`: node-only (`environment: "node"`, `include: ["lib/**/*.test.ts"]`).
+- Existing frontend tests: 6 files / 29 tests passed (lib-only). `EditJobDialog.tsx` is a large `"use client"` component requiring render/interaction harness; adding component test infra is invasive for this audit.
+
+### Evidence
+
+- Backend targeted: `cd backend; pytest -q tests/test_admin_instagram_social_posts.py tests/test_public_ig_media.py tests/test_ig_media_validation.py` → **15 passed in 122.91s**
+- Frontend existing: `cd frontend; npm run -s test` → **6 files passed, 29 tests passed**
+- gsd-nyquist-auditor: `## PARTIAL` — resolved 0/4, escalated 4/4 (no new tests, no implementation changes)
+
+### User Decision
+
+- Selected: **"Fix all gaps (Recommended)"** at audit gate; auditor escalated all UI gaps as manual-only due no feasible frontend UI harness.
