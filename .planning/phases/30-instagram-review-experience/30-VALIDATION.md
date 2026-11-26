@@ -45,6 +45,7 @@ updated: 2026-11-26
 | 30-02-01 | 02 | 2 | REVW-01, REVW-02, REVW-03, REVW-04 | T-30-P2-01, T-30-P2-03 | Frontend API client types/functions use admin Bearer auth and preserve FB contracts while adding IG draft/status/media calls | manual/static | `cd frontend && npm run -s lint -- lib/api.ts` | ✅ | ⚠️ manual-only |
 | 30-02-02 | 02 | 2 | REVW-01, REVW-02, REVW-03, REVW-04 | T-30-P2-01, T-30-P2-02, T-30-P2-04 | IG section renders below FB; readiness fail-closed visible/disabled; toggle/caption/preview states show safe pt-BR errors; IG-only blocking, FB/site unaffected | manual | N/A (no frontend UI harness) | ✅ | ⚠️ manual-only |
 | 30-02-03 | 02 | 2 | REVW-01, REVW-02, REVW-03, REVW-04 | T-30-P2-04 | Hardening pass verifies D-01..D-09 copy/states, in-flight prepare guard, and manual checklist evidence recorded | manual/static | `cd frontend && npm run -s lint -- app/admin/review/EditJobDialog.tsx lib/api.ts` | ✅ | ⚠️ manual-only |
+| 30-03-01 | 03 | 1 | REVW-01 | T-30-P3-01 | Independent Instagram status block renders loading/empty/status_label/detail states using igStatus only; no Facebook coupling | manual/static | `cd frontend && npx eslint app/admin/review/EditJobDialog.tsx` | ✅ | ⚠️ manual-only |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky/manual-only*
 
@@ -140,3 +141,28 @@ updated: 2026-11-26
 ### User Decision
 
 - Selected: **"Fix all gaps (Recommended)"** at audit gate; auditor escalated all UI gaps as manual-only due no feasible frontend UI harness.
+
+## Validation Audit 2026-11-26 (re-audit, mark manual-only)
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 4 |
+| Resolved | 0 (no feasible frontend UI automation) |
+| Escalated | 4 |
+
+### Findings
+
+- **REVW-01 (PARTIAL, manual-only):** Backend provider-isolated IG draft/status and approve guards covered by `backend/tests/test_admin_instagram_social_posts.py`. UI section below Facebook, independent toggle/status, readiness disabled-visible state with `/admin/integracoes` CTA, and 30-03 independent IG status rendering remain manual-only (no component harness).
+- **REVW-02 (PARTIAL, manual-only):** Server-side 2200-char rejection and template C generation covered. Live `N/2200 caracteres` counter and UI save-block UX remain manual-only.
+- **REVW-03 (MISSING, manual-only):** >30 hashtag non-blocking warning and "Links na legenda não são clicáveis. Use \"link na bio\" como CTA." guidance are UI-only; no frontend component harness.
+- **REVW-04 (PARTIAL, manual-only):** D-07/IMAG-01 backend guards and Phase 29 media validation/preparation tests covered. Auto-prepare/loading/error/invalid/valid preview states and IG-only blocking UX remain manual-only.
+
+### Evidence
+
+- Backend targeted: `cd backend; pytest -q tests/test_admin_instagram_social_posts.py tests/test_public_ig_media.py tests/test_ig_media_validation.py` → **15 passed in 118.74s**
+- Frontend harness check: `frontend/package.json` has `vitest@^2.1.9`; no `@testing-library/react`, `@testing-library/user-event`, or `jsdom`/`happy-dom`. `frontend/vitest.config.ts` is node-only (`include: ["lib/**/*.test.ts"]`).
+- Phase artifacts reviewed: 30-01/02/03 PLAN+SUMMARY, 30-VERIFICATION.md, 30-VALIDATION.md. 30-03 added IG status rendering (lint/manual only); added 30-03-01 to Per-Task Verification Map as manual-only.
+
+### User Decision
+
+- Selected: **"Skip — mark manual-only (Recommended)"** at audit gate. No new tests generated; VALIDATION.md updated with 30-03 map row and audit trail.
