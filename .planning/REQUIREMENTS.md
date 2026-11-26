@@ -21,10 +21,10 @@ Requirements for milestone v1.5: Integração Instagram na Revisão. Each maps t
 
 ### Review UI Instagram
 
-- [ ] **REVW-01**: Diálogo de revisão exibe seção Instagram ao lado do Facebook com toggle por vaga e status independente por plataforma.
-- [ ] **REVW-02**: Admin edita legenda Instagram pré-preenchida a partir dos dados da vaga; UI mostra contador ao vivo `N/2200` e bloqueia legenda acima do limite.
-- [ ] **REVW-03**: UI da legenda Instagram avisa quando há >30 hashtags e orienta que links na legenda não são clicáveis, usando CTA tipo “link na bio” (URL não é CTA clicável principal).
-- [ ] **REVW-04**: Admin visualiza preview da imagem exata pretendida para publicação no Instagram antes de aprovar/publicar.
+- [x] **REVW-01**: Diálogo de revisão exibe seção Instagram ao lado do Facebook com toggle por vaga e status independente por plataforma.
+- [x] **REVW-02**: Admin edita legenda Instagram pré-preenchida a partir dos dados da vaga; UI mostra contador ao vivo `N/2200` e bloqueia legenda acima do limite.
+- [x] **REVW-03**: UI da legenda Instagram avisa quando há >30 hashtags e orienta que links na legenda não são clicáveis, usando CTA tipo “link na bio” (URL não é CTA clicável principal).
+- [x] **REVW-04**: Admin visualiza preview da imagem exata pretendida para publicação no Instagram antes de aprovar/publicar.
 
 ### Publish / Segurança Operacional
 
@@ -76,10 +76,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMAG-01 | Phase 29, Phase 30, Phase 31 | Complete |
 | IMAG-02 | Phase 29 | Complete |
 | IMAG-03 | Phase 29 | Complete |
-| REVW-01 | Phase 30 | Pending |
-| REVW-02 | Phase 30 | Pending |
-| REVW-03 | Phase 30 | Pending |
-| REVW-04 | Phase 30 | Pending |
+| REVW-01 | Phase 33 | Complete |
+| REVW-02 | Phase 30 | Complete |
+| REVW-03 | Phase 30 | Complete |
+| REVW-04 | Phase 30 | Complete |
 | PUBL-01 | Phase 31 | Complete |
 | PUBL-02 | Phase 31 | Complete |
 | PUBL-03 | Phase 31 | Complete |
@@ -95,4 +95,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-11-23*
-*Last updated: 2026-11-23 after v1.5 roadmap creation (phases 29-32)*
+*Last updated: 2026-11-26 after v1.5 audit gap closure planning (Phase 33, REVW-01..04 reconciled)*

@@ -37,9 +37,10 @@
 **Milestone Goal:** Permitir publicar cada vaga aprovada também no Instagram, com legenda configurada na etapa de revisão, reaproveitando a base Meta/Facebook existente e mantendo as publicações independentes.
 
 - [x] **Phase 29: Meta/IG Readiness & Media Foundation** - Prontidão Meta/Instagram e base de imagem pública segura para publicação (3/3 plans) (completed 2026-11-23)
-- [x] **Phase 30: Instagram Review Experience** - Seção Instagram na revisão com controles, validações e preview (completed 2026-11-25)
-- [x] **Phase 31: Independent Publish Pipeline** - Publicação assíncrona Instagram desacoplada do Facebook com segurança operacional (completed 2026-11-25)
-- [x] **Phase 32: Hardening, Regression & Operations** - Cobertura automatizada, regressão Facebook e documentação operacional (completed 2026-11-26)
+- [x] **Phase 30: Instagram Review Experience** - Seção Instagram na revisão com controles, validações e preview (completed 2026-11-25)
+- [x] **Phase 31: Independent Publish Pipeline** - Publicação assíncrona Instagram desacoplada do Facebook com segurança operacional (completed 2026-11-25)
+- [x] **Phase 32: Hardening, Regression & Operations** - Cobertura automatizada, regressão Facebook e documentação operacional (completed 2026-11-26)
+- [ ] **Phase 33: v1.5 Verification & Traceability Reconciliation** - Re-verificação formal Phase 30 e reconciliação de rastreabilidade/artefatos do milestone v1.5
 
 ## Phase Details
 
@@ -98,6 +99,18 @@
 **Plans**: TBD
 **Research flags / decisions**: Manual Meta verification/App Review steps are expected handoffs, not fabricated evidence. Include Facebook regression characterization as a release gate.
 
+### Phase 33: v1.5 Verification & Traceability Reconciliation
+**Goal**: Fechar o gap formal de auditoria v1.5 reconciliando verificação da Phase 30 e rastreabilidade/artefatos stale do milestone.
+**Depends on**: Phase 32
+**Requirements**: REVW-01
+**Gap Closure:** Closes gaps from v1.5 audit
+**Success Criteria** (what must be TRUE):
+  1. `30-VERIFICATION.md` é re-verificado/reconciliado após o gap closure `30-03`, refletindo o estado real de REVW-01 (status IG independente renderizado em `EditJobDialog.tsx`) sem contradizer evidência de código.
+  2. `REQUIREMENTS.md` reflete o fechamento formal: REVW-01..04 checkboxes/traceability atualizados para estado correto, coverage/count coerentes, sem requisitos v1.5 formalmente pendentes por staleness.
+  3. Artefatos stale identificados na auditoria são reconciliados: `32-VERIFICATION.md` alinhado com `32-HUMAN-UAT.md` (4/4 pass), e `31-VALIDATION.md` atualizado ou anotado para remover inconsistência interna.
+**Plans**: TBD
+**Research flags / decisions**: Não reimplementar funcionalidade já presente; foco em verificação, evidência e bookkeeping. Nyquist cleanup (`/gsd-validate-phase`) permanece opcional/deferido salvo solicitação explícita.
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -116,3 +129,4 @@
 | 30. Instagram Review Experience | v1.5 | 2/2 | Complete   | 2026-11-25 |
 | 31. Independent Publish Pipeline | v1.5 | 2/2 | Complete    | 2026-11-26 |
 | 32. Hardening, Regression & Operations | v1.5 | 2/2 | Complete    | 2026-11-26 |
+| 33. v1.5 Verification & Traceability Reconciliation | v1.5 | 0/TBD | Not started | - |
