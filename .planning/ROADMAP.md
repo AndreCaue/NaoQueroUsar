@@ -39,7 +39,7 @@
 - [x] **Phase 29: Meta/IG Readiness & Media Foundation** - Prontidão Meta/Instagram e base de imagem pública segura para publicação (3/3 plans) (completed 2026-11-23)
 - [x] **Phase 30: Instagram Review Experience** - Seção Instagram na revisão com controles, validações e preview (completed 2026-11-25)
 - [x] **Phase 31: Independent Publish Pipeline** - Publicação assíncrona Instagram desacoplada do Facebook com segurança operacional (completed 2026-11-25)
-- [ ] **Phase 32: Hardening, Regression & Operations** - Cobertura automatizada, regressão Facebook e documentação operacional
+- [x] **Phase 32: Hardening, Regression & Operations** - Cobertura automatizada, regressão Facebook e documentação operacional (completed 2026-11-26)
 
 ## Phase Details
 
@@ -115,4 +115,4 @@
 | 29. Meta/IG Readiness & Media Foundation | v1.5 | 3/3 | Complete    | 2026-11-23 |
 | 30. Instagram Review Experience | v1.5 | 2/2 | Complete   | 2026-11-25 |
 | 31. Independent Publish Pipeline | v1.5 | 2/2 | Complete    | 2026-11-26 |
-| 32. Hardening, Regression & Operations | v1.5 | 0/TBD | Not started | - |
+| 32. Hardening, Regression & Operations | v1.5 | 2/2 | Complete   | 2026-11-26 |
