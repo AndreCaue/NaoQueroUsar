@@ -5,7 +5,7 @@
 **Latest shipped milestone:** v1.4 Polimento UX e Admin — **shipped 2026-11-23** (audit `tech_debt`, 6/6 requirements satisfied, 3/3 phases, 4/4 E2E flows, no critical blockers; tech debt accepted).
 **Archives:** `.planning/milestones/v1.4-ROADMAP.md`, `.planning/milestones/v1.4-REQUIREMENTS.md`, `.planning/milestones/v1.4-MILESTONE-AUDIT.md`
 
-**v1.5 in progress:** Phase 29 (Meta/IG Readiness & Media Foundation) complete — 3/3 plans, automated verification 5/5, human UAT pending (3 itens). Next: Phase 30 (Instagram Review Experience).
+**v1.5 in progress:** Phases 29-31 complete (Meta/IG readiness, Instagram review experience, independent publish pipeline). Phase 31 verified passed (5/5, PUBL-01..05). Next: Phase 32 (Hardening, Regression & Operations).
 
 **Previous milestones:**
 
@@ -88,6 +88,11 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - ✓ Contrato de validação/preparação de imagem Instagram com feedback pt-BR, bloqueio aplicável só ao Instagram (enforcement review/publish em 30/31) — Validated in Phase 29 (IMAG-01)
 - ✓ Card fallback determinístico 1080x1350 JPEG compatível com Instagram, proveniência/versionamento — Validated in Phase 29 (IMAG-02)
 - ✓ Imagem por URL pública HTTPS estável/acessível pela Meta, com validação/preview/proveniência — Validated in Phase 29 (IMAG-03)
+- ✓ Publicação Instagram assíncrona e independente do Facebook (falha isolada por plataforma) — Validated in Phase 31 (PUBL-01)
+- ✓ Publicação Instagram via Graph API 2 passos (container/status/publish) com timeout/erro seguro — Validated in Phase 31 (PUBL-02)
+- ✓ Status/auditoria por plataforma com IDs/permalink/timestamps/erros seguros, sem tokens — Validated in Phase 31 (PUBL-03)
+- ✓ Ambiguidade/retry sem duplicação cega; reconciliação antes de nova tentativa automática — Validated in Phase 31 (PUBL-04)
+- ✓ Rate limit/limite diário Instagram tratados com segurança, estado acionável, sem retry storm — Validated in Phase 31 (PUBL-05)
 
 ### Active
 
@@ -166,4 +171,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-11-23 after Phase 29 execution (Meta/IG Readiness & Media Foundation) — automated verification passed, 3 human UAT items pending_
+_Last updated: 2026-11-26 after Phase 31 execution (Independent Publish Pipeline) — verification passed 5/5 (PUBL-01..05), phase complete_
