@@ -36,8 +36,8 @@ Requirements for milestone v1.5: Integração Instagram na Revisão. Each maps t
 
 ### Qualidade / Hardening
 
-- [ ] **HARD-01**: Testes automatizados cobrem draft/validação Instagram, publisher/pipeline (idempotência, retry, ambiguidade, rate limit, mapeamento de erros) e caracterização/regressão do fluxo Facebook.
-- [ ] **HARD-02**: Documentação operacional inclui env vars, checklist manual Meta, orientação de expiração/reconexão de token e troubleshooting de estados de publicação Instagram.
+- [x] **HARD-01**: Testes automatizados cobrem draft/validação Instagram, publisher/pipeline (idempotência, retry, ambiguidade, rate limit, mapeamento de erros) e caracterização/regressão do fluxo Facebook.
+- [x] **HARD-02**: Documentação operacional inclui env vars, checklist manual Meta, orientação de expiração/reconexão de token e troubleshooting de estados de publicação Instagram.
 
 ## v2 Requirements
 
@@ -85,8 +85,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PUBL-03 | Phase 31 | Complete |
 | PUBL-04 | Phase 31 | Complete |
 | PUBL-05 | Phase 31 | Complete |
-| HARD-01 | Phase 32 | Pending |
-| HARD-02 | Phase 32 | Pending |
+| HARD-01 | Phase 32 | Complete |
+| HARD-02 | Phase 32 | Complete |
 
 **Coverage:**
 - v1.5 requirements: 17 total
