@@ -95,6 +95,8 @@ async def test_facebook_publisher_classifies_transient_and_ambiguous_errors(monk
     assert result.ok is False
     assert result.category == PublishFailureCategory.transient
     assert "automática" in (result.error_message or "").lower() or "tempor" in (result.error_message or "").lower()
+    assert "access_token" not in (result.error_message or "").lower()
+    assert "page_access_token" not in (result.error_message or "").lower()
 
     class RateLimitResponse:
         status_code = 429
@@ -119,6 +121,8 @@ async def test_facebook_publisher_classifies_transient_and_ambiguous_errors(monk
     result = await publisher.publish(payload)
     assert result.ok is False
     assert result.category == PublishFailureCategory.transient
+    assert "access_token" not in (result.error_message or "").lower()
+    assert "page_access_token" not in (result.error_message or "").lower()
 
     class TimeoutClient:
         def __init__(self, *args, **kwargs):
@@ -138,6 +142,8 @@ async def test_facebook_publisher_classifies_transient_and_ambiguous_errors(monk
     assert result.ok is False
     assert result.category == PublishFailureCategory.ambiguous
     assert "duplic" in (result.error_message or "").lower() or "confirmar" in (result.error_message or "").lower()
+    assert "access_token" not in (result.error_message or "").lower()
+    assert "page_access_token" not in (result.error_message or "").lower()
 
     class PermanentResponse:
         status_code = 401
@@ -163,3 +169,60 @@ async def test_facebook_publisher_classifies_transient_and_ambiguous_errors(monk
     assert result.ok is False
     assert result.category == PublishFailureCategory.permanent
     assert "não foi possível publicar" in (result.error_message or "").lower() or "revise" in (result.error_message or "").lower()
+    assert "access_token" not in (result.error_message or "").lower()
+    assert "page_access_token" not in (result.error_message or "").lower()
+
+
+@pytest.mark.asyncio
+async def test_facebook_publisher_error_messages_never_leak_tokens(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.social.facebook.get_settings",
+        lambda: type("S", (), {"META_GRAPH_VERSION": "v21.0"})(),
+    )
+    publisher = FacebookPublisher()
+    payload = SocialPostPayload(
+        job_id="job-1",
+        provider="facebook",
+        message="msg",
+        link=None,
+        page_id="p",
+        page_access_token="super-secret-page-token",
+    )
+
+    scenarios = [
+        (500, {"error": {"message": "server error", "code": 2}}, PublishFailureCategory.transient),
+        (429, {"error": {"message": "rate limit"}}, PublishFailureCategory.transient),
+        (400, {"error": {"message": "bad request", "code": 100}}, PublishFailureCategory.permanent),
+    ]
+
+    for status_code, body, expected_category in scenarios:
+        class FakeResponse:
+            def __init__(self, status=status_code, payload=body):
+                self.status_code = status
+                self._payload = payload
+
+            def json(self):
+                return self._payload
+
+        class FakeClient:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+
+            async def post(self, url, data=None):
+                return FakeResponse()
+
+        monkeypatch.setattr(httpx, "AsyncClient", FakeClient)
+        result = await publisher.publish(payload)
+
+        assert result.ok is False
+        assert result.category == expected_category
+        assert "access_token" not in (result.error_message or "").lower()
+        assert "page_access_token" not in (result.error_message or "").lower()
+        assert "token=" not in (result.error_message or "").lower()
+        assert "super-secret-page-token" not in (result.error_message or "")
