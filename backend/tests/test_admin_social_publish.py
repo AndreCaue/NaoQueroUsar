@@ -440,6 +440,15 @@ async def test_approve_dispatches_fb_and_ig_independently_publ01(
 
     monkeypatch.setattr(BackgroundTasks, "add_task", spy_add_task)
 
+    async def fake_prepare_ok(session, job_id, settings):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(
+            validation=SimpleNamespace(valid=True, code=None, message="ok")
+        )
+
+    monkeypatch.setattr("app.api.v1.admin.prepare_instagram_media", fake_prepare_ok)
+
     resp = await client.patch(
         f"/api/v1/admin/jobs/{job.id}/approve",
         headers={"Authorization": f"Bearer {token}"},
@@ -479,6 +488,15 @@ async def test_approve_ig_dispatch_failure_does_not_block_fb_or_site(
         return original_add_task(self, func, *args, **kwargs)
 
     monkeypatch.setattr(BackgroundTasks, "add_task", flaky_add_task)
+
+    async def fake_prepare_ok(session, job_id, settings):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(
+            validation=SimpleNamespace(valid=True, code=None, message="ok")
+        )
+
+    monkeypatch.setattr("app.api.v1.admin.prepare_instagram_media", fake_prepare_ok)
 
     resp = await client.patch(
         f"/api/v1/admin/jobs/{job.id}/approve",
