@@ -28,11 +28,11 @@ Requirements for milestone v1.5: Integração Instagram na Revisão. Each maps t
 
 ### Publish / Segurança Operacional
 
-- [ ] **PUBL-01**: Aprovação/publicação processa Instagram e Facebook de forma independente; falha em uma plataforma não bloqueia nem corrompe a outra.
-- [ ] **PUBL-02**: Backend implementa publicação Instagram Graph API (Content Publishing) em 2 passos assíncronos (criar container, checar status quando necessário, publicar) com versão Graph configurável e tratamento seguro de timeout.
-- [ ] **PUBL-03**: Pipeline persiste legenda usada, IDs de container/post, permalink quando disponível, status, erro seguro, tentativas e timestamps; logs não expõem tokens/segredos.
-- [ ] **PUBL-04**: Retry/backoff é idempotente e seguro contra ambiguidade; resultado ambíguo/timeout não dispara auto-retry cego que possa duplicar post.
-- [ ] **PUBL-05**: Rate limit e limite diário de publicação Instagram são tratados com segurança (consulta/runtime authority como `content_publishing_limit` quando aplicável, classificação segura de 2207042/rate limit, sem retry storm) com status acionável ao admin.
+- [x] **PUBL-01**: Aprovação/publicação processa Instagram e Facebook de forma independente; falha em uma plataforma não bloqueia nem corrompe a outra.
+- [x] **PUBL-02**: Backend implementa publicação Instagram Graph API (Content Publishing) em 2 passos assíncronos (criar container, checar status quando necessário, publicar) com versão Graph configurável e tratamento seguro de timeout.
+- [x] **PUBL-03**: Pipeline persiste legenda usada, IDs de container/post, permalink quando disponível, status, erro seguro, tentativas e timestamps; logs não expõem tokens/segredos.
+- [x] **PUBL-04**: Retry/backoff é idempotente e seguro contra ambiguidade; resultado ambíguo/timeout não dispara auto-retry cego que possa duplicar post.
+- [x] **PUBL-05**: Rate limit e limite diário de publicação Instagram são tratados com segurança (consulta/runtime authority como `content_publishing_limit` quando aplicável, classificação segura de 2207042/rate limit, sem retry storm) com status acionável ao admin.
 
 ### Qualidade / Hardening
 
@@ -80,11 +80,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REVW-02 | Phase 30 | Pending |
 | REVW-03 | Phase 30 | Pending |
 | REVW-04 | Phase 30 | Pending |
-| PUBL-01 | Phase 31 | Pending |
-| PUBL-02 | Phase 31 | Pending |
-| PUBL-03 | Phase 31 | Pending |
-| PUBL-04 | Phase 31 | Pending |
-| PUBL-05 | Phase 31 | Pending |
+| PUBL-01 | Phase 31 | Complete |
+| PUBL-02 | Phase 31 | Complete |
+| PUBL-03 | Phase 31 | Complete |
+| PUBL-04 | Phase 31 | Complete |
+| PUBL-05 | Phase 31 | Complete |
 | HARD-01 | Phase 32 | Pending |
 | HARD-02 | Phase 32 | Pending |
 
