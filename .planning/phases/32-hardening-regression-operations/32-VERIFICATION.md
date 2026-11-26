@@ -1,17 +1,117 @@
 ---
 phase: 32-hardening-regression-operations
-verified: 2026-11-26T12:39:54Z
+verified: 2026-11-26T13:30:00Z
 status: human_needed
-score: 7/7 automated scenario checks passed; 4 manual handoff items pending
+score: 9/9 must-haves verified
 requirements: [HARD-01, HARD-02]
+human_verification:
+  - test: "Conectar/reconectar Meta+IG e validar prontidão live"
+    expected: "Status de integração/prontidão IG coerente em /admin/integracoes, sem exposição de segredos; Facebook permanece utilizável."
+    why_human: "Requer app Meta, Página FB, conta IG Business/Creator vinculada, papéis/tarefas e credenciais autorizadas."
+  - test: "Smoke publish IG real 2-passos em ambiente autorizado"
+    expected: "Publicação IG conclui com status/IDs/permalink sanitizados e logs seguros; sem duplicação."
+    why_human: "Requer integração live Meta/IG, mídia pública HTTPS acessível pela Meta e execução real autorizada."
+  - test: "Validar reconciliação ambígua/rate limit real"
+    expected: "Estados ambíguos/rate limit ficam acionáveis; sem retry storm; reconciliação antes de republicar quando aplicável."
+    why_human: "Depende de condições reais/plataforma Meta ou incidente controlado autorizado."
+  - test: "App Review/roles/tasks/Advanced Access"
+    expected: "Permissões, papéis e status de review coerentes com operação IG."
+    why_human: "Processo externo no Meta App Dashboard com responsabilidade legal/técnica."
 ---
 
-# Phase 32: Hardening, Regression & Operations — Verification
+# Phase 32: Hardening, Regression & Operations Verification Report
 
-**Phase Goal:** Hardening de regressão e operação: suíte automatizada para cenários críticos Instagram/Facebook e documentação operacional Meta/Instagram.
-**Verified:** 2026-11-26T12:39:54Z
+**Phase Goal:** Integração Instagram é verificável, observável e segura de operar sem regressão no fluxo Facebook.
+**Verified:** 2026-11-26T13:30:00Z
 **Status:** human_needed
-**Reason:** Cobertura automatizada HARD-01/HARD-02 passou; itens de validação Meta/live permanecem como handoff manual explícito e não foram executados nesta sessão.
+**Re-verification:** No — existing 32-VERIFICATION.md validated and updated with verifier-format evidence
+
+## Goal Achievement
+
+### Observable Truths
+
+| # | Truth | Status | Evidence |
+|---|-------|--------|----------|
+| 1 | Cenários HARD-01 nomeados (draft/validação IG, idempotência, retry, ambiguidade, rate limit, mapeamento de erros, caracterização/regressão FB) estão mapeados para testes automatizados rastreáveis com comando e resultado. | ✓ VERIFIED | HARD-01 Scenario Matrix abaixo; testes existem em `backend/tests/test_social_post_generation.py`, `test_facebook_publisher.py`, `test_instagram_publisher.py`, `test_social_publish_pipeline.py`, `test_ig_media_validation.py`, `test_social_retry_policy.py`, `test_social_idempotency.py`, `test_admin_social_publish.py`, `test_admin_social_retry_api.py`, `test_admin_social_status_api.py`, `test_admin_instagram_social_posts.py`, `test_social_worker_claim.py`, `test_social_publisher.py`. Spot-check: 10 testes passaram (`test_docs_meta_instagram.py`, `test_social_post_generation.py`, `test_facebook_publisher.py`). Gate completo registrado em 32-01-SUMMARY: 73 passed, 1 skipped, 3 warnings. |
+| 2 | Facebook Regression Gate cobre ciclo completo FB sem regressão causada por IG. | ✓ VERIFIED | Bloco "Facebook Regression Gate" abaixo com mapeamento por fluxo (draft/geração/contrato FB, aprovação/site-first, publish assíncrono/pipeline, status/logs seguros, retry/idempotência, reconexão/erro seguro). Comando gate registrado como PASS no 32-01-SUMMARY. `test_social_post_generation.py` é explicitamente IG-only. |
+| 3 | Testes HARD-01 são backend-first pytest, comportamentais, sem segredos/tokens. | ✓ VERIFIED | Arquivos são pytest em `backend/tests`. `test_facebook_publisher.py` contém asserções `"access_token" not in ...`, `"page_access_token" not in ...`, `"token="` não necessário por presença de checks de token; fixtures usam valores sintéticos. Sem testes frontend adicionados. |
+| 4 | Operador encontra em fonte única operacional env vars, checklist manual Meta, expiração/reconexão/rotação e troubleshooting de estados IG. | ✓ VERIFIED | `docs/META-INTEGRATION-TESTING.md` contém seções 6 (env vars canônicas/segurança), 7 (Troubleshooting publicação Instagram), 5.6/8 (expiração/reconexão/rotação/handoff), checklist manual com "Não executado / não evidenciado nesta sessão". |
+| 5 | Evidência de Phase 32 separa claramente cobertura automatizada de handoff manual Meta, sem afirmar execução manual não realizada. | ✓ VERIFIED | `32-VERIFICATION.md` tem `Manual Meta Handoff` com "Não executado / não evidenciado nesta sessão" em todos os itens; status `human_needed`. |
+| 6 | Facebook Regression Gate aparece como bloco explícito na verificação com arquivos, comando e resultado. | ✓ VERIFIED | Seção "Facebook Regression Gate" presente com tabela Fluxo/Cobertura/Comando/Resultado/Conclusão. |
+| 7 | `.env.example` alinhado aos budgets IG publish existentes em config, sem segredos. | ✓ VERIFIED | `backend/.env.example` contém `IG_PUBLISH_HTTP_TIMEOUT_SECONDS=20.0`, `IG_STATUS_POLL_MAX_ATTEMPTS=5`, `IG_STATUS_POLL_DELAY_SECONDS=2.0`, `IG_PUBLISH_MAX_ATTEMPT_SECONDS=45.0`; `backend/app/core/config.py` valida os mesmos campos. |
+| 8 | Requirement IDs dos PLAN frontmatter estão contabilizados em REQUIREMENTS.md. | ✓ VERIFIED | 32-01 declara `HARD-01`; 32-02 declara `HARD-02`. REQUIREMENTS.md mapeia HARD-01/HARD-02 para Phase 32 (linhas 39-40, 88-89). Ambos contabilizados; status em REQUIREMENTS.md ainda marcado Pending (atualização de checklist global fora do escopo desta verificação). |
+| 9 | Limite HARD-01 draft/validação IG: regras backend-enforced cobertas por pytest; `>30 hashtags` e "link na bio" CTA permanecem UI-only Phase 30 D-09. | ✓ VERIFIED | `test_social_post_generation.py` cobre template determinístico, 2200 cap, link na bio, hashtags obrigatórias, sem vazamento de contato/empresa confidencial. `32-VERIFICATION.md` registra fronteira explícita sem fabricar hard-block backend para `>30 hashtags`. |
+
+**Score:** 9/9 truths verified
+
+### Required Artifacts
+
+| Artifact | Expected | Status | Details |
+|----------|----------|--------|---------|
+| `backend/tests/test_facebook_publisher.py` | FB publisher contract/regression + safe error mapping | ✓ VERIFIED | Contém `PublishFailureCategory.transient/ambiguous/permanent` e asserções de ausência de token em `error_message`. |
+| `backend/tests/test_social_post_generation.py` | IG draft generation/normalization backend contract | ✓ VERIFIED | Contém `generate_instagram_draft_for_job`, `generate_instagram_template`, "link na bio", "#vagas". |
+| `backend/tests/test_social_publish_pipeline.py` | Pipeline HARD-01/FB regression behavioral contracts | ✓ VERIFIED | Referenciado no gate; arquivo existente e incluído no comando HARD-01/FB. |
+| `docs/META-INTEGRATION-TESTING.md` | Fonte operacional única Meta/FB/IG | ✓ VERIFIED | Contém env canônicas, `ig_rate_limit_blocked`, `content_publishing_limit`, troubleshooting IG Phase 31, handoff "Não executado / não evidenciado nesta sessão". |
+| `backend/.env.example` | Alinhamento env vars IG publish budgets | ✓ VERIFIED | Contém os 4 budgets IG publish Phase 31. |
+| `backend/tests/test_docs_meta_instagram.py` | Rastreabilidade HARD-02 documental | ✓ VERIFIED | Preserva contrato Phase 29 e adiciona checks HARD-02; passou em spot-check. |
+| `.planning/phases/32-hardening-regression-operations/32-VERIFICATION.md` | Matriz HARD-01, FB gate, handoff Meta | ✓ VERIFIED | Este arquivo; contém matrizes, gate, handoff explícito. |
+
+### Key Link Verification
+
+| From | To | Via | Status | Details |
+|------|----|-----|--------|---------|
+| `backend/tests/test_facebook_publisher.py` | `backend/app/services/social/facebook.py` | `FacebookPublisher` publish/error mapping | ✓ WIRED | Testes importam/instanciam publisher e validam `PublishResult`/categorias. |
+| `backend/tests/test_social_post_generation.py` | `backend/app/services/social/post_generation.py` | `generate_instagram_template`, `generate_instagram_draft_for_job` | ✓ WIRED | Imports diretos confirmados por grep. |
+| `backend/tests/test_social_publish_pipeline.py` | `backend/app/services/social/publish_pipeline.py` | `process_claimed_post` provider-aware outcomes | ✓ WIRED | Arquivo incluído no gate HARD-01/FB; summary/plan mapeiam cenários. |
+| `docs/META-INTEGRATION-TESTING.md` | `backend/.env.example` | alinhamento env vars/budgets canônicos | ✓ WIRED | Ambos contêm `IG_PUBLISH_HTTP_TIMEOUT_SECONDS` e variáveis Meta/social canônicas. |
+| `32-VERIFICATION.md` | `docs/META-INTEGRATION-TESTING.md` | referência de handoff/fonte operacional sem duplicar status | ✓ WIRED | Seção HARD-02 e Handoff referenciam o doc. |
+
+### Requirements Coverage
+
+| Requirement | Source Plan | Description | Status | Evidence |
+|-------------|-------------|-------------|--------|----------|
+| HARD-01 | 32-01-PLAN.md | Testes automatizados cobrem draft/validação IG, publisher/pipeline (idempotência, retry, ambiguidade, rate limit, mapeamento de erros) e caracterização/regressão do fluxo Facebook. | ✓ SATISFIED (automated) | Matriz HARD-01, gate FB, testes/commits presentes; 10 testes spot-check PASS; gate completo registrado PASS (73 passed, 1 skipped, 3 warnings). |
+| HARD-02 | 32-02-PLAN.md | Documentação operacional inclui env vars, checklist manual Meta, orientação de expiração/reconexão de token e troubleshooting de estados de publicação Instagram. | ✓ SATISFIED (doc + handoff) | `docs/META-INTEGRATION-TESTING.md` atualizado, `.env.example` alinhado, `test_docs_meta_instagram.py` PASS; execução live Meta permanece handoff explícito. |
+
+**Orphaned requirements for Phase 32:** None. REQUIREMENTS.md maps only HARD-01, HARD-02 to Phase 32.
+
+### Anti-Patterns Found
+
+| File | Line | Pattern | Severity | Impact |
+|------|------|---------|----------|--------|
+| None | - | - | - | Nenhum blocker/warning detectado nos artefatos verificados por spot-check. |
+
+### Human Verification Required
+
+### 1. Conexão OAuth Meta/IG e prontidão live
+
+**Test:** Conectar/reconectar em `/admin/integracoes` com app/página/IG reais autorizados.
+**Expected:** Prontidão IG correta (ready/missing/reconnect) sem quebrar FB; sem exposição de segredos.
+**Why human:** Requer credenciais Meta e contas/papéis reais.
+
+### 2. Smoke publish IG real (2-passos)
+
+**Test:** Aprovar/publicar job com IG habilitado em ambiente autorizado com mídia pública HTTPS.
+**Expected:** Publicação confirmada, IDs/permalink sanitizados, status seguro, sem duplicação.
+**Why human:** Requer Graph API live e infraestrutura pública real.
+
+### 3. Reconciliação ambígua/rate limit real
+
+**Test:** Exercitar cenário controlado autorizado de ambiguidade/rate limit.
+**Expected:** Estado acionável, sem retry storm, reconciliação antes de republicar.
+**Why human:** Comportamento depende de plataforma Meta/condições reais.
+
+### 4. App Review/roles/tasks/Advanced Access
+
+**Test:** Validar papéis/permissões/review no Meta App Dashboard.
+**Expected:** Configuração compatível com operação IG.
+**Why human:** Processo externo administrativo/legal.
+
+### Gaps Summary
+
+Nenhum gap automatizado encontrado. A fase permanece `human_needed` porque a validação live Meta/App Review/IG smoke não foi executada nesta sessão e está corretamente marcada como handoff explícito.
+
+---
 
 ## HARD-01 Scenario Matrix
 
@@ -63,5 +163,11 @@ Referências: `docs/META-INTEGRATION-TESTING.md`, `backend/.env.example`. Não d
 
 | Comando | Resultado | Observação |
 |---|---|---|
-| `cd backend && pytest -q tests/test_docs_meta_instagram.py` | PASS (1 passed, 0.07s) | Executado nesta sessão (Plan 32-02, Task 1). |
-| `cd backend && pytest -q tests/test_facebook_publisher.py tests/test_instagram_publisher.py tests/test_social_publish_pipeline.py tests/test_social_post_generation.py tests/test_ig_media_validation.py tests/test_social_retry_policy.py tests/test_social_idempotency.py tests/test_admin_social_publish.py tests/test_admin_social_retry_api.py tests/test_admin_social_status_api.py tests/test_admin_instagram_social_posts.py tests/test_social_worker_claim.py tests/test_social_publisher.py` | PASS (73 passed, 1 skipped, 3 warnings) | Resultado registrado no `32-01-SUMMARY.md` (Plan 32-01, Task 2, commit `e0e028a`). |
+| `cd backend && python -m pytest -q tests/test_docs_meta_instagram.py tests/test_social_post_generation.py tests/test_facebook_publisher.py` | PASS (10 passed, 0.19s) | Spot-check executado pelo verificador nesta sessão. |
+| `cd backend && pytest -q tests/test_docs_meta_instagram.py` | PASS (1 passed, 0.07s) | Registrado no 32-02-SUMMARY (Plan 32-02, Task 1). |
+| `cd backend && pytest -q tests/test_facebook_publisher.py tests/test_instagram_publisher.py tests/test_social_publish_pipeline.py tests/test_social_post_generation.py tests/test_ig_media_validation.py tests/test_social_retry_policy.py tests/test_social_idempotency.py tests/test_admin_social_publish.py tests/test_admin_social_retry_api.py tests/test_admin_social_status_api.py tests/test_admin_instagram_social_posts.py tests/test_social_worker_claim.py tests/test_social_publisher.py` | PASS (73 passed, 1 skipped, 3 warnings) | Registrado no 32-01-SUMMARY (Plan 32-01, Task 2, commit `e0e028a`). Gate completo não reexecutado nesta verificação por custo; evidência de commit/summary consistente com artefatos presentes. |
+
+---
+
+_Verified: 2026-11-26T13:30:00Z_
+_Verifier: OpenCode (gsd-verifier)_
