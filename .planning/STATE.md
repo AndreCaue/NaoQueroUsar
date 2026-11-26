@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
-status: ready_to_plan
-stopped_at: Phase 31 complete (2/2) — ready to discuss Phase 32
-last_updated: 2026-11-26T00:53:42.829Z
-last_activity: 2026-11-25 -- Phase 31 execution started
+status: planning
+stopped_at: Phase 32 context gathered
+last_updated: "2026-11-26T10:46:50.665Z"
+last_activity: 2026-11-26
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
   completed_plans: 8
-  percent: 50
+  percent: 75
 ---
 
 # Project State
@@ -117,7 +117,7 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 
 ## Session Continuity
 
-Last session: 2026-11-25T23:22:51.905Z
-Stopped at: Phase 31 UI-SPEC approved
-Resume file: .planning/phases/31-independent-publish-pipeline/31-UI-SPEC.md
+Last session: 2026-11-26T10:46:50.637Z
+Stopped at: Phase 32 context gathered
+Resume file: .planning/phases/32-hardening-regression-operations/32-CONTEXT.md
 Next: Re-verify Phase 30 (`/gsd-verify-work 30` or `/gsd-execute-phase 30` verification flow) then proceed to Phase 31 planning
