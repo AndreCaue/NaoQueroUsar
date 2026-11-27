@@ -1,15 +1,25 @@
 ---
 phase: 31
 slug: independent-publish-pipeline
-status: ready
-nyquist_compliant: true
+status: reconciled
+nyquist_compliant: false
 wave_0_complete: false
 created: 2026-11-25
+reconciled_at: 2026-11-26
+reconciled_by: phase-33-audit-reconciliation
+phase_level_evidence: ".planning/phases/31-independent-publish-pipeline/31-VERIFICATION.md (passed, 5/5 must-haves verified, 2026-11-25T00:00:00Z)"
+task_level_nyquist_evidence: "not reconciled / not executed as Nyquist per-task sign-off in this artifact"
 ---
 
 # Phase 31 — Validation Strategy
 
 > Per-phase validation contract for feedback sampling during execution.
+
+## Phase 33 Reconciliation (2026-11-26)
+
+This artifact had internal contradiction (frontmatter reported nyquist compliant as true while `wave_0_complete: false` and tasks were pending). Phase 33 normalized it for audit clarity without fabricating task/Wave 0 execution. Per-task map and Wave 0 remain historical/stale/not Nyquist-executed unless backed by separate evidence. Phase-level implementation evidence exists in `31-VERIFICATION.md` (5/5 passed) and Phase 31 plans/summaries/tests referenced there; that is phase-level evidence, not Nyquist per-task execution.
+
+Phase-level evidence references (reference only, not per-task Nyquist execution claims): `31-VERIFICATION.md` (passed 5/5), `31-01-SUMMARY.md`, `31-02-SUMMARY.md`, and test files named in this artifact (`backend/tests/test_instagram_publisher.py`, `backend/tests/test_social_publish_pipeline.py`, `backend/tests/test_social_publisher.py`, `backend/tests/test_admin_social_publish.py`, `backend/tests/test_admin_instagram_social_posts.py`).
 
 ---
 
@@ -36,6 +46,8 @@ created: 2026-11-25
 
 ## Per-task Verification Map
 
+> Historical/stale task map — statuses not reconciled as Nyquist per-task execution by Phase 33.
+
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 31-01-01 | 01 | 1 | PUBL-01, PUBL-02, PUBL-03, PUBL-04, PUBL-05 | T-31-03, T-31-05 | Schema/contracts expose safe IG reconciliation/audit fields; claim eligibility respects `publish_enabled`; test scaffolds cover ambiguity/rate-limit/reconciliation | unit/contract | `cd backend && pytest -q tests/test_social_publisher.py tests/test_social_publish_pipeline.py tests/test_instagram_publisher.py -k "contract or publish_enabled or ambiguous or rate or reconcile or instagram"` | ❌ W0 | ⬜ pending |
@@ -50,12 +62,14 @@ created: 2026-11-25
 
 ## Wave 0 Requirements
 
+> Historical/stale task map — statuses not reconciled as Nyquist per-task execution by Phase 33.
+
 - [ ] `backend/tests/test_instagram_publisher.py` — covers PUBL-02, PUBL-05, timeout/error mapping, permalink best-effort, reactive runtime-authority classification.
 - [ ] Extend `backend/tests/test_social_publish_pipeline.py` — covers provider dispatch, D-05 publish_enabled claim, IG ambiguity/reconciliation, no retry storm (PUBL-01/PUBL-04/PUBL-05).
 - [ ] Extend `backend/tests/test_admin_social_publish.py` — covers worker breakdown, provider-aware retry/status/list, approve IG dispatch, safe audit logs (PUBL-01/PUBL-03).
 - [ ] Extend `backend/tests/test_admin_instagram_social_posts.py` as needed for PUBL-03 status/audit/reconciliation semantics.
 
-*Wave 0 is covered by Plan 31-01 Task 1 and Plan 31-02 Task 1 test scaffolds/extensions.*
+*Wave 0 is covered by Plan 31-01 Task 1 and Plan 31-02 Task 1 test scaffolds/extensions (historical plan intent; not reconciled as executed Nyquist evidence by Phase 33).*
 
 ---
 
@@ -70,11 +84,11 @@ created: 2026-11-25
 
 ## Validation Sign-Off
 
-- [x] All tasks have `<automated>` verify or Wave 0 dependencies
-- [x] Sampling continuity: no 3 consecutive tasks without automated verify
-- [x] Wave 0 covers all MISSING references
+- [ ] All tasks have `<automated>` verify or Wave 0 dependencies (historical plan intent; not Nyquist per-task executed evidence)
+- [ ] Sampling continuity: no 3 consecutive tasks without automated verify (historical plan intent; not Nyquist per-task executed evidence)
+- [ ] Wave 0 covers all MISSING references (historical plan intent; not Nyquist per-task executed evidence)
 - [x] No watch-mode flags
 - [x] Feedback latency < 45s
-- [x] `nyquist_compliant: true` set in frontmatter
+- [ ] Frontmatter Nyquist flag reconciled to `nyquist_compliant: false` for audit clarity (phase-level evidence only; no per-task execution claim)
 
-**Approval:** ready
+**Approval:** reconciled for audit traceability (phase-level evidence only; Nyquist per-task execution not claimed)

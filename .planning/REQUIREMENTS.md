@@ -93,6 +93,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 - Mapped to phases: 17
 - Unmapped: 0 ✓
 
+
+**Phase 33 reconciliation:** All 17/17 v1.5 requirements are coherent and formally closed (checkboxes, traceability, coverage/count aligned; REVW-01..04, PUBL-01..05, HARD-01..02 reconciled with phase evidence).
+
 ---
 *Requirements defined: 2026-11-23*
-*Last updated: 2026-11-26 after v1.5 audit gap closure planning (Phase 33, REVW-01..04 reconciled)*
+*Last updated: 2026-11-26 after Phase 33 reconciliation (verification/traceability): REVW-01 re-verified passed 4/4; 32-VERIFICATION aligned with 32-HUMAN-UAT 4/4; 31-VALIDATION normalized; all 17 v1.5 requirements formally closed*
