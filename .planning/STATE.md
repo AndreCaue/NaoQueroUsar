@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
-status: executing
-stopped_at: Phase 33 context gathered
-last_updated: "2026-11-27T00:04:28.781Z"
-last_activity: 2026-11-27 -- Phase 33 planning complete
+status: completed
+stopped_at: Phase 33 complete — v1.5 audit traceability reconciled
+last_updated: "2026-11-27T00:14:30.000Z"
+last_activity: 2026-11-27 -- Completed 33-01 verification/traceability reconciliation
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 10
-  percent: 80
+  completed_plans: 11
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-23)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Milestone complete
+**Current focus:** Phase 33 complete — v1.5 verification/traceability reconciled
 
 ## Current Position
 
-Phase: 32
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-11-27 -- Phase 33 planning complete
+Phase: 33 (verification-traceability-reconciliation) — COMPLETE
+Plan: 1 of 1 complete
+Status: Phase 33 complete; v1.5 audit traceability gaps reconciled
+Last activity: 2026-11-27 -- Completed 33-01 verification/traceability reconciliation
 
 Progress: [██████████] 100%
 
@@ -60,6 +60,7 @@ Progress: [██████████] 100%
 | Phase 29 P01 | 8min | 3 tasks | 15 files |
 | Phase 29 P02 | 25min | 3 tasks | 12 files |
 | Phase 29 P03 | 5min | 2 tasks | 5 files |
+| 33 | 1/1 | Complete |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Recent decisions affecting current work:
 - [Phase 29]: Public IG media serves exact job_id+version hash and rebuilds only when requested version matches current job hash
 - [Phase 29]: IG media hash uses only card-relevant job fields; contact-only edits do not invalidate version hash
 - [Phase 29]: Integrations UI shows additive IG readiness with actionable pt-BR states; META-03 live Meta verification is explicit handoff (D-15)
+- [Phase 33]: Audit reconciliation closed by objective evidence only: 30-VERIFICATION passed 4/4 (REVW-01, 30-03 commit 9f58c15, history preserved), 32-VERIFICATION passed with 9/9 automated + 32-HUMAN-UAT 4/4, 31-VALIDATION normalized (phase-level evidence, no Nyquist fabrication), REQUIREMENTS 17/17 coherent.
 
 ### Pending Todos
 
@@ -117,7 +119,7 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 
 ## Session Continuity
 
-Last session: 2026-11-26T23:38:23.980Z
-Stopped at: Phase 33 context gathered
-Resume file: .planning/phases/33-verification-traceability-reconciliation/33-CONTEXT.md
-Next: Re-verify Phase 30 (`/gsd-verify-work 30` or `/gsd-execute-phase 30` verification flow) then proceed to Phase 31 planning
+Last session: 2026-11-27T00:14:30.000Z
+Stopped at: Phase 33 complete — v1.5 audit traceability reconciled
+Resume file: None
+Next: Run milestone audit/completion flow (`/gsd-audit-milestone` or `/gsd-complete-milestone`) as appropriate
