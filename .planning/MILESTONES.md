@@ -1,5 +1,33 @@
 # Milestones
 
+## v1.5 Integração Instagram na Revisão (Shipped: 2026-11-27)
+
+**Phases:** 29–33 (5 phases) | **Plans:** 11 completed | **Tasks:** 27
+**Git range:** `v1.4..HEAD` (111 commits, 161 files changed, +23804/-8922)
+**Audit:** `.planning/milestones/v1.5-MILESTONE-AUDIT.md` — **tech_debt** (17/17 requirements satisfied, 5/5 phases, 17/17 integration, 4/4 E2E flows, no critical blockers; tech debt accepted)
+
+**Delivered:** Publicação Instagram por vaga na revisão, desacoplada do Facebook e com segurança operacional: prontidão Meta/IG confirmável e base de mídia pública HTTPS com card fallback determinístico 1080x1350; seção Instagram no review com toggle/legenda/validações/preview/status independente; pipeline Graph 2 passos assíncrono com isolamento FB/IG, reconciliação de ambiguidade sem retry cego, rate/content limit acionável e auditoria segura; hardening automatizado + runbook operacional com handoffs live explícitos.
+
+**Key accomplishments:**
+
+1. Prontidão Meta/IG aditiva no fluxo Meta existente, com persistência de readiness `ig-user-id`, contratos pt-BR seguros de status/verify e base de mídia (schemas/migration) — Phase 29 (META-01, META-02).
+2. Card IG determinístico 1080x1350 com serving público HTTPS versionado, validação/proveniência IMAG-01 e UX admin de Integrações com estados acionáveis + documentação operacional META-03 — Phase 29 (IMAG-01..03, META-03).
+3. Contratos de review IG por vaga (`publish_enabled`), legenda Template C determinística/editável com guards server-side isolados do Facebook, e UI de revisão com toggle readiness-gated, contador/validações, preview exato e status IG independente — Phase 30 (REVW-01..04).
+4. Publisher Instagram Graph 2 passos com polling limitado, pipeline provider-aware FB/IG isolado, reconciliação segura de ambiguidade, rate/content limit sem retry storm e status/auditoria segura por plataforma — Phase 31 (PUBL-01..05).
+5. Hardening pytest HARD-01 + gate de regressão Facebook green e runbook operacional Meta/IG/Facebook canônico separando evidência automatizada de handoffs live Meta — Phase 32 (HARD-01, HARD-02).
+6. Reconciliação de auditoria/bookkeeping (REVW-01, 32-VERIFICATION/UAT, 31-VALIDATION, traceability) com evidência objetiva, sem execução fabricada — Phase 33.
+
+**Known gaps / deferred at close (accepted):**
+
+- Live Meta confirmations pending: IG readiness real em `/admin/integracoes`, reachability pública HTTPS da mídia pela Meta (`MEDIA_PUBLIC_BASE_URL`), e OAuth reconnect para escopos IG em conta previamente conectada.
+- Nyquist PARTIAL/MISSING: fases 30/31/32 partial, 33 missing (advisory; não bloqueador).
+- Phase 32 live Meta/App Review/roles/tasks/Advanced Access handoff remains by design; 32-HUMAN-UAT 4/4 recorded, no new live Meta execution in Phase 33.
+- Known deferred items at close: 7 (see `STATE.md` Deferred Items) — includes v1.3 CL-02 quick-task heuristic residuals re-acknowledged and Phase 29/31 UAT/verification gaps.
+
+**Archives:** [v1.5-ROADMAP.md](./milestones/v1.5-ROADMAP.md), [v1.5-REQUIREMENTS.md](./milestones/v1.5-REQUIREMENTS.md), [v1.5-MILESTONE-AUDIT.md](./milestones/v1.5-MILESTONE-AUDIT.md)
+
+---
+
 ## v1.4 Polimento UX e Admin (Shipped: 2026-11-23)
 
 **Phases:** 26–28 (3 phases) | **Plans:** 6 completed | **Tasks:** 16

@@ -2,56 +2,23 @@
 
 ## Current State
 
-**Latest shipped milestone:** v1.4 Polimento UX e Admin — **shipped 2026-11-23** (audit `tech_debt`, 6/6 requirements satisfied, 3/3 phases, 4/4 E2E flows, no critical blockers; tech debt accepted).
-**Archives:** `.planning/milestones/v1.4-ROADMAP.md`, `.planning/milestones/v1.4-REQUIREMENTS.md`, `.planning/milestones/v1.4-MILESTONE-AUDIT.md`
-
-**v1.5 in progress:** Phases 29-32 executed. Phase 32 (Hardening, Regression & Operations) automated gates passed (HARD-01/HARD-02); status `human_needed` for 4 live Meta/App Review handoff items recorded in `32-HUMAN-UAT.md`. Next: human verification/approval, then milestone audit/completion.
+**Latest shipped milestone:** v1.5 Integração Instagram na Revisão — **shipped 2026-11-27** (audit `tech_debt`, 17/17 requirements satisfied, 5/5 phases, 11/11 plans, 17/17 integration, 4/4 E2E flows, no critical blockers; tech debt accepted).
+**Archives:** `.planning/milestones/v1.5-ROADMAP.md`, `.planning/milestones/v1.5-REQUIREMENTS.md`, `.planning/milestones/v1.5-MILESTONE-AUDIT.md`
 
 **Previous milestones:**
 
+- v1.4 Polimento UX e Admin — shipped 2026-11-23 (`.planning/milestones/v1.4-ROADMAP.md`, `.planning/milestones/v1.4-REQUIREMENTS.md`, `.planning/milestones/v1.4-MILESTONE-AUDIT.md`)
 - v1.3 Chatbot Inteligente de Busca de Vagas — shipped 2026-11-22 (`.planning/milestones/v1.3-ROADMAP.md`, `.planning/milestones/v1.3-REQUIREMENTS.md`, `.planning/milestones/v1.3-MILESTONE-AUDIT.md`)
 - v1.2 Integração com Facebook Pages — shipped 2026-11-17 (`.planning/milestones/v1.2-ROADMAP.md`, `.planning/milestones/v1.2-REQUIREMENTS.md`)
 - v1.1 EmpregaNoix — shipped 2026-11-15 (`.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`, `.planning/milestones/v1.1-MILESTONE-AUDIT.md`)
 
-**v1.4 delivered:** Polimento de UX pública e fluxo admin sem perder fricção zero: login admin dedicado em `/admin/login` com redirect seguro/guard/logout/401 alinhados e entrada discreta na Política de Privacidade; controles por ambiente para anúncios e doações com validação segura; e home com `available_cities` dinâmico (published/non-expired, independente de filtros), chips de cidade ativos, limpeza de cidade obsoleta, dropdown de ordenação acessível e hover visual consistente em chips/cards/dropdown.
+**v1.5 delivered:** Publicação Instagram por vaga na etapa de revisão, desacoplada do Facebook e com segurança operacional: prontidão Meta/IG confirmável (conta vinculada, `ig-user-id`, estados acionáveis) e base de mídia pública HTTPS com card fallback determinístico 1080x1350; seção Instagram no diálogo de revisão com toggle por vaga, legenda editável (Template C, `N/2200`, aviso >30 hashtags, CTA “link na bio”), preview da imagem exata e bloqueio aplicável só ao Instagram; pipeline assíncrono Graph 2 passos (container/status/publish) com isolamento FB/IG, reconciliação de ambiguidade sem retry cego, rate/content limit acionável sem retry storm e auditoria/status seguros; hardening automatizado (HARD-01 + regressão FB) e runbook operacional Meta/IG/Facebook com handoffs live explícitos.
 
-**Known accepted residuals (v1.4):** Phase 26 live Turnstile+backend browser smoke pending (`26-HUMAN-UAT.md`, `26-VERIFICATION.md` human_needed; code paths verified). Phase 28 VERIFICATION frontmatter human_needed but human UAT acknowledged (2026-11-22, 5/5 passed). Integration warning: `frontend/app/admin/integracoes/IntegrationsClient.tsx` missing 401 handler clearing `nqu_admin_token` and redirecting via `buildAdminLoginHref(path+search)`. Nyquist partial in Phases 26/27/28. Known deferred items at close: 7 (see `STATE.md` Deferred Items), including v1.3 CL-02 quick-task heuristic residuals.
+**Known accepted residuals (v1.5):** Live Meta confirmations pending (IG readiness real em `/admin/integracoes`, public HTTPS media reachability pela Meta com `MEDIA_PUBLIC_BASE_URL`, OAuth reconnect para escopos IG). Nyquist PARTIAL/MISSING em fases 30/31/32/33 (advisory). Phase 32 live Meta/App Review/roles/tasks/Advanced Access handoff remains by design; 32-HUMAN-UAT 4/4 recorded but no new live Meta execution in Phase 33. Deferred items acknowledged at close: 7 (see `STATE.md` Deferred Items) — includes v1.3 CL-02 quick-task heuristic residuals re-acknowledged and Phase 29/31 UAT/verification gaps.
 
-## Current Milestone: v1.5 Integração Instagram na Revisão
+## Next Milestone Goals
 
-**Goal:** Permitir publicar cada vaga aprovada também no Instagram, com legenda configurada na etapa de revisão, reaproveitando a base Meta/Facebook existente e mantendo as publicações independentes.
-
-**Target features:**
-
-- Seção Instagram na etapa de revisão ao lado do Facebook: toggle por vaga, legenda editável pré-preenchida, contador 2.200, aviso >30 hashtags, preview de imagem e status por plataforma
-- Imagem obrigatória para Instagram: origem a definir (logo/card gerado/upload); fallback card padrão 1080x1080 ou 1080x1350 JPEG servido por URL pública acessível pela Meta
-- Publicação via Instagram Graph API (Content Publishing) em 2 passos (container + publish), com checagem de status quando necessário; obter/armazenar `ig-user-id` a partir da Página Facebook vinculada, reaproveitando token existente
-- Pipeline assíncrono, retry/backoff e idempotência, desacoplado do Facebook (falha de um não bloqueia o outro)
-- Persistência/observabilidade: legenda usada, post id, permalink, status, erro, timestamps; tratamento de rate limit e limite diário; tokens/IDs via env; logs sem tokens; tratar expiração de token
-- Qualidade: testes unitários/integração mockada, checklist manual Meta documentado; sem regressão no fluxo Facebook
-
-**Out of scope (v1.5):** Stories/Reels/carrossel, agendamento, métricas/analytics, responder comentários/DMs, múltiplas contas Instagram.
-
-**Constraints/guardrails:**
-
-- Conta Instagram Business/Creator vinculada à Página Facebook
-- Links na legenda não são clicáveis (CTA tipo "link na bio")
-- Antes de implementar, confirmar documentação/permissões/limites Meta atuais; mapear permissões/App Review (ex.: instagram_basic, instagram_content_publish, pages_show_list, pages_read_engagement)
-- Reaproveitar padrões existentes (app Meta, tokens, service, fila/jobs, modelo, review UI, erros/logs); sem novas abstrações desnecessárias
-
-**Decisões em aberto (resolver no discuss-phase):**
-
-- Origem da imagem (logo da empresa / card gerado a partir da vaga / upload na revisão)
-- Formato/template/armazenamento/serving do card gerado (proporção, onde armazenar e servir)
-- Biblioteca/estratégia de geração de imagem, se aplicável
-- Estratégia de renovação ou alerta de expiração do token
-
-**Candidate carry-over (evaluate during scoping/execution):**
-
-- v1.4 tech debt: IntegrationsClient 401 recovery alignment (ADMN-01 robustness), Phase 26 live smoke, Nyquist partial 26/27/28.
-- v1.3 residuals: CL-02 audit-open heuristic residual, D-14/WR-02 focus trap, runtime/browser deferments by item, Nyquist 21/22/23/25 partial, `23-06/23-07` PLANs without SUMMARYs.
-- v1.2 carry-over: `PUB-01..08` traceability reconciliation, `TEST-04/DOC-01/AUD-05` handoffs.
-- v1.1 carry-over: EXTR/PUBL/SRCH/UIUX caveats, canonical live smoke, DB-backed test reproducibility.
+No next milestone scoped yet. Use `/gsd-new-milestone` to define goals, research, requirements, and roadmap.
 
 ## What This Is
 
@@ -95,10 +62,14 @@ Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos —
 - ✓ Rate limit/limite diário Instagram tratados com segurança, estado acionável, sem retry storm — Validated in Phase 31 (PUBL-05)
 - ✓ Hardening automatizado Instagram/Facebook: cenários HARD-01 cobertos por pytest rastreável (draft/validação IG, idempotência, retry, ambiguidade, rate limit, mapeamento de erros, FB regression gate) — Validated in Phase 32 (HARD-01; automated gate green, live Meta handoff pending)
 - ✓ Documentação operacional Meta/Instagram/Facebook: env vars canônicas, checklist handoff Meta, expiração/reconexão/rotação, troubleshooting IG acionável — Validated in Phase 32 (HARD-02; doc/env/test evidence, live handoff pending)
+- ✓ Seção Instagram na revisão com toggle por vaga e status independente por plataforma — Validated in Phase 30/33 (REVW-01; reconciled in Phase 33 with objective evidence)
+- ✓ Legenda Instagram editável/preenchida a partir da vaga com contador `N/2200` e bloqueio >2200 — Validated in Phase 30 (REVW-02)
+- ✓ Aviso de >30 hashtags e orientação CTA “link na bio” (links não clicáveis) na legenda Instagram — Validated in Phase 30 (REVW-03)
+- ✓ Preview da imagem exata pretendida para publicação Instagram antes de aprovar/publicar — Validated in Phase 30 (REVW-04)
 
 ### Active
 
-None yet — requirements for v1.5 will be defined in `.planning/REQUIREMENTS.md` during milestone initialization.
+None yet — define with `/gsd-new-milestone`.
 
 ### Out of Scope
 
@@ -151,6 +122,10 @@ None yet — requirements for v1.5 will be defined in `.planning/REQUIREMENTS.md
 | Chat NL usa LLM só para extração de parâmetros; busca determinística reutiliza `list_published`/`JobPublic`             | Evita custo/latência/alucinação de enviar corpus ao LLM; preserva contrato público sem contatos                          | ✓ Good (v1.3)                                                                                         |
 | Campos não nativos no chat tratados como limitado/aproximado e sinalizado                                               | Evita afirmar filtragem inexistente e mantém honestidade de produto                                                      | ✓ Good (v1.3)                                                                                         |
 | Residuals de fechamento v1.3 aceitos explicitamente (CL-02 heuristic, D-14/WR-02, deferimentos runtime/Nyquist parcial) | Fecha milestone com rastreabilidade sem fabricar evidência                                                               | ⚠️ Revisit (acompanhar em milestone futuro se necessário)                                             |
+| Publicação Instagram desacoplada do Facebook (site-first/best-effort, isolamento por provider) | Falha/rate-limit/ambiguidade em uma plataforma não pode bloquear nem corromper a outra; preserva contrato público e fluxo admin | ✓ Good (v1.5, PUBL-01/04/05) |
+| Card fallback determinístico 1080x1350 JPEG + URL pública HTTPS versionada para mídia IG | Meta precisa de URL pública acessível; versionamento por hash evita mídia stale e mantém proveniência/preview exatos | ✓ Good (v1.5, IMAG-01/02/03) |
+| Ambiguidade IG não dispara auto-retry cego; rate/content limit tratado como estado acionável | Evita duplicação acidental e retry storm; exige reconciliação segura antes de nova tentativa | ✓ Good (v1.5, PUBL-04/05) |
+| Reconciliação de auditoria por evidência objetiva (Phase 33) | Fecha bookkeeping sem fabricar execução live; preserva histórico e separa handoffs operacionais | ✓ Good (v1.5) |
 
 ## Evolution
 
@@ -173,4 +148,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-11-26 after Phase 32 execution (Hardening, Regression & Operations) — automated verification 9/9, status human_needed (4 live Meta/App Review handoff items in 32-HUMAN-UAT.md)_
+_Last updated: 2026-11-27 after v1.5 milestone completion (audit tech_debt; 17/17 requirements satisfied, 7 deferred items acknowledged)_

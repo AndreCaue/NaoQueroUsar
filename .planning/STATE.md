@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: Integração Instagram na Revisão
-status: milestone_complete
-stopped_at: Milestone complete (Phase 33 was final phase)
-last_updated: 2026-11-27T00:18:33.606Z
-last_activity: 2026-11-27 -- Completed 33-01 verification/traceability reconciliation
+status: Awaiting next milestone
+stopped_at: Phase 33 complete — v1.5 audit traceability reconciled
+last_updated: "2026-11-27T00:54:01.841Z"
+last_activity: 2026-11-27 — Milestone v1.5 completed and archived
 progress:
   total_phases: 5
   completed_phases: 5
@@ -21,16 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-23)
 
 **Core value:** Qualquer pessoa encontra uma vaga e o contato para se candidatar em segundos — sem cadastro, sem login, sem fricção.
-**Current focus:** Milestone complete
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 33
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-11-27
-
-Progress: [██████████] 100%
+Phase: Milestone v1.5 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-11-27 — Milestone v1.5 completed and archived
 
 ## Performance Metrics
 
@@ -108,6 +106,18 @@ Items acknowledged and deferred at milestone v1.4 close on 2026-11-22:
 | verification_gap | Phase 26 26-VERIFICATION.md | human_needed (live smoke pending; no code gaps) |
 | verification_gap | Phase 28 28-VERIFICATION.md | human_needed (human UAT acknowledged 2026-11-22, 5/5 passed) |
 
+Items acknowledged and deferred at milestone v1.5 close on 2026-11-27 (user selected [A] Acknowledge all; see `.planning/v1.5-MILESTONE-AUDIT.md` for audit context):
+
+| Category | Item | Status |
+|----------|------|--------|
+| uat_gap | Phase 29 29-HUMAN-UAT.md | partial (2 pending scenarios; live Meta/public HTTPS/OAuth confirmations) |
+| uat_gap | Phase 31 31-HUMAN-UAT.md | partial (3 pending scenarios; live Meta/operational confirmations) |
+| verification_gap | Phase 29 29-VERIFICATION.md | human_needed (live Meta readiness/public reachability/OAuth reconnect) |
+| quick_task | 261110-u28-bloquear-a-expressao-jacira-chavare-ao-c | missing (known v1.3 CL-02 heuristic residual; previously accepted v1.4, re-acknowledged v1.5) |
+| quick_task | 261110-uik-remover-jacira-chavare-do-texto-colado-s | missing (known v1.3 CL-02 heuristic residual; previously accepted v1.4, re-acknowledged v1.5) |
+| quick_task | 261111-krt-atualizar-next-16-4-6-eslint-9 | missing (known v1.3 CL-02 heuristic residual; previously accepted v1.4, re-acknowledged v1.5) |
+| quick_task | 261112-ttk-escape-hatch-turnstile-teste-em-prod | missing (known v1.3 CL-02 heuristic residual; PLAN-only deferred, previously accepted v1.4, re-acknowledged v1.5) |
+
 ### Quick Tasks Completed
 
 | Task | Disposition | Evidence |
@@ -123,3 +133,7 @@ Last session: 2026-11-27T00:14:30.000Z
 Stopped at: Phase 33 complete — v1.5 audit traceability reconciled
 Resume file: None
 Next: Run milestone audit/completion flow (`/gsd-audit-milestone` or `/gsd-complete-milestone`) as appropriate
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
