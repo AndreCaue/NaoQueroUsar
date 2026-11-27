@@ -1,30 +1,33 @@
 ---
 phase: 32-hardening-regression-operations
 verified: 2026-11-26T13:30:00Z
-status: human_needed
+reverified: 2026-11-26T19:35:00Z
+reverification_mode: phase33_uat_reconciliation
+status: passed
 score: 9/9 must-haves verified
 requirements: [HARD-01, HARD-02]
 human_verification:
-  - test: "Conectar/reconectar Meta+IG e validar prontidão live"
-    expected: "Status de integração/prontidão IG coerente em /admin/integracoes, sem exposição de segredos; Facebook permanece utilizável."
-    why_human: "Requer app Meta, Página FB, conta IG Business/Creator vinculada, papéis/tarefas e credenciais autorizadas."
-  - test: "Smoke publish IG real 2-passos em ambiente autorizado"
-    expected: "Publicação IG conclui com status/IDs/permalink sanitizados e logs seguros; sem duplicação."
-    why_human: "Requer integração live Meta/IG, mídia pública HTTPS acessível pela Meta e execução real autorizada."
-  - test: "Validar reconciliação ambígua/rate limit real"
-    expected: "Estados ambíguos/rate limit ficam acionáveis; sem retry storm; reconciliação antes de republicar quando aplicável."
-    why_human: "Depende de condições reais/plataforma Meta ou incidente controlado autorizado."
-  - test: "App Review/roles/tasks/Advanced Access"
-    expected: "Permissões, papéis e status de review coerentes com operação IG."
-    why_human: "Processo externo no Meta App Dashboard com responsabilidade legal/técnica."
+  status: completed
+  source: 32-HUMAN-UAT.md
+  completed_at: 2026-11-26T19:35:00Z
+  result: 4/4 pass
+  items:
+    - test: "Conectar/reconectar Meta+IG e validar prontidão live"
+      result: pass
+    - test: "Smoke publish IG real 2-passos em ambiente autorizado"
+      result: pass
+    - test: "Validar reconciliação ambígua/rate limit real"
+      result: pass
+    - test: "App Review/roles/tasks/Advanced Access"
+      result: pass
 ---
 
 # Phase 32: Hardening, Regression & Operations Verification Report
 
 **Phase Goal:** Integração Instagram é verificável, observável e segura de operar sem regressão no fluxo Facebook.
 **Verified:** 2026-11-26T13:30:00Z
-**Status:** human_needed
-**Re-verification:** No — existing 32-VERIFICATION.md validated and updated with verifier-format evidence
+**Status:** passed
+**Re-verification:** Yes — Phase 33 reconciliation with 32-HUMAN-UAT.md 4/4 pass (automated evidence preserved; no new live Meta execution)
 
 ## Goal Achievement
 
@@ -36,13 +39,17 @@ human_verification:
 | 2 | Facebook Regression Gate cobre ciclo completo FB sem regressão causada por IG. | ✓ VERIFIED | Bloco "Facebook Regression Gate" abaixo com mapeamento por fluxo (draft/geração/contrato FB, aprovação/site-first, publish assíncrono/pipeline, status/logs seguros, retry/idempotência, reconexão/erro seguro). Comando gate registrado como PASS no 32-01-SUMMARY. `test_social_post_generation.py` é explicitamente IG-only. |
 | 3 | Testes HARD-01 são backend-first pytest, comportamentais, sem segredos/tokens. | ✓ VERIFIED | Arquivos são pytest em `backend/tests`. `test_facebook_publisher.py` contém asserções `"access_token" not in ...`, `"page_access_token" not in ...`, `"token="` não necessário por presença de checks de token; fixtures usam valores sintéticos. Sem testes frontend adicionados. |
 | 4 | Operador encontra em fonte única operacional env vars, checklist manual Meta, expiração/reconexão/rotação e troubleshooting de estados IG. | ✓ VERIFIED | `docs/META-INTEGRATION-TESTING.md` contém seções 6 (env vars canônicas/segurança), 7 (Troubleshooting publicação Instagram), 5.6/8 (expiração/reconexão/rotação/handoff), checklist manual com "Não executado / não evidenciado nesta sessão". |
-| 5 | Evidência de Phase 32 separa claramente cobertura automatizada de handoff manual Meta, sem afirmar execução manual não realizada. | ✓ VERIFIED | `32-VERIFICATION.md` tem `Manual Meta Handoff` com "Não executado / não evidenciado nesta sessão" em todos os itens; status `human_needed`. |
+| 5 | Evidência de Phase 32 separa claramente cobertura automatizada de handoff manual Meta, sem afirmar execução manual não realizada. | ✓ VERIFIED | `32-VERIFICATION.md` tem `Manual Meta Handoff` com "Não executado / não evidenciado nesta sessão" em todos os itens; status reconciliado em Phase 33 com UAT 4/4 pass registrado em `32-HUMAN-UAT.md`. |
 | 6 | Facebook Regression Gate aparece como bloco explícito na verificação com arquivos, comando e resultado. | ✓ VERIFIED | Seção "Facebook Regression Gate" presente com tabela Fluxo/Cobertura/Comando/Resultado/Conclusão. |
 | 7 | `.env.example` alinhado aos budgets IG publish existentes em config, sem segredos. | ✓ VERIFIED | `backend/.env.example` contém `IG_PUBLISH_HTTP_TIMEOUT_SECONDS=20.0`, `IG_STATUS_POLL_MAX_ATTEMPTS=5`, `IG_STATUS_POLL_DELAY_SECONDS=2.0`, `IG_PUBLISH_MAX_ATTEMPT_SECONDS=45.0`; `backend/app/core/config.py` valida os mesmos campos. |
 | 8 | Requirement IDs dos PLAN frontmatter estão contabilizados em REQUIREMENTS.md. | ✓ VERIFIED | 32-01 declara `HARD-01`; 32-02 declara `HARD-02`. REQUIREMENTS.md mapeia HARD-01/HARD-02 para Phase 32 (linhas 39-40, 88-89). Ambos contabilizados; status em REQUIREMENTS.md ainda marcado Pending (atualização de checklist global fora do escopo desta verificação). |
 | 9 | Limite HARD-01 draft/validação IG: regras backend-enforced cobertas por pytest; `>30 hashtags` e "link na bio" CTA permanecem UI-only Phase 30 D-09. | ✓ VERIFIED | `test_social_post_generation.py` cobre template determinístico, 2200 cap, link na bio, hashtags obrigatórias, sem vazamento de contato/empresa confidencial. `32-VERIFICATION.md` registra fronteira explícita sem fabricar hard-block backend para `>30 hashtags`. |
 
-**Score:** 9/9 truths verified
+**Score:** 9/9 must-haves verified
+
+## UAT Reconciliation (Phase 33, 2026-11-26)
+
+Automated verification remains 9/9. Human UAT completed in `32-HUMAN-UAT.md` with 4/4 pass (total 4, passed 4, issues 0, pending 0, skipped 0, blocked 0; updated 2026-11-26T19:35:00Z). Phase 33 reconciles verification status to passed while preserving the separate nature of automated and human evidence (D-05, D-06, D-08). No new live Meta execution was performed by Phase 33.
 
 ### Required Artifacts
 
@@ -81,35 +88,18 @@ human_verification:
 |------|------|---------|----------|--------|
 | None | - | - | - | Nenhum blocker/warning detectado nos artefatos verificados por spot-check. |
 
-### Human Verification Required
+### Human Verification (Completed via 32-HUMAN-UAT.md)
 
-### 1. Conexão OAuth Meta/IG e prontidão live
-
-**Test:** Conectar/reconectar em `/admin/integracoes` com app/página/IG reais autorizados.
-**Expected:** Prontidão IG correta (ready/missing/reconnect) sem quebrar FB; sem exposição de segredos.
-**Why human:** Requer credenciais Meta e contas/papéis reais.
-
-### 2. Smoke publish IG real (2-passos)
-
-**Test:** Aprovar/publicar job com IG habilitado em ambiente autorizado com mídia pública HTTPS.
-**Expected:** Publicação confirmada, IDs/permalink sanitizados, status seguro, sem duplicação.
-**Why human:** Requer Graph API live e infraestrutura pública real.
-
-### 3. Reconciliação ambígua/rate limit real
-
-**Test:** Exercitar cenário controlado autorizado de ambiguidade/rate limit.
-**Expected:** Estado acionável, sem retry storm, reconciliação antes de republicar.
-**Why human:** Comportamento depende de plataforma Meta/condições reais.
-
-### 4. App Review/roles/tasks/Advanced Access
-
-**Test:** Validar papéis/permissões/review no Meta App Dashboard.
-**Expected:** Configuração compatível com operação IG.
-**Why human:** Processo externo administrativo/legal.
+| Test | Result | Evidence |
+|---|---|---|
+| Conectar/reconectar Meta+IG e validar prontidão live | pass | Recorded in 32-HUMAN-UAT.md (2026-11-26T19:35:00Z). Expected: status/prontidão coerente em `/admin/integracoes`, sem exposição de segredos; Facebook permanece utilizável. |
+| Smoke publish IG real 2-passos em ambiente autorizado | pass | Recorded in 32-HUMAN-UAT.md (2026-11-26T19:35:00Z). Expected: publicação IG conclui com status/IDs/permalink sanitizados e logs seguros; sem duplicação. |
+| Validar reconciliação ambígua/rate limit real | pass | Recorded in 32-HUMAN-UAT.md (2026-11-26T19:35:00Z). Expected: estados ambíguos/rate limit acionáveis; sem retry storm; reconciliação antes de republicar quando aplicável. |
+| App Review/roles/tasks/Advanced Access | pass | Recorded in 32-HUMAN-UAT.md (2026-11-26T19:35:00Z). Expected: permissões, papéis e status de review coerentes com operação IG. |
 
 ### Gaps Summary
 
-Nenhum gap automatizado encontrado. A fase permanece `human_needed` porque a validação live Meta/App Review/IG smoke não foi executada nesta sessão e está corretamente marcada como handoff explícito.
+Nenhum gap automatizado encontrado. Human UAT foi concluído com 4/4 pass e reconciliado na Phase 33; nenhum item humano permanece pendente nesta verificação. Phase 33 não executou nova validação live Meta.
 
 ---
 
@@ -154,10 +144,10 @@ Referências: `docs/META-INTEGRATION-TESTING.md`, `backend/.env.example`. Não d
 
 | Item | Status | Pré-condições | Responsável/Ambiente necessário | Evidência sanitizada requerida | Executado nesta sessão | Resultado |
 |---|---|---|---|---|---|---|
-| Conexão OAuth Meta/IG e prontidão live | handoff/manual | App Meta, Page, IG Business/Creator vinculado, papéis/tarefas, envs canônicas configuradas | Operador autorizado + ambiente com credenciais Meta válidas | Screenshot/log sanitizado de `/admin/integracoes` e estado de prontidão, sem tokens/segredos | Não | Não executado / não evidenciado nesta sessão |
-| Smoke publish IG real (2-passos) | handoff/manual | Prontidão IG ready, mídia pública HTTPS acessível, job aprovado para teste | Operador autorizado + ambiente Meta/IG autorizado | IDs/permalink/timestamps sanitizados, status final e logs seguros | Não | Não executado / não evidenciado nesta sessão |
-| Reconciliação ambígua/rate limit real | handoff/manual | Cenário controlado ou incidente real autorizado; integração pronta | Operador autorizado + suporte Meta se necessário | Evidência sanitizada do estado, ação tomada, e resultado final/reconciliação | Não | Não executado / não evidenciado nesta sessão |
-| App Review/roles/tasks/Advanced Access conforme necessário | handoff/manual | Acesso ao Meta App Dashboard e permissões administrativas | Responsável legal/técnico do app Meta | Checklist/print sanitizado de permissões, papéis e status de review | Não | Não executado / não evidenciado nesta sessão |
+| Conexão OAuth Meta/IG e prontidão live | handoff/manual | App Meta, Page, IG Business/Creator vinculado, papéis/tarefas, envs canônicas configuradas | Operador autorizado + ambiente com credenciais Meta válidas | Screenshot/log sanitizado de `/admin/integracoes` e estado de prontidão, sem tokens/segredos | Não | Não executado / não evidenciado nesta sessão; UAT 4/4 pass registrado em 32-HUMAN-UAT.md (2026-11-26T19:35:00Z) |
+| Smoke publish IG real (2-passos) | handoff/manual | Prontidão IG ready, mídia pública HTTPS acessível, job aprovado para teste | Operador autorizado + ambiente Meta/IG autorizado | IDs/permalink/timestamps sanitizados, status final e logs seguros | Não | Não executado / não evidenciado nesta sessão; UAT 4/4 pass registrado em 32-HUMAN-UAT.md (2026-11-26T19:35:00Z) |
+| Reconciliação ambígua/rate limit real | handoff/manual | Cenário controlado ou incidente real autorizado; integração pronta | Operador autorizado + suporte Meta se necessário | Evidência sanitizada do estado, ação tomada, e resultado final/reconciliação | Não | Não executado / não evidenciado nesta sessão; UAT 4/4 pass registrado em 32-HUMAN-UAT.md (2026-11-26T19:35:00Z) |
+| App Review/roles/tasks/Advanced Access conforme necessário | handoff/manual | Acesso ao Meta App Dashboard e permissões administrativas | Responsável legal/técnico do app Meta | Checklist/print sanitizado de permissões, papéis e status de review | Não | Não executado / não evidenciado nesta sessão; UAT 4/4 pass registrado em 32-HUMAN-UAT.md (2026-11-26T19:35:00Z) |
 
 ## Comandos Executados
 
@@ -170,4 +160,5 @@ Referências: `docs/META-INTEGRATION-TESTING.md`, `backend/.env.example`. Não d
 ---
 
 _Verified: 2026-11-26T13:30:00Z_
-_Verifier: OpenCode (gsd-verifier)_
+_Reverified: 2026-11-26T19:35:00Z_
+_Verifier: OpenCode (gsd-verifier), reconciled by OpenCode (gsd-executor, Phase 33 UAT reconciliation)_
